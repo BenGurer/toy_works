@@ -22,7 +22,7 @@ stimfile = viewGet(thisView,'stimfile',1);
 tSeries = loadTSeries(thisView, 1, 'all');
 
 % select voxel
-VoxeltSeries = tSeries(26,72,13,:); % r2 = 0.311 max index = 7 tw index 7ish
+VoxeltSeries = tSeries(26,72,13,:); % r2 = 0.311 max  index = 7 tw index 7ish
 % VoxeltSeries = tSeries(32,72,10,:); % r2 = 0.312 maxIndex 9 TW 4 - 5
 
 % make data one row double
@@ -96,7 +96,7 @@ INTpCF = initalParams.pCF(maxI(maxII));
 INTpTW = initalParams.pTW (maxII);
 
 % set minimising search parameters
-x0 = [INTpCF INTpTW 1 1];
+x0 = [INTpCF INTpTW 0 1];
 xdata.desMatrix = desMatrix;
 xdata.StimulusSet = StimulusSet;
 ydata = double(VoxeltSeries);
@@ -110,9 +110,17 @@ initialpRFmodelTimeSeries = pRFtimeCourse (x0,xdata);
 % Modelled time series using minimising search parameters
 fittedpRFmodelTimeSeries = pRFtimeCourse (x,xdata);
 
+f = [0.02:1:20];
+r = makepRF(x(1),x(2),f);
+
 %%%%%%%%%%%%%%%%%%
 %% Plot figures %%
 %%%%%%%%%%%%%%%%%%
+
+figure; plot(f,r)
+
+%% Hemodynamic Response Function
+figure; plot(hrf); title('HDR function'), xlabel('Time (TR)'), ylabel('Amplitude')
 
 %% Design matrix
 figure
@@ -141,7 +149,7 @@ for i = 1:length(initalParams.pCF)
         hold on
     end
 end
-
+title('Modelled pRFs'), xlabel('Frequency (ERB Scale)'), ylabel('Amplitude')
 %% R2 values of fitted modelled time series
 figure; contourf(r2); colorbar; title('R2 values of Model fits'), xlabel('Initial Tuning Width ID'), ylabel('Initial Charactersic Frequency ID')
 
@@ -149,6 +157,7 @@ figure; contourf(r2); colorbar; title('R2 values of Model fits'), xlabel('Initia
 figure
 hold on
 plot(ydata)
+plot(initialpRFmodelTimeSeries)
 plot(fittedpRFmodelTimeSeries); title('Voxel and Modelled Time Series'), xlabel('Time (TR)'), ylabel('BOLD Percent Signal Change')
 text(max(xlim)-range(xlim)/10,max(ylim)-range(ylim)/20,sprintf('pCF = %.2f kHz\npTW = %.2f ERB',x(1),x(2)))
 
@@ -160,10 +169,8 @@ x = 4;
 y = 11;
 z = 4;
 hrf = gampdf(t,x,1)-gampdf(t,y,1)/z;
-figure; plot(hrf); title('HDR function'), xlabel('Time (TR)'), ylabel('Amplitude')
 
-function modelData = pRFtimeCourse (x,xdata)
-
+function modelTimeCourse = pRFtimeCourse (x,xdata)
 pCF = x(1);
 pTW = x(2);
 scaling = x(3);
@@ -173,24 +180,25 @@ desMatrix = xdata.desMatrix;
 StimulusSet = xdata.StimulusSet;
 
 [nrows, ncols] = size(desMatrix);
-modelData = zeros(nrows,1);
+modelTimeCourse = zeros(nrows,1);
 
+% Response of voxel to each stimulus
 r = makepRF(pCF,pTW,StimulusSet);
 
-% replace below with matrix *
-% for k = 1:nrows
-% modelData(k) = sum(desMatrix(k,:) .* r,2);
-% end
-modelData = desMatrix * r';
-modelData = modelData + offset;
-modelData = modelData./mean(modelData);
-modelData = modelData .* scaling;
+% Matrix multiplication of design matrix and response of voxel to each
+% stimulus =
+% At each time point(colums) sum the product of each element in the row (stimulus
+% presenation convolved with HRF) with the voxels pRF response to each stimulus
+modelTimeCourse = desMatrix * r';
+modelTimeCourse = modelTimeCourse + offset; % off set to account for data off set
+modelTimeCourse = modelTimeCourse./mean(modelTimeCourse); % give data a mean of 1
+modelTimeCourse = modelTimeCourse .* scaling; % scale of data unknown so account for this
 
 
 function coarseSearch = makeModelledTimeCourse(desMatrix,StimulusSet,pCF,pTW)
 [nrows, ncols] = size(desMatrix);
 % pRF = zeros(length(pCF),length(pTW),nrows);
-coarseSearch.modelTimeSeries = zeros(nrows,length(pCF),length(pTW));
+modelTimeSeries = zeros(nrows,length(pCF),length(pTW));
 coarseSearch.pRF  = zeros(ncols,length(pCF),length(pTW));
 for i = 1:length(pCF)
     % output vector length of stimulus set
@@ -202,30 +210,14 @@ for i = 1:length(pCF)
         %         for k = 1:nrows
         %             pRF(i,n,k) = sum(desMatrix(k,:) .* r,2);
         %         end
-        coarseSearch.modelTimeSeries(:,i,n) = desMatrix * r';
+        modelTimeSeries(:,i,n) = desMatrix * r';
         %         plot(modelTimeCourse(:,i,n))
         coarseSearch.pRF(:,i,n)=r;
     end
 end
-% modelTimeCourse = modelTimeCourse +1;
-% modelTimeCourse = modelTimeCourse./repmat(mean(modelTimeCourse),[nrows,1,1]);
+modelTimeCourse = modelTimeCourse +1;
+coarseSearch.modelTimeCourse = modelTimeCourse./repmat(mean(modelTimeCourse),[nrows,1,1]); % take average of EACH time course - divide each time point by this average
 
-% figure;
-% for i = 1:length(pCF)
-%     for n = 1:length(pTW)
-%         plot(modelTimeCourse(:,i,n))
-%         hold on
-%     end
-% end
-
-
-
-% title('Modelled Time Courses'), xlabel('Time (TR)'), ylabel('Amplitude')
-
-% change program to have time course on first dimention
-% pRF = permute(pRF,[2,3,1]);
-% take average of EACH time course - divide each time point by this average
-% add 3rd param for fitting fuction - for scaling
 
 function r = makepRF(pCF,pTW,stimf)
 % take into account bandwidth of noise
@@ -234,15 +226,6 @@ function r = makepRF(pCF,pTW,stimf)
 P = 4*pCF/pTW;
 g = abs(stimf-pCF)/pCF;
 r = (1+P*g).*exp(-P*g);
-
-function [w] = lcfROEX(param,f)
-CF = param(1);
-C =param(2);
-P = 4*CF/C;
-% ERB = C*lcfErb(CF);
-% P = 4*CF/ERB;
-g = abs(f-CF)/CF;
-w = (1+P*g).*exp(-P*g);
 
 function erb = lcfErb(f)
 % ***** lcfErb *****
