@@ -1,5 +1,5 @@
-function d = toy_pRF
-%(stimfile,TR)
+function x = toy_pRF
+%(thisView,TR)
 
 % load one voxel time series - from auditory cortex with high R2
 
@@ -21,13 +21,17 @@ stimfile = viewGet(thisView,'stimfile',1);
 % Load tSeries
 tSeries = loadTSeries(thisView, 1, 'all');
 
+%% SORT OUT STARTING FROM THIS POINT and looping
+
 % select voxel
-VoxeltSeries = tSeries(26,72,13,:); % r2 = 0.311 max  index = 7 tw index 7ish
+% VoxeltSeries = tSeries(26,72,13,:); % r2 = 0.311 max  index = 7 tw index 7ish
 % VoxeltSeries = tSeries(32,72,10,:); % r2 = 0.312 maxIndex 9 TW 4 - 5
+VoxeltSeries = tSeries(39,68,16,:);
 
 % make data one row double
 VoxeltSeries = squeeze(VoxeltSeries);
-
+VoxeltSeries = percentTSeries(VoxeltSeries,'detrend','Linear','spatialNormalization','Divide by mean','subtractMean', 'Yes', 'temporalNormalization', 'No');
+ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Make Hemodynamic Response Function %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -51,8 +55,12 @@ nStimuli = length(stimfile{1,1}.stimNames); % Number of stimuli presented
 tTime = length(VoxeltSeries); % time in TR
 
 %% NEED TO DO THIS %%%
+% CONVERT TO SECONDS or divide by TR?
 % loop length of runs and concatinate
-tIndex = [cell2mat(stimfile{1,1}.mylog.stimtimes_s)/2;(cell2mat(stimfile{1,2}.mylog.stimtimes_s)/2)+tTime/2]; % Load stim times. Divide by TR to get time points in TR
+% convert stim times in Seconds to TR time points, convert from cell to
+% matrix - concatinate stimfiles by adding length of stim conditions of
+% previous stimfile to the next one
+tIndex = [cell2mat(stimfile{1,1}.mylog.stimtimes_s)/TR;(cell2mat(stimfile{1,2}.mylog.stimtimes_s)/TR)+(max(cell2mat(stimfile{1,1}.mylog.stimtimes_s))+2)/TR]; % Load stim times. Divide by TR to get time points in TR
 tIndex = tIndex+1; % add one indexing to handle stimulus at time 0
 dRaw = zeros(tTime,nStimuli); % Stimulus Impulse Matrix
 desMatrix = zeros(tTime,nStimuli); % Design matrix - Stimulus impulse convolved with HRF
@@ -96,7 +104,7 @@ INTpCF = initalParams.pCF(maxI(maxII));
 INTpTW = initalParams.pTW (maxII);
 
 % set minimising search parameters
-x0 = [INTpCF INTpTW 0 1];
+x0 = [INTpCF INTpTW 1];
 xdata.desMatrix = desMatrix;
 xdata.StimulusSet = StimulusSet;
 ydata = double(VoxeltSeries);
@@ -160,27 +168,29 @@ plot(ydata)
 plot(initialpRFmodelTimeSeries)
 plot(fittedpRFmodelTimeSeries); title('Voxel and Modelled Time Series'), xlabel('Time (TR)'), ylabel('BOLD Percent Signal Change')
 text(max(xlim)-range(xlim)/10,max(ylim)-range(ylim)/20,sprintf('pCF = %.2f kHz\npTW = %.2f ERB',x(1),x(2)))
-
+keyboard
 function hrf = makeHrf(TR)
 % given the TR, return the HRF shape for t = 0 ... 30s
 %
-t = [0:TR:30]; % vector of time points (in steps of TR)
-x = 4;
-y = 11;
-z = 4;
+% t = [0:TR:16./TR]; % vector of time points (in steps of TR)
+t = [0:1:16./TR]; % vector of time points (in steps of TR)
+x = 4/TR;
+y = 11/TR;
+z = 4/TR;
 hrf = gampdf(t,x,1)-gampdf(t,y,1)/z;
+% hrf = hrf./ max(hrf);
 
 function modelTimeCourse = pRFtimeCourse (x,xdata)
 pCF = x(1);
 pTW = x(2);
 scaling = x(3);
-offset = x(4);
+% offset = x(3);
 
 desMatrix = xdata.desMatrix;
 StimulusSet = xdata.StimulusSet;
 
 [nrows, ncols] = size(desMatrix);
-modelTimeCourse = zeros(nrows,1);
+% modelTimeCourse = zeros(nrows,1);
 
 % Response of voxel to each stimulus
 r = makepRF(pCF,pTW,StimulusSet);
@@ -190,7 +200,7 @@ r = makepRF(pCF,pTW,StimulusSet);
 % At each time point(colums) sum the product of each element in the row (stimulus
 % presenation convolved with HRF) with the voxels pRF response to each stimulus
 modelTimeCourse = desMatrix * r';
-modelTimeCourse = modelTimeCourse + offset; % off set to account for data off set
+% modelTimeCourse = modelTimeCourse + offset; % off set to account for data off set
 modelTimeCourse = modelTimeCourse./mean(modelTimeCourse); % give data a mean of 1
 modelTimeCourse = modelTimeCourse .* scaling; % scale of data unknown so account for this
 
@@ -198,7 +208,7 @@ modelTimeCourse = modelTimeCourse .* scaling; % scale of data unknown so account
 function coarseSearch = makeModelledTimeCourse(desMatrix,StimulusSet,pCF,pTW)
 [nrows, ncols] = size(desMatrix);
 % pRF = zeros(length(pCF),length(pTW),nrows);
-modelTimeSeries = zeros(nrows,length(pCF),length(pTW));
+coarseSearch.modelTimeSeries = zeros(nrows,length(pCF),length(pTW));
 coarseSearch.pRF  = zeros(ncols,length(pCF),length(pTW));
 for i = 1:length(pCF)
     % output vector length of stimulus set
@@ -210,13 +220,13 @@ for i = 1:length(pCF)
         %         for k = 1:nrows
         %             pRF(i,n,k) = sum(desMatrix(k,:) .* r,2);
         %         end
-        modelTimeSeries(:,i,n) = desMatrix * r';
+        coarseSearch.modelTimeSeries(:,i,n) = desMatrix * r';
         %         plot(modelTimeCourse(:,i,n))
         coarseSearch.pRF(:,i,n)=r;
     end
 end
-modelTimeCourse = modelTimeCourse +1;
-coarseSearch.modelTimeCourse = modelTimeCourse./repmat(mean(modelTimeCourse),[nrows,1,1]); % take average of EACH time course - divide each time point by this average
+coarseSearch.modelTimeSeries = coarseSearch.modelTimeSeries +1;
+coarseSearch.modelTimeSeries = coarseSearch.modelTimeSeries./repmat(mean(coarseSearch.modelTimeSeries),[nrows,1,1]); % take average of EACH time course - divide each time point by this average
 
 
 function r = makepRF(pCF,pTW,stimf)
