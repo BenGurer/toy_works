@@ -174,7 +174,7 @@ function hrf = makeHrf(TR)
 %
 % t = [0:TR:16./TR]; % vector of time points (in steps of TR)
 t = [0:1:16./TR]; % vector of time points (in steps of TR)
-x = 4/TR;
+x = 4/TR; % wrong
 y = 11/TR;
 z = 4/TR;
 hrf = gampdf(t,x,1)-gampdf(t,y,1)/z;
