@@ -1,5 +1,6 @@
-function [pCF,pTW,error] = pRFpush (VoxeltSeries,stiminfo,TR,stimTR)
-
+function [pCF,pTW,error] = pRFpush (VoxeltSeries,stiminfo,coarseSearch,initalParams)
+% stiminfo.StimulusSet
+% stiminfo.designMatrix
 if any(isnan(VoxeltSeries))
     
     pCF = nan;
@@ -11,23 +12,6 @@ else
 VoxeltSeries = squeeze(VoxeltSeries);
 VoxeltSeries = percentTSeries(VoxeltSeries,'detrend','Linear','spatialNormalization','Divide by mean','subtractMean', 'Yes', 'temporalNormalization', 'No');
  
-
-
-%%%%%%%%%%%%%%%%%%
-%% Coarse search %%
-%%%%%%%%%%%%%%%%%%
-% product of design matrix and pRF is the modelled time course
-% coarse search of pRF using correlation matrix
-% Best fit from this is used as initial parameters for minimising search
-
-% search between limits of stimulus set frequency range
-StimLowFreq = min(stiminfo.StimulusSet);
-StimHighFreq = max(stiminfo.StimulusSet);
-initalParams.pCF = lcfInvNErb(linspace(lcfNErb(StimLowFreq), lcfNErb(StimHighFreq), 10));
-initalParams.pTW = [0.5 1 5 10 50 100];
-
-% Returns a matrix of modelled time courses and pRF
-coarseSearch = makeModelledTimeCourse(stiminfo.desMatrix,stiminfo.StimulusSet,initalParams.pCF,initalParams.pTW);
 
 % Calculate correlation of each modelled time course with actual voxel time series
 r2 = zeros(length(initalParams.pCF),length(initalParams.pTW));
@@ -48,13 +32,14 @@ INTpTW = initalParams.pTW (maxII);
 
 % set minimising search parameters
 x0 = [INTpCF INTpTW 1];
-xdata.desMatrix = stiminfo.desMatrix;
+xdata.desMatrix = stiminfo.designMatrix;
 xdata.StimulusSet = stiminfo.StimulusSet;
 ydata = double(VoxeltSeries);
-lb = [0.02, 0.0001];
-ub= [20, 1000];
+lb = [0.02, 0.0001 -Inf];
+ub= [20, 1000 +Inf];
 fun = @pRFtimeCourse; % needs to be forward model
-[x, error] = lsqcurvefit(fun,x0,xdata,ydata,lb,ub);
+options = optimset('Display','off');
+[x,error,residual,exitflag,output] = lsqcurvefit(fun,x0,xdata,ydata,lb,ub,options);
 
 pCF = x(1);
 pTW = x(2);
@@ -141,31 +126,6 @@ modelTimeCourse = desMatrix * r';
 % modelTimeCourse = modelTimeCourse + offset; % off set to account for data off set
 modelTimeCourse = modelTimeCourse./mean(modelTimeCourse); % give data a mean of 1
 modelTimeCourse = modelTimeCourse .* scaling; % scale of data unknown so account for this
-
-
-function coarseSearch = makeModelledTimeCourse(desMatrix,StimulusSet,pCF,pTW)
-[nrows, ncols] = size(desMatrix);
-% pRF = zeros(length(pCF),length(pTW),nrows);
-coarseSearch.modelTimeSeries = zeros(nrows,length(pCF),length(pTW));
-coarseSearch.pRF  = zeros(ncols,length(pCF),length(pTW));
-for i = 1:length(pCF)
-    % output vector length of stimulus set
-    % use last arguement to set spacing of function
-    for n = 1:length(pTW)
-        r = makepRF(pCF(i),pTW(n),StimulusSet);
-        % take pRF and multiply by design matrix
-        % loop to lineraly sum
-        %         for k = 1:nrows
-        %             pRF(i,n,k) = sum(desMatrix(k,:) .* r,2);
-        %         end
-        coarseSearch.modelTimeSeries(:,i,n) = desMatrix * r';
-        %         plot(modelTimeCourse(:,i,n))
-        coarseSearch.pRF(:,i,n)=r;
-    end
-end
-coarseSearch.modelTimeSeries = coarseSearch.modelTimeSeries +1;
-coarseSearch.modelTimeSeries = coarseSearch.modelTimeSeries./repmat(mean(coarseSearch.modelTimeSeries),[nrows,1,1]); % take average of EACH time course - divide each time point by this average
-
 
 function r = makepRF(pCF,pTW,stimf)
 % take into account bandwidth of noise

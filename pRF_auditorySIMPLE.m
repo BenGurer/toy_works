@@ -1,4 +1,4 @@
-function view = pRF_auditory
+function thisView = pRF_auditory
 %(view,params)
 %
 % view = pRF_auditory(view,[params])
@@ -32,10 +32,10 @@ function view = pRF_auditory
 % djh, 7/2007
 % $Id$
 
-view = getMLRView;
+thisView = getMLRView;
 
 
-if ~isview(view)
+if ~isview(thisView)
     help pRF_auditory
     mrErrorDlg('(pRF_auditory) Invalid view.')
 end
@@ -43,20 +43,20 @@ end
 % Get analysis parameters from pRF_auditoryGUI
 if ieNotDefined('params')
     % Initialize analysis parameters with default values
-    groupName = viewGet(view,'groupName');
+    groupName = viewGet(thisView,'groupName');
     params.groupName = groupName;
     % find out all the scans in the current group that have more than 2 volumes
     % since we can't compute tSeriesStats for scans with less
-    groupNum = viewGet(view,'groupNum',groupName);
-    for iScan = 1:viewGet(view,'nScans',groupNum)
-        nVols(iScan) = viewGet(view,'nVolumes',iScan);
+    groupNum = viewGet(thisView,'groupNum',groupName);
+    for iScan = 1:viewGet(thisView,'nScans',groupNum)
+        nVols(iScan) = viewGet(thisView,'nVolumes',iScan);
         if nVols(iScan) <= 2
             disp(sprintf('(pRF_auditory) Scan %s:%i has %i volumes - need at least 2 volumes to run tSeriesStats',groupName,iScan,nVols(iScan)));
         end
     end
     scanList = find(nVols>2);
     if length(scanList) > 0
-        params.scanList = selectInList(view,'scans','Select scans for pRF_auditory',scanList);
+        params.scanList = selectInList(thisView,'scans','Select scans for pRF_auditory',scanList);
         if isempty(params.scanList),return,end
     else
         disp(sprintf('(pRF_auditory) Could not find any scans to process'));
@@ -76,15 +76,15 @@ end
 
 % Change group
 groupName = params.groupName;
-curGroup = viewGet(view,'currentGroup');
-groupNum = viewGet(view,'groupNum',groupName);
+curGroup = viewGet(thisView,'currentGroup');
+groupNum = viewGet(thisView,'groupNum',groupName);
 if (groupNum ~= curGroup)
     mrWarnDlg(['Changing view to group: ',groupName]);
-    view = viewSet(view,'currentGroup',groupNum);
+    thisView = viewSet(thisView,'currentGroup',groupNum);
 end
 
 % Compute it
-[pRF_CF, pRF_TW] = computepRF_auditory(view,params);
+[pRF_CF, pRF_TW] = computepRF_auditory(thisView,params);
 
 % Make analysis structure
 pRF.name = 'pRF_auditory';  % This can be reset by editAnalysisGUI
@@ -94,17 +94,18 @@ pRF.function = 'pRF_auditory';
 pRF.guiFunction = 'pRF_auditoryGUI';
 pRF.params = params;
 
+
 % Install it in the view
-view = viewSet(view,'newanalysis',pRF);
-view = viewSet(view,'newoverlay',pRF_CF);
-view = viewSet(view,'newoverlay',pRF_TW);
+thisView = viewSet(thisView,'newanalysis',pRF);
+thisView = viewSet(thisView,'newoverlay',pRF_CF);
+thisView = viewSet(thisView,'newoverlay',pRF_TW);
 % view = viewSet(view,'newoverlay',tsStd);
 % view = viewSet(view,'newoverlay',tsMaxFrameDiff);
 % view = viewSet(view,'newoverlay',tsMaxMedianDiff);
 % view = viewSet(view,'newoverlay',tsMeanDividedByStd);
 
 % Save it
-saveAnalysis(view,pRF.name);
+saveAnalysis(thisView,pRF.name);
 
 
 keyboard
@@ -176,9 +177,26 @@ for scanIndex=1:length(scanList)
     
     stiminfo = makeStimInfo(stimfile,nframes,stimTR,TR);
     
+    %%%%%%%%%%%%%%%%%%
+%% Coarse search %%
+%%%%%%%%%%%%%%%%%%
+% product of design matrix and pRF is the modelled time course
+% coarse search of pRF using correlation matrix
+% Best fit from this is used as initial parameters for minimising search
+
+% search between limits of stimulus set frequency range
+StimLowFreq = min(stiminfo.StimulusSet);
+StimHighFreq = max(stiminfo.StimulusSet);
+initalParams.pCF = lcfInvNErb(linspace(lcfNErb(StimLowFreq), lcfNErb(StimHighFreq), 10));
+initalParams.pTW = [0.5 1 5 10 50 100];
+
+% Returns a matrix of modelled time courses and pRF
+coarseSearch = makeModelledTimeCourse(stiminfo.designMatrix,stiminfo.StimulusSet,initalParams.pCF,initalParams.pTW);
+
+    
     nslices = viewGet(view,'nslices',scanNum);
     for sliceNum = 1:nslices
-        [pCF,pTW,error] = computepRF_auditorySeries(tSeries(:,:,sliceNum,:),stiminfo,TR,stimTR);
+        [pCF,pTW,error] = computepRF_auditorySeries(tSeries(:,:,sliceNum,:),stiminfo,coarseSearch,initalParams);
         pRF_CF.data{scanNum}(:,:,sliceNum) = pCF;
         pRF_TW.data{scanNum}(:,:,sliceNum) = pTW;
         pRF_error.data{scanNum}(:,:,sliceNum) = error;
@@ -187,6 +205,10 @@ for scanIndex=1:length(scanList)
     end
     mrCloseDlg(waitHandle);
 end
+
+% Fill range fields
+pRF_CF.range = findRange(pRF_CF.data);
+pRF_TW.range = findRange(pRF_TW.data);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function stiminfo = makeStimInfo(stimfile,nframes,stimTR,TR)
@@ -229,17 +251,16 @@ function hrf = makeHrf(TR)
 t = [0:1:16./TR]; % vector of time points (in steps of TR)
 x = 4/TR;
 y = 11/TR;
-z = 4/TR;
+z = 4;
 hrf = gampdf(t,x,1)-gampdf(t,y,1)/z;
 
-function [pCF,pTW,error] = computepRF_auditorySeries(tSeries,stiminfo,TR,stimTR)
+function [pCF,pTW,error] = computepRF_auditorySeries(tSeries,stiminfo,coarseSearch,initalParams)
 
 %% This is where we calculated the pRF
 % Calculate TR from number of stim file time points compared to image timepoints?
 % loop through slice voxels
 % output 3 matrixs of same size with pCF, pTW and error of each voxel
 [nrows, ncols, nslice, nframes] = size(tSeries);
-
 % nslice should be 1 - doing 1 slice at a time
 
 pCF = zeros(nrows,ncols);
@@ -248,7 +269,43 @@ error = zeros(nrows,ncols);
 for i = 1:nrows
     for ii = 1:ncols
         VoxeltSeries = tSeries(i,ii,1,:);
-        [pCF(i,ii),pTW(i,ii),error(i,ii)] = pRFpush (VoxeltSeries,stiminfo,TR,stimTR);
+        [pCF(i,ii),pTW(i,ii),error(i,ii)] = pRFpush (VoxeltSeries,stiminfo,coarseSearch,initalParams);
     end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function range = findRange(data)
+
+ampMin = realmax;
+ampMax = 0;
+nScans = length(data);
+for scan=1:nScans
+  if ~isempty(data{scan})
+     thisData = data{scan}(:);
+     thisData = thisData(~isinf(thisData));
+    ampMin = min([ampMin min(thisData)]);
+    ampMax = max([ampMax max(thisData)]);
+  end
+end
+if (ampMin <= ampMax)
+  range = [ampMin ampMax];
+else
+  % if amp data is empty, need to make sure min < max
+  range = [0 1];
+end
+function erb = lcfErb(f)
+% ***** lcfErb *****
+% ERBs as per Glasberg and Moore (1990);
+A = 24.7/1000; B = 4.37;
+erb = A*(B*f+1);
+
+function nerb = lcfNErb(f)
+% ***** lcfNErb *****
+% Converts frequency to ERB number;
+A = 24.7/1000; B = 4.37;
+nerb = 1/(A*B)*log(B*f+1);
+
+function f = lcfInvNErb(nerb)
+% ***** lcfInvNErb *****
+% Converts ERB number to frequency;
+A = 24.7/1000; B = 4.37;
+f = 1/B*(exp(A*B*nerb)-1);
