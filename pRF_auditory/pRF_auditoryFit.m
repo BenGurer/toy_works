@@ -277,7 +277,7 @@ fitParams.stimHeight = 1; % fitParams.stimExtents(4)-fitParams.stimExtents(2);
 if ~isfield(fitParams,'initParams')
   % check the rfType to get the correct min/max arrays
   switch (fitParams.rfType)
-   case 'gaussian'
+   case {'gaussian','gaussian_Log','ROEX'}
     % parameter names/descriptions and other information for allowing user to set them
     fitParams.paramNames = {'x','y','rfWidth'};
     fitParams.paramDescriptions = {'RF x position (Frequency)','RF y position (Unused)','RF width (std of gaussian)'};
@@ -289,7 +289,7 @@ if ~isfield(fitParams,'initParams')
     fitParams.maxParams = [fitParams.stimExtents(3) fitParams.stimExtents(4) inf];
 
     fitParams.initParams = [0 0 4];
-   case 'gaussian-hdr'
+   case {'gaussian-hdr','gaussian_Log-hdr'}
     % parameter names/descriptions and other information for allowing user to set them
     fitParams.paramNames = {'x','y','rfWidth','timelag','tau'};
     fitParams.paramDescriptions = {'RF x position (Frequency)','RF y position (Unused)','RF width (std of gaussian)','Time before start of rise of hemodynamic function','Width of the hemodynamic function (tau parameter of gamma)'};
@@ -529,7 +529,7 @@ function p = getFitParams(params,fitParams)
 p.rfType = fitParams.rfType;
 
 switch (fitParams.rfType)
-  case 'gaussian'
+  case {'gaussian','gaussian_Log','ROEX'}
     p.x = params(1);
     p.y = params(2);
     p.std = params(3);
@@ -546,7 +546,7 @@ switch (fitParams.rfType)
     p.canonical.tau2 = fitParams.tau2;
     p.canonical.exponent2 = fitParams.exponent2;
     p.canonical.offset2 = 0;
-  case 'gaussian-hdr'
+  case {'gaussian-hdr','gaussian_Log-hdr','ROEX-hdr'}
     p.x = params(1);
     p.y = params(2);
     p.std = params(3);
@@ -646,7 +646,11 @@ rfModel = [];
 
 % now gernerate the rfModel
 if any(strcmp(fitParams.rfType,{'gaussian','gaussian-hdr'}))
-  rfModel = makeRFGaussian(params,fitParams);
+    rfModel = makeRFGaussian(params,fitParams);
+elseif any(strcmp(fitParams.rfType,{'gaussian_Log','gaussian_Log-hdr'}))
+    rfModel = makeRFGaussian_Log(params,fitParams);
+elseif any(strcmp(fitParams.rfType,{'ROEX','ROEX-hdr'}))
+    rfModel = makeRFGaussian_Log(params,fitParams);
 else
   disp(sprintf('(pRFFit:getRFModel) Unknown rfType: %s',fitParams.rfType));
 end
@@ -659,6 +663,28 @@ function rfModel = makeRFGaussian(params,fitParams)
 
 % compute rf
 rfModel = exp(-(((fitParams.stimX-params.x).^2)/(2*(params.std^2))+((fitParams.stimY-params.y).^2)/(2*(params.std^2))));
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%   makeRFGaussian_Log %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+function rfModel = makeRFGaussian_Log(params,fitParams)
+
+% compute rf
+rfModel = exp(-(((fitParams.stimX-log(params.x)).^2)/(2*(params.std^2))+((fitParams.stimY-params.y).^2)/(2*(params.std^2))));
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%   makeRFROEX   %%
+%%%%%%%%%%%%%%%%%%%%%%%%
+function rfModel = makeRFROEX_Log(params,fitParams)
+
+% compute rf
+% rfModel = exp(-(((fitParams.stimX-log(params.x)).^2)/(2*(params.std^2))+((fitParams.stimY-params.y).^2)/(2*(params.std^2))));
+pCF = log(params.x);
+fun = @(x,mu,sigma) 1 * exp(-(x - mu).^2/2/sigma^2);
+pTW = integral(@(x)fun(x,pCF,params.std),-100,100); 
+P = 4*pCF/pTW;
+g = abs(fitParams.stimX-pCF)/pCF;
+rfModel = (1+P*g).*exp(-P*g);
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%   makeauditoryPRF    %%

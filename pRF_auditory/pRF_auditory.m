@@ -91,26 +91,26 @@ r2.mergeFunction = 'pRFMergeParams';
 % create the parameters for the PrefCentreFreq overlay
 PrefCentreFreq = r2;
 PrefCentreFreq.name = 'PrefCentreFreq';
-PrefCentreFreq.range = [0 5]; %cf 0.5-3.5
-PrefCentreFreq.clip = [0 5];
+PrefCentreFreq.range = [0 20]; %cf 0.5-3.5
+PrefCentreFreq.clip = [0 20];
 PrefCentreFreq.colormapType = 'normal';
-PrefCentreFreq.colormap = hsv(256); %Compare to hot...
+PrefCentreFreq.colormap = jet(256); %Compare to hot...
 
 PrefY = r2;
 PrefY.name = 'PrefY';
-PrefY.range = [0 5]; %cf 0.5-3.5
-PrefY.clip = [0 5];
+PrefY.range = [0 1]; %cf 0.5-3.5
+PrefY.clip = [0 1];
 PrefY.colormapType = 'normal';
-PrefY.colormap = hsv(256); %Compare to hot...
+PrefY.colormap = jet(256); %Compare to hot...
 
 % create the paramteres for the rfHalfWidth overlay
 % deal with the sigma.
 rfHalfWidth = r2;
 rfHalfWidth.name = 'rfHalfWidth';
-rfHalfWidth.range = [0 5];
-rfHalfWidth.clip = [0 inf];
+rfHalfWidth.range = [0 20];
+rfHalfWidth.clip = [0 20];
 rfHalfWidth.colormapType = 'normal';
-rfHalfWidth.colormap = pink(256);
+rfHalfWidth.colormap = jet(256);
 
 % create the parameters for the polarAngle overlay
 % polarAngle = r2;
