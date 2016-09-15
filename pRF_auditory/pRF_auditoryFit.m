@@ -289,7 +289,7 @@ if ~isfield(fitParams,'initParams')
     fitParams.maxParams = [fitParams.stimExtents(3) fitParams.stimExtents(4) inf];
 
     fitParams.initParams = [0 0 4];
-   case {'gaussian-hdr','gaussian_Log-hdr'}
+   case {'gaussian-hdr','gaussian_Log-hdr','ROEX-hdr'}
     % parameter names/descriptions and other information for allowing user to set them
     fitParams.paramNames = {'x','y','rfWidth','timelag','tau'};
     fitParams.paramDescriptions = {'RF x position (Frequency)','RF y position (Unused)','RF width (std of gaussian)','Time before start of rise of hemodynamic function','Width of the hemodynamic function (tau parameter of gamma)'};
@@ -383,6 +383,18 @@ function [residual modelResponse rfModel r] = getModelResidual(params,tSeries,fi
 residual = [];
 if nargin < 4, justGetModel = 0;end
 
+if ~fieldIsNotDefined(fitParams,'estimationSupersampling')
+  estimationSupersampling = fitParams.estimationSupersampling;
+else
+  estimationSupersampling = 1;
+end
+
+if ~fieldIsNotDefined(fitParams,'acquisitionDelay')
+  acquisitionDelay = fitParams.acquisitionDelay;
+else
+  acquisitionDelay = d.tr/2;
+end
+
 % get the model response
 % convert parameter array into a parameter strucutre
 p = getFitParams(params,fitParams);
@@ -417,6 +429,9 @@ for i = 1:fitParams.concatInfo.n
     % with no filtering, just remove mean
     thisModelResponse = thisModelResponse - mean(thisModelResponse);
   end
+  
+ thisModelResponse = mrDownsample(thisModelResponse, d.designSupersampling/estimationSupersampling, floor(rem(acquisitionDelay,d.tr/estimationSupersampling)*d.designSupersampling/estimationSupersampling/d.tr)+1);
+    
   
   if ~justGetModel
     % compute correlation of this portion of the model response with time series
@@ -994,7 +1009,7 @@ end
 %    getStim    %
 %%%%%%%%%%%%%%%%%
 function stim = getStim(v,scanNum,fitParams)
-TR = 2
+% stimTR = 2
 % get stimfile
 stimfile = viewGet(v,'stimfile',scanNum);
 % get volume to trigger ratio
@@ -1004,41 +1019,58 @@ groupNum = viewGet(v,'curGroup');
 global gpRFFitStimImage
 if (isfield(fitParams,'recomputeStimImage'))
     disp(sprintf('(pRFFit) Computing stim image'));
+    
+%     var.supersamplingMode = 'Set value';
+%     var.estimationSupersampling = 4;
+%     var.designSupersampling = 4;
+%      d = getStimvol(v,var);
+    d = getStimvolpRF(v);
+    
+params.scanParams{scanNum}.estimationSupersampling = 4;
+params.scanParams{scanNum}.acquisitionDelay = 1;
+
+    
+%     stim{i}.x 
+%     stim{i}.y
+%     stim{i}.t
+%     stim{i}.im
+   stim = makeAuditoryStimImage(d,params,1,scanNum);
+    
 %create a volume of dimensions x,y,t with the stimulus image.
 % stim.x and stim.y are the X and Y coordinates. stim.t is the array of times at which image is taken.
 
 % stim.x = frequency
 % stim.y = 1
 % stim.t = time
-s = cell(length(stimfile),1); 
-for i = 1:length(stimfile)
-    s{i} = stimfile{i};
-    stimNames = s{i}.stimNames;
-    % remove text to get frequency in Hz
-    [nRows, nStimuli] = size(stimNames);
-    x = zeros(1, nStimuli);
-    for k = 1:nStimuli
-        x(:,k) = sscanf(stimNames{:,k}, '%*s %d%*s', [1, inf]); % remove text to get frequency in Hz
-    end
-    x = x/1000; % convert Hz to kHz
-    stim{i}.x = x;
-    stim{i}.y = 1; % save dimension for future analysis
-    stim{i}.t = s{i}.mylog.stimtimes_s
-    t = (cell2mat(stim{i}.t))/TR;
-%     runTimeStart = fitParams.concatInfo.runTransition(i,1);
-%     runTimeEnd = fitParams.concatInfo.runTransition(i,2);
-    runTime = fitParams.concatInfo.runTransition(i,2) - fitParams.concatInfo.runTransition(i,1) + 1;
-    stimMatrix = zeros(runTime,nStimuli);
+% s = cell(length(stimfile),1); 
+% for i = 1:length(stimfile)
+%     s{i} = stimfile{i};
+%     stimNames = s{i}.stimNames;
+%     % remove text to get frequency in Hz
+%     [nRows, nStimuli] = size(stimNames);
+%     x = zeros(1, nStimuli);
 %     for k = 1:nStimuli
-%     stimMatrix(t(i)+runTimeStart-1,i) = 1;
+%         x(:,k) = sscanf(stimNames{:,k}, '%*s %d%*s', [1, inf]); % remove text to get frequency in Hz
 %     end
-    for k = 1:nStimuli
-    stimMatrix(t(k)+1,k) = 1;
-    end
-%     stimMatrix = stimCell2Mat(stim{i}.t);
-    stim{i}.im = permute(stimMatrix,[3,2,1]);
-  
-end
+%     x = x/1000; % convert Hz to kHz
+%     stim{i}.x = x;
+%     stim{i}.y = 1; % save dimension for future analysis
+%     stim{i}.t = s{i}.mylog.stimtimes_s
+%     t = (cell2mat(stim{i}.t))/stimTR;
+% %     runTimeStart = fitParams.concatInfo.runTransition(i,1);
+% %     runTimeEnd = fitParams.concatInfo.runTransition(i,2);
+%     runTime = fitParams.concatInfo.runTransition(i,2) - fitParams.concatInfo.runTransition(i,1) + 1;
+%     stimMatrix = zeros(runTime,nStimuli);
+% %     for k = 1:nStimuli
+% %     stimMatrix(t(i)+runTimeStart-1,i) = 1;
+% %     end
+%     for k = 1:nStimuli
+%     stimMatrix(t(k)+1,k) = 1;
+%     end
+% %     stimMatrix = stimCell2Mat(stim{i}.t);
+%     stim{i}.im = permute(stimMatrix,[3,2,1]);
+%   
+% end
 % check for averages
   stim = checkStimForAverages(v,scanNum,viewGet(v,'curGroup'),stim,fitParams.concatInfo,fitParams.stimImageDiffTolerance);
   if isempty(stim),return,end
