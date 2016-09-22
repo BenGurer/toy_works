@@ -1,8 +1,10 @@
 % makeDesignMatrix.m
 %
 %        $Id$
-%      usage: makeDesignMatrix(d,params,verbose)
-%         by: farshad moradi, modified by julien besle
+%      usage: makeAuditoryStimImage(d,params,verbose)
+%               A modified version of makeDesignMatrix
+%         by: farshad moradi, modified by julien besle - made to work with
+%         pRF_auditory by Ben Gurer
 %       date: 06/14/07, 11/02/2010
 %       e.g.: makeDesignMatrix(d,params,verbose)
 %    purpose: makes a stimulation convolution matrix
