@@ -383,10 +383,10 @@ function [residual modelResponse rfModel r] = getModelResidual(params,tSeries,fi
 residual = [];
 if nargin < 4, justGetModel = 0;end
 
-if ~fieldIsNotDefined(fitParams,'estimationSupersampling')
-  estimationSupersampling = fitParams.estimationSupersampling;
+if ~fieldIsNotDefined(fitParams,'designSupersampling')
+  designSupersampling = fitParams.estimationSupersampling;
 else
-  estimationSupersampling = 1;
+  designSupersampling = 1;
 end
 
 if ~fieldIsNotDefined(fitParams,'acquisitionDelay')
@@ -429,10 +429,9 @@ for i = 1:fitParams.concatInfo.n
     % with no filtering, just remove mean
     thisModelResponse = thisModelResponse - mean(thisModelResponse);
   end
-  
- thisModelResponse = mrDownsample(thisModelResponse, d.designSupersampling/estimationSupersampling, floor(rem(acquisitionDelay,d.tr/estimationSupersampling)*d.designSupersampling/estimationSupersampling/d.tr)+1);
-    
-  
+ 
+ thisModelResponse = pRF_resampleDesignMatrix(thisModelResponse,designSupersampling,acquisitionDelay);
+   
   if ~justGetModel
     % compute correlation of this portion of the model response with time series
     thisTSeries = tSeries(fitParams.concatInfo.runTransition(i,1):fitParams.concatInfo.runTransition(i,2));
@@ -1025,8 +1024,8 @@ if (isfield(fitParams,'recomputeStimImage'))
     %      d = getStimvol(v,var);
     d = getStimvolpRF(v);
     
-    params.scanParams{scanNum}.estimationSupersampling = 4;
-    params.scanParams{scanNum}.acquisitionDelay = 1;
+%     params.scanParams{scanNum}.designSupersampling = 4;
+%     params.scanParams{scanNum}.acquisitionDelay = 1;
     
     % create a volume of dimensions x,y,t with the stimulus image.
     % stim.x and stim.y are the X and Y coordinates. stim.t is the array of times at which image is taken.
