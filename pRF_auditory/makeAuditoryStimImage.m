@@ -30,18 +30,18 @@ if ieNotDefined('verbose')
   verbose = 1;
 end
 
-if ~fieldIsNotDefined(params.scanParams{scanNum},'estimationSupersampling')
-  estimationSupersampling = params.scanParams{scanNum}.estimationSupersampling;
+if ~fieldIsNotDefined(d,'designSupersampling')
+  designSupersampling = d.designSupersampling;
 else
-  estimationSupersampling = 1;
+  designSupersampling = 1;
 end
 % if ~fieldIsNotDefined(params.scanParams{scanNum},'acquisitionSubsample')
 %   acquisitionSubsample = params.scanParams{scanNum}.acquisitionSubsample;
 % else
 %   acquisitionSubsample = 1;
 % end
-if ~fieldIsNotDefined(params.scanParams{scanNum},'acquisitionDelay')
-  acquisitionDelay = params.scanParams{scanNum}.acquisitionDelay;
+if ~fieldIsNotDefined(d,'acquisitionDelay')
+  acquisitionDelay = params.acquisitionDelay;
 else
   acquisitionDelay = d.tr/2;
 end
@@ -74,7 +74,7 @@ runTransition(:,2) = runTransition(:,2)*round(d.designSupersampling);
 %apply duration and convert to matrix form
 stimMatrix = stimCell2Mat(d.stimvol,d.stimDurations,runTransition);
 %if design sampling is larger than estimation sampling, we need to correct the amplitude of the hrf 
-stimMatrix = stimMatrix*estimationSupersampling/d.designSupersampling; 
+stimMatrix = stimMatrix*designSupersampling/d.designSupersampling; 
 
 % apply EV combination matrix
 d.EVmatrix = stimMatrix*stimToEVmatrix;

@@ -59,6 +59,7 @@ if fitParams.justGetStimImage
   return
 end
 
+
 % get the tSeries
 if ~isempty(x)
   % if tSeries was not passed in then load it
@@ -124,16 +125,16 @@ for iField = 1:length(paramsInfoFields)
   fit.paramsInfo.(paramsInfoFields{iField}) = fitParams.(paramsInfoFields{iField});
 end
 % test to see if scan lengths and stim lengths match
-tf = true;
-for iScan = 1:fit.concatInfo.n
-  sLength = fit.concatInfo.runTransition(iScan,2) - fit.concatInfo.runTransition(iScan,1) + 1;
-  if sLength ~= size(fitParams.stim{iScan}.im,3)
-    mrWarnDlg(sprintf('(pRF_auditoryFit) Data length of %i for scan %i (concatNum:%i) does not match stimfile length %i',fit.concatInfo.runTransition(iScan,2),scanNum,iScan,size(fitParams.stim{iScan}.im,3)));
-    tf = false;
-  end
-end
-
-if ~tf,fit = [];return,end
+% tf = true;
+% for iScan = 1:fit.concatInfo.n
+%   sLength = fit.concatInfo.runTransition(iScan,2) - fit.concatInfo.runTransition(iScan,1) + 1;
+%   if sLength ~= size(fitParams.stim{iScan}.im,3)
+%     mrWarnDlg(sprintf('(pRF_auditoryFit) Data length of %i for scan %i (concatNum:%i) does not match stimfile length %i',fit.concatInfo.runTransition(iScan,2),scanNum,iScan,size(fitParams.stim{iScan}.im,3)));
+%     tf = false;
+%   end
+% end
+% 
+% if ~tf,fit = [];return,end
 
 % do prefit. This computes (or is passed in precomputed) model responses
 % for a variety of parameters and calculates the correlation between
@@ -231,11 +232,13 @@ elseif strcmp(lower(fitParams.algorithm),'nelder-mead')
   fit.r2 = residual^2;
 end
 
-% compute polar coordinates
+% compute population receptive field properties
 % [fit.polarAngle fit.eccentricity] = cart2pol(fit.x,fit.y);
 fit.PrefCentreFreq = fit.x;
 fit.PrefY = fit.y;
 fit.rfHalfWidth = fit.std;
+fit.hdrtimelag = fit.canonical.timelag;
+fit.hdr = fit.canonical;
 
 % display
 if fitParams.verbose
@@ -247,7 +250,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%
 %    setFitParams    %
 %%%%%%%%%%%%%%%%%%%%%%
-function fitParams = setFitParams(fitParams);
+function fitParams = setFitParams(fitParams)
 
 % set rfType
 if ~isfield(fitParams,'rfType') || isempty(fitParams.rfType)
@@ -383,8 +386,8 @@ function [residual modelResponse rfModel r] = getModelResidual(params,tSeries,fi
 residual = [];
 if nargin < 4, justGetModel = 0;end
 
-if ~fieldIsNotDefined(fitParams,'designSupersampling')
-  designSupersampling = fitParams.estimationSupersampling;
+if ~fieldIsNotDefined(fitParams.d,'designSupersampling')
+  designSupersampling = fitParams.d.designSupersampling;
 else
   designSupersampling = 1;
 end
@@ -392,7 +395,7 @@ end
 if ~fieldIsNotDefined(fitParams,'acquisitionDelay')
   acquisitionDelay = fitParams.acquisitionDelay;
 else
-  acquisitionDelay = d.tr/2;
+  acquisitionDelay = fitParams.d.tr/2;
 end
 
 % get the model response
@@ -418,19 +421,22 @@ for i = 1:fitParams.concatInfo.n
 
   % and convolve in time.
   thisModelResponse = convolveModelResponseWithHRF(thisModelResponse,hrf);
-
+  
   % drop junk frames here
   thisModelResponse = thisModelResponse(fitParams.concatInfo.totalJunkedFrames(i)+1:end);
-
+  if ~fieldIsNotDefined(fitParams.d,'designSupersampling')
+      %   thisModelResponse = pRF_resampleDesignMatrix(thisModelResponse,params,fitParams);
+      sampleNumber = floor(rem(acquisitionDelay,fitParams.d.tr)*designSupersampling/fitParams.d.tr)+1;
+      thisModelResponse = mrDownsample(thisModelResponse, designSupersampling, sampleNumber);
+  end
+  
   % apply concat filtering
   if isfield(fitParams,'applyFiltering') && fitParams.applyFiltering
-    thisModelResponse = applyConcatFiltering(thisModelResponse,fitParams.concatInfo,i);
+      thisModelResponse = applyConcatFiltering(thisModelResponse,fitParams.concatInfo,i);
   else
     % with no filtering, just remove mean
     thisModelResponse = thisModelResponse - mean(thisModelResponse);
   end
- 
- thisModelResponse = pRF_resampleDesignMatrix(thisModelResponse,designSupersampling,acquisitionDelay);
    
   if ~justGetModel
     % compute correlation of this portion of the model response with time series
@@ -1018,15 +1024,6 @@ global gpRFFitStimImage
 if (isfield(fitParams,'recomputeStimImage'))
     disp(sprintf('(pRFFit) Computing stim image'));
     
-    %     var.supersamplingMode = 'Set value';
-    %     var.estimationSupersampling = 4;
-    %     var.designSupersampling = 4;
-    %      d = getStimvol(v,var);
-    d = getStimvolpRF(v);
-    
-%     params.scanParams{scanNum}.designSupersampling = 4;
-%     params.scanParams{scanNum}.acquisitionDelay = 1;
-    
     % create a volume of dimensions x,y,t with the stimulus image.
     % stim.x and stim.y are the X and Y coordinates. stim.t is the array of times at which image is taken.
     % stim needs to be in the following format
@@ -1035,7 +1032,7 @@ if (isfield(fitParams,'recomputeStimImage'))
     %     stim{i}.t
     %     stim{i}.im
     
-    stim = makeAuditoryStimImage(d,params,1,scanNum);
+    stim = makeAuditoryStimImage(fitParams.d,fitParams,1,scanNum);
     stim = checkStimForAverages(v,scanNum,viewGet(v,'curGroup'),stim,fitParams.concatInfo,fitParams.stimImageDiffTolerance);
     
     if isempty(stim),return,end

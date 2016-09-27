@@ -113,12 +113,12 @@ rfHalfWidth.colormapType = 'normal';
 rfHalfWidth.colormap = jet(256);
 
 % create the parameters for the polarAngle overlay
-% polarAngle = r2;
-% polarAngle.name = 'polarAngle';
-% polarAngle.range = [-pi pi];
-% polarAngle.clip = [-pi pi];
-% polarAngle.colormapType = 'normal';
-% polarAngle.colormap = hsv(256);
+hdrTimeLag = r2;
+hdrTimeLag.name = 'polarAngle';
+hdrTimeLag.range = [-pi pi];
+hdrTimeLag.clip = [-pi pi];
+hdrTimeLag.colormapType = 'normal';
+hdrTimeLag.colormap = hsv(256);
 
 % create the parameters for the eccentricity overlay
 % eccentricity = r2;
@@ -162,12 +162,27 @@ for scanNum = params.scanNum
   % get scan dims
   scanDims = viewGet(v,'scanDims',scanNum);
   
+  if params.pRFFit.supersampling == 1
+%       paramsInfo.designSupersampling = 'Automatic';
+%       d = getStimvolpRF(v);
+%       
+%       
+      
+      var.supersamplingMode = 'Automatic';
+      %     var.estimationSupersampling = 4;
+      %     var.designSupersampling = 4;
+      %          d = getStimvol(v,var);
+      params.pRFFit.d = getStimvolpRF(v,var);
+%       params.pRFFit.d.tr = d.tr;
+  end
+  
   % init overlays
   r2.data{scanNum} = nan(scanDims);
   PrefCentreFreq.data{scanNum} = nan(scanDims);
   PrefY.data{scanNum} = nan(scanDims);
   % eccentricity.data{scanNum} = nan(scanDims);
   rfHalfWidth.data{scanNum} = nan(scanDims);
+  hdrTimeLag.data{scanNum} = nan(scanDims);
 
   % default all variables that will be returned
   % by pRFFIt, so that we can call it the
@@ -199,9 +214,10 @@ for scanNum = params.scanNum
   rawParams = nan(fit.nParams,n);
   r = nan(n,fit.concatInfo.n);
   thisr2 = nan(1,n);
-  thisPolarAngle = nan(1,n);
-  thisEccentricity = nan(1,n);
+%   thisPolarAngle = nan(1,n);
+  
   thisRfHalfWidth = nan(1,n);
+  hdrTimeLag = nan(1,n);
 
   % get some info about the scan to pass in (which prevents
   % pRFFit from calling viewGet - which is problematic for distributed computing
@@ -276,6 +292,7 @@ for scanNum = params.scanNum
         thisRfHalfWidth(i) = fit.rfHalfWidth;
         % keep parameters
         rawParams(:,i) = fit.params(:);
+        thishdrTimeLag(i) = fit.params.canonical.timelag;
         r(i,:) = fit.r;
       end
     end
@@ -286,6 +303,7 @@ for scanNum = params.scanNum
       PrefCentreFreq.data{scanNum}(x(i),y(i),z(i)) = thisPrefCentreFreq(i);
       PrefY.data{scanNum}(x(i),y(i),z(i)) = thisPrefY(i);
       rfHalfWidth.data{scanNum}(x(i),y(i),z(i)) = thisRfHalfWidth(i);
+      hdrTimeLag.data{scanNum}(x(i),y(i),z(i)) = thishdrTimeLag(i);
     end
   end
   % display time update
@@ -302,6 +320,7 @@ for scanNum = params.scanNum
   PrefCentreFreq.params{scanNum} = thisParams;
   PrefY.params{scanNum} = thisParams;
   rfHalfWidth.params{scanNum} = thisParams; 
+  hdrTimeLag.params{scanNum} = thisParams; 
   % display how long it took
   disp(sprintf('(pRF_auditory) Fitting for %s:%i took in total: %s',params.groupName,scanNum,mlrDispElapsedTime(toc)));
 end
