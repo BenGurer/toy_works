@@ -135,6 +135,7 @@ paramsInfo{end+1} = {'timelag',1,'minmax=[0 inf]','incdec=[-0.5 0.5]','The timel
 paramsInfo{end+1} = {'tau',0.6,'minmax=[0 inf]','incdec=[-0.1 0.1]','The tau (width) of the gamma function used to model the HDR. If using gaussian-hdr, this is just the initial value and the actual value will be fit.'};
 paramsInfo{end+1} = {'exponent',4,'minmax=[0 inf]','incdec=[-1 1]','The exponent of the gamma function used to model the HDR. This is always a fixed param.'};
 paramsInfo{end+1} = {'diffOfGamma',1,'type=checkbox','Set to true if you want the HDR to be a difference of gamma functions - i.e. have a positive and a delayed negative component'};
+paramsInfo{end+1} = {'fitexp',1,'type=checkbox','Set to true if you want to fit the HDR exponents'};
 paramsInfo{end+1} = {'amplitudeRatio',0.25,'minmax=[0 inf]','incdec=[-0.1 0.1]','Ratio of amplitude of 1st gamma to second gamma','contingent=diffOfGamma'};
 paramsInfo{end+1} = {'timelag2',2,'minmax=[0 inf]','incdec=[-0.5 0.5]','Time lag of 2nd ggamma for when you are using a difference of gamma functions','contingent=diffOfGamma'};
 paramsInfo{end+1} = {'tau2',1.2,'minmax=[0 inf]','incdec=[-0.1 0.1]','The tau (width) of the second gamma function.','contingent=diffOfGamma'};

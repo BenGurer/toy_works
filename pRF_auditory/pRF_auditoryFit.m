@@ -104,7 +104,7 @@ fitParams = setFitParams(fitParams);
 % just return model response for already calcualted params
 if fitParams.getModelResponse
   % get model fit
-  [residual fit.modelResponse fit.rfModel] = getModelResidual(fitParams.params,tSeries,fitParams);
+  [residual fit.modelResponse fit.rfModel r scale] = getModelResidual(fitParams.params,tSeries,fitParams);
   % get the canonical
   fit.p = getFitParams(fitParams.params,fitParams);
   fit.canonical = getCanonicalHRF(fit.p.canonical,fitParams.framePeriod);
@@ -160,7 +160,7 @@ if isfield(fitParams,'prefit') && ~isempty(fitParams.prefit)
     
     for i = 1:fitParams.prefit.n
       % fit the model with these parameters
-      [residual modelResponse rfModel] = getModelResidual([fitParams.prefit.x(i) fitParams.prefit.y(i) fitParams.prefit.rfHalfWidth(i) params(4:end)],tSeries,fitParams,1);
+      [residual modelResponse rfModel r scale] = getModelResidual([fitParams.prefit.x(i) fitParams.prefit.y(i) fitParams.prefit.rfHalfWidth(i) params(4:end)],tSeries,fitParams,1);
       % normalize to 0 mean unit length
       allModelResponse(i,:) = (modelResponse-mean(modelResponse))./sqrt(sum(modelResponse.^2))';
       if fitParams.verbose
@@ -225,25 +225,39 @@ fit.rfType = fitParams.rfType;
 fit.params = params;
 
 % compute r^2
-[residual modelResponse rfModel fit.r] = getModelResidual(params,tSeries,fitParams);
+[residual modelResponse rfModel fit.r scale] = getModelResidual(params,tSeries,fitParams);
 if strcmp(lower(fitParams.algorithm),'levenberg-marquardt')
   fit.r2 = 1-sum((residual-mean(residual)).^2)/sum((tSeries-mean(tSeries)).^2);
 elseif strcmp(lower(fitParams.algorithm),'nelder-mead')
   fit.r2 = residual^2;
 end
 
-% compute population receptive field properties
+% These are the formulas for the AIC and AICc (which is corrected for the number of parameters in the model)
+error = residual;
+N = length(residual);
+nParams = fitParams.nParams; %nParams is the number of parameters in the model N is the number of datapoints error is the N-vector of differences between the modelle and actual data
+% aic = 2*nParams + N*(log(2*pi) + 1 - log(N) + log(sum(sum(error.^2))));
+% aicc = aic + 2*nParams*(nParams+1)/(N-nParams-1);
+fit.aic = 2*nParams + N*(log(2*pi) + 1 - log(N) + log(sum(sum(error.^2))));
+fit.aicc = fit.aic + 2*nParams*(nParams+1)/(N-nParams-1);
+
+
+% save population receptive field properties
+% can convert values to other scales if not fitted in the desired scaling
 % [fit.polarAngle fit.eccentricity] = cart2pol(fit.x,fit.y);
 fit.PrefCentreFreq = fit.x;
 fit.PrefY = fit.y;
 fit.rfHalfWidth = fit.std;
+fit.hdrExp = fit.canonical.exponent;
 fit.hdrtimelag = fit.canonical.timelag;
 fit.hdr = fit.canonical;
+fit.scale = scale;
+fit.N = N;
 
 % display
 if fitParams.verbose
   % disp(sprintf('%s[%2.f %2.f %2.f] r2=%0.2f polarAngle=%6.1f eccentricity=%6.1f rfHalfWidth=%6.1f',fitParams.dispstr,x,y,z,fit.r2,r2d(fit.polarAngle),fit.eccentricity,fit.std));
-  disp(sprintf('%s[%2.f %2.f %2.f] r2=%0.2f PrefCentreFreq=%6.1f PrefY=%6.1f rfHalfWidth=%6.1f',fitParams.dispstr,x,y,z,fit.r2,fit.PrefCentreFreq,fit.PrefY,fit.std));
+  disp(sprintf('%s[%2.f %2.f %2.f] r2=%0.2f pCF=%6.1f aicc=%6.1f rTW=%6.1f HDR exponent=%6.1f',fitParams.dispstr,x,y,z,fit.r2,fit.PrefCentreFreq,fit.aicc,fit.std,fit.hdrExp));
     
 end
 
@@ -303,18 +317,42 @@ if ~isfield(fitParams,'initParams')
     fitParams.minParams = [fitParams.stimExtents(1) fitParams.stimExtents(2) 0 0 0];
     fitParams.maxParams = [fitParams.stimExtents(3) fitParams.stimExtents(4) inf 3 inf];
     fitParams.initParams = [0 0 4 fitParams.timelag fitParams.tau];
+    if fitParams.fitexp
+        % fit exponent of gamma function
+        fitParams.paramNames = {fitParams.paramNames{:} 'exp'};
+        fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Exponent'};
+        fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1];
+        fitParams.paramMin = [fitParams.paramMin(:)' 0];
+        fitParams.paramMax = [fitParams.paramMax(:)' 16];
+        % set min/max and init
+        fitParams.minParams = [fitParams.minParams 0];
+        fitParams.maxParams = [fitParams.maxParams 16];
+        fitParams.initParams = [fitParams.initParams fitParams.exponent];
+    end
     % add on parameters for difference of gamma
     if fitParams.diffOfGamma
-      % parameter names/descriptions and other information for allowing user to set them
-      fitParams.paramNames = {fitParams.paramNames{:} 'amp2' 'timelag2','tau2'};
-      fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Amplitude of second gamma for HDR' 'Timelag for second gamma for HDR','tau for second gamma for HDR'};
-      fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1 0.1 0.5];
-      fitParams.paramMin = [fitParams.paramMin(:)' 0 0 0];
-      fitParams.paramMax = [fitParams.paramMax(:)' inf inf inf];
-      % set min/max and init
-      fitParams.minParams = [fitParams.minParams 0 0 0];
-      fitParams.maxParams = [fitParams.maxParams inf 6 inf];
-      fitParams.initParams = [fitParams.initParams fitParams.amplitudeRatio fitParams.timelag2 fitParams.tau2];
+        % parameter names/descriptions and other information for allowing user to set them
+        fitParams.paramNames = {fitParams.paramNames{:} 'amp2' 'timelag2','tau2'};
+        fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Amplitude of second gamma for HDR' 'Timelag for second gamma for HDR','tau for second gamma for HDR'};
+        fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1 0.1 0.5];
+        fitParams.paramMin = [fitParams.paramMin(:)' 0 0 0];
+        fitParams.paramMax = [fitParams.paramMax(:)' inf inf inf];
+        % set min/max and init
+        fitParams.minParams = [fitParams.minParams 0 0 0];
+        fitParams.maxParams = [fitParams.maxParams inf inf inf];
+        fitParams.initParams = [fitParams.initParams fitParams.amplitudeRatio fitParams.timelag2 fitParams.tau2];
+        if fitParams.fitexp
+            % Fit the exponent of second gamma function
+            fitParams.paramNames = {fitParams.paramNames{:} 'exp2'};
+            fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Exponent2'};
+            fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1];
+            fitParams.paramMin = [fitParams.paramMin(:)' 0];
+            fitParams.paramMax = [fitParams.paramMax(:)' 16];
+            % set min/max and init
+            fitParams.minParams = [fitParams.minParams 0];
+            fitParams.maxParams = [fitParams.maxParams 16];
+            fitParams.initParams = [fitParams.initParams fitParams.exponent2];
+        end
     end
    otherwise
     disp(sprintf('(pRFFit:setFitParams) Unknown rfType %s',rfType));
@@ -381,9 +419,12 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%   getModelResidual   %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
-function [residual modelResponse rfModel r] = getModelResidual(params,tSeries,fitParams,justGetModel)
+function [residual modelResponse rfModel r scale] = getModelResidual(params,tSeries,fitParams,justGetModel)
 
 residual = [];
+r = [];
+scale = [];
+
 if nargin < 4, justGetModel = 0;end
 
 if ~fieldIsNotDefined(fitParams.d,'designSupersampling')
@@ -453,12 +494,13 @@ for i = 1:fitParams.concatInfo.n
 
     if fitParams.betaEachScan
       % scale and offset the model to best match the tSeries
-      [thisModelResponse thisResidual] = scaleAndOffset(thisModelResponse',thisTSeries(:));
+      [thisModelResponse thisResidual scale] = scaleAndOffset(thisModelResponse',thisTSeries(:));
     else
       thisResidual = [];
     end
   else
     thisResidual = [];
+    
   end
   
   % make into a column array
@@ -471,7 +513,7 @@ if justGetModel,return,end
 
 % scale the whole time series
 if ~fitParams.betaEachScan
-  [modelResponse residual] = scaleAndOffset(modelResponse,tSeries(:));
+  [modelResponse residual scale] = scaleAndOffset(modelResponse,tSeries(:));
 end
 
 
@@ -526,7 +568,7 @@ if exist('myaxis') == 2,myaxis;end
 %%%%%%%%%%%%%%%%%%%%%%%%
 %    scaleAndOffset    %
 %%%%%%%%%%%%%%%%%%%%%%%%
-function [modelResponse residual] = scaleAndOffset(modelResponse,tSeries)
+function [modelResponse residual beta] = scaleAndOffset(modelResponse,tSeries)
 
 designMatrix = modelResponse;
 designMatrix(:,2) = 1;
@@ -549,44 +591,52 @@ function p = getFitParams(params,fitParams)
 p.rfType = fitParams.rfType;
 
 switch (fitParams.rfType)
-  case {'gaussian','gaussian_Log','ROEX'}
-    p.x = params(1);
-    p.y = params(2);
-    p.std = params(3);
-    % use a fixed single gaussian
-    p.canonical.type = 'gamma';
-    p.canonical.lengthInSeconds = 25;
-    p.canonical.timelag = fitParams.timelag;
-    p.canonical.tau = fitParams.tau;
-    p.canonical.exponent = fitParams.exponent;
-    p.canonical.offset = 0;
-    p.canonical.diffOfGamma = fitParams.diffOfGamma;
-    p.canonical.amplitudeRatio = fitParams.amplitudeRatio;
-    p.canonical.timelag2 = fitParams.timelag2;
-    p.canonical.tau2 = fitParams.tau2;
-    p.canonical.exponent2 = fitParams.exponent2;
-    p.canonical.offset2 = 0;
-  case {'gaussian-hdr','gaussian_Log-hdr','ROEX-hdr'}
-    p.x = params(1);
-    p.y = params(2);
-    p.std = params(3);
-    % use a fixed single gaussian
-    p.canonical.type = 'gamma';
-    p.canonical.lengthInSeconds = 25;
-    p.canonical.timelag = params(4);
-    p.canonical.tau = params(5);
-    p.canonical.exponent = fitParams.exponent;
-    p.canonical.offset = 0;
-    p.canonical.diffOfGamma = fitParams.diffOfGamma;
-    if fitParams.diffOfGamma
-      p.canonical.amplitudeRatio = params(6);
-      p.canonical.timelag2 = params(7);
-      p.canonical.tau2 = params(8);
-      p.canonical.exponent2 = fitParams.exponent2;
-      p.canonical.offset2 = 0;
-    end
-otherwise 
-    disp(sprintf('(pRFFit) Unknown rfType %s',rfType));
+    case {'gaussian','gaussian_Log','ROEX'}
+        p.x = params(1);
+%         p.y = params(2);
+        p.y = 1;
+        p.std = params(3);
+        % use a fixed single gaussian
+        p.canonical.type = 'gamma';
+        p.canonical.lengthInSeconds = 25;
+        p.canonical.timelag = fitParams.timelag;
+        p.canonical.tau = fitParams.tau;
+        p.canonical.exponent = fitParams.exponent;
+        p.canonical.offset = 0;
+        p.canonical.diffOfGamma = fitParams.diffOfGamma;
+        p.canonical.amplitudeRatio = fitParams.amplitudeRatio;
+        p.canonical.timelag2 = fitParams.timelag2;
+        p.canonical.tau2 = fitParams.tau2;
+        p.canonical.exponent2 = fitParams.exponent2;
+        p.canonical.offset2 = 0;
+    case {'gaussian-hdr','gaussian_Log-hdr','ROEX-hdr'}
+        p.x = params(1);
+        %         p.y = params(2);
+        p.y = 1;
+        p.std = params(3);
+        % use a fixed single gaussian
+        p.canonical.type = 'gamma';
+        p.canonical.lengthInSeconds = 25;
+        p.canonical.timelag = params(4);
+        p.canonical.tau = params(5);
+        p.canonical.exponent = fitParams.exponent;
+        p.canonical.offset = 0;
+        if fitParams.fitexp
+            p.canonical.exponent = params(6);
+        end
+        p.canonical.diffOfGamma = fitParams.diffOfGamma;
+        if fitParams.diffOfGamma
+            p.canonical.amplitudeRatio = params(7);
+            p.canonical.timelag2 = params(8);
+            p.canonical.tau2 = params(9);
+            p.canonical.exponent2 = fitParams.exponent2;
+            p.canonical.offset2 = 0;
+            if fitParams.fitexp
+                p.canonical.exponent2 = params(10);
+            end
+        end
+    otherwise
+        disp(sprintf('(pRFFit) Unknown rfType %s',rfType));
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -631,7 +681,7 @@ end
 %%%%%%%%%%%%%%%%%%%
 function gammafun = thisGamma(time,amplitude,timelag,offset,tau,exponent)
 
-exponent = round(exponent);
+% exponent = round(exponent);
 % gamma function
 gammafun = (((time-timelag)/tau).^(exponent-1).*exp(-(time-timelag)/tau))./(tau*factorial(exponent-1));
 

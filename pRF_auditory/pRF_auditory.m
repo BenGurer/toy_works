@@ -17,6 +17,13 @@
 %             can do:
 %             [v params] = pRF_auditory(v,[],'justGetParams=1');
 %
+
+
+% TO DO
+% Add HDR estimates to corse search
+% Create function to plot average HDR estimates of ROI
+% give option to fit in ERB space
+% make HDR fitting a tick box in GUI - to change case in pRF_auditoryFit
 function [v d] = pRF_auditory(v,params,varargin)
 
 % check arguments
@@ -107,34 +114,44 @@ PrefY.colormap = jet(256); %Compare to hot...
 % deal with the sigma.
 rfHalfWidth = r2;
 rfHalfWidth.name = 'rfHalfWidth';
-rfHalfWidth.range = [0 20];
-rfHalfWidth.clip = [0 20];
-rfHalfWidth.colormapType = 'normal';
+rfHalfWidth.range = [0 100];
+rfHalfWidth.clip = [0 100];
+rfHalfWidth.colormapType = 'setRangeToMax';
 rfHalfWidth.colormap = jet(256);
 
-% create the parameters for the polarAngle overlay
-hdrTimeLag = r2;
-hdrTimeLag.name = 'polarAngle';
-hdrTimeLag.range = [-pi pi];
-hdrTimeLag.clip = [-pi pi];
-hdrTimeLag.colormapType = 'normal';
-hdrTimeLag.colormap = hsv(256);
+% create the parameters for the HDR exponent overlay
+hdrExp = r2;
+hdrExp.name = 'hdrExponent';
+hdrExp.range = [0 15];
+hdrExp.clip = [0 16];
+hdrExp.colormapType = 'setRangeToMax';
+hdrExp.colormap = jet(256);
 
-% create the parameters for the eccentricity overlay
-% eccentricity = r2;
-% eccentricity.name = 'eccentricity';
-% eccentricity.range = [0 15];
-% eccentricity.clip = [0 inf];
-% eccentricity.colormapType = 'normal';
-% eccentricity.colormap = copper(256);
+% create the parameters for the AICC overlay
+aicc = r2;
+aicc.name = 'aicc';
+aicc.range = [0 1];
+aicc.clip = [-700 0];
+aicc.colormapType = 'setRangeToMax';
+aicc.colormap = hot(312);
+% colormap is made with a little bit less on the dark end
+aicc.colormap = aicc.colormap(end-255:end,:);
 
-% create the paramteres for the rfHalfWidth overlay
-% rfHalfWidth = r2;
-% rfHalfWidth.name = 'rfHalfWidth';
-% rfHalfWidth.range = [0 15];
-% rfHalfWidth.clip = [0 inf];
-% rfHalfWidth.colormapType = 'normal';
-% rfHalfWidth.colormap = pink(256);
+% create the paramteres for the hdrtimelag overlay
+hdrtimelag = r2;
+hdrtimelag.name = 'hdrtimelag';
+hdrtimelag.range = [0 15];
+hdrtimelag.clip = [0 16];
+hdrtimelag.colormapType = 'setRangeToMax';
+hdrtimelag.colormap = hot(256);
+
+% create the paramteres for the hdrScale overlay
+hdrScale = r2;
+hdrScale.name = 'hdrScale';
+hdrScale.range = [0 100];
+hdrScale.clip = [0 100];
+hdrScale.colormapType = 'setRangeToMax';
+hdrScale.colormap = jet(256);
 
 % get number of workers 
 nProcessors = mlrNumWorkers;
@@ -162,27 +179,20 @@ for scanNum = params.scanNum
   % get scan dims
   scanDims = viewGet(v,'scanDims',scanNum);
   
-  if params.pRFFit.supersampling == 1
-%       paramsInfo.designSupersampling = 'Automatic';
-%       d = getStimvolpRF(v);
-%       
-%       
-      
+  if params.pRFFit.supersampling == 1   
       var.supersamplingMode = 'Automatic';
-      %     var.estimationSupersampling = 4;
-      %     var.designSupersampling = 4;
-      %          d = getStimvol(v,var);
       params.pRFFit.d = getStimvolpRF(v,var);
-%       params.pRFFit.d.tr = d.tr;
   end
   
   % init overlays
   r2.data{scanNum} = nan(scanDims);
   PrefCentreFreq.data{scanNum} = nan(scanDims);
   PrefY.data{scanNum} = nan(scanDims);
-  % eccentricity.data{scanNum} = nan(scanDims);
+  aicc.data{scanNum} = nan(scanDims);
   rfHalfWidth.data{scanNum} = nan(scanDims);
-  hdrTimeLag.data{scanNum} = nan(scanDims);
+  hdrExp.data{scanNum} = nan(scanDims);
+  hdrtimelag.data{scanNum} = nan(scanDims);
+  hdrScale.data{scanNum} = nan(scanDims);
 
   % default all variables that will be returned
   % by pRFFIt, so that we can call it the
@@ -214,10 +224,11 @@ for scanNum = params.scanNum
   rawParams = nan(fit.nParams,n);
   r = nan(n,fit.concatInfo.n);
   thisr2 = nan(1,n);
-%   thisPolarAngle = nan(1,n);
-  
+  thisaicc = nan(1,n);
   thisRfHalfWidth = nan(1,n);
-  hdrTimeLag = nan(1,n);
+  thishdrExp = nan(1,n);
+  thishdrtimelag = nan(1,n);
+  thishdrscale = nan(1,n);
 
   % get some info about the scan to pass in (which prevents
   % pRFFit from calling viewGet - which is problematic for distributed computing
@@ -292,18 +303,26 @@ for scanNum = params.scanNum
         thisRfHalfWidth(i) = fit.rfHalfWidth;
         % keep parameters
         rawParams(:,i) = fit.params(:);
-        thishdrTimeLag(i) = fit.params.canonical.timelag;
+        thishdrExp(i) = fit.hdrExp;
+        thishdrtimelag(i) = fit.hdrtimelag;
+        thishdrscale(i) = fit.scale(1);
+        thishdroffset(i) = fit.scale(2);
         r(i,:) = fit.r;
+        thisaicc(i) = fit.aicc;
+        
       end
     end
       
     % set overlays
     for i = 1:n
       r2.data{scanNum}(x(i),y(i),z(i)) = thisr2(i);
+      aicc.data{scanNum}(x(i),y(i),z(i)) = thisaicc(i);
       PrefCentreFreq.data{scanNum}(x(i),y(i),z(i)) = thisPrefCentreFreq(i);
       PrefY.data{scanNum}(x(i),y(i),z(i)) = thisPrefY(i);
       rfHalfWidth.data{scanNum}(x(i),y(i),z(i)) = thisRfHalfWidth(i);
-      hdrTimeLag.data{scanNum}(x(i),y(i),z(i)) = thishdrTimeLag(i);
+      hdrExp.data{scanNum}(x(i),y(i),z(i)) = thishdrExp(i);
+      hdrtimelag.data{scanNum}(x(i),y(i),z(i)) = thishdrtimelag(i);
+      hdrScale.data{scanNum}(x(i),y(i),z(i)) = thishdrscale(i);
     end
   end
   % display time update
@@ -317,13 +336,19 @@ for scanNum = params.scanNum
   iScan = find(params.scanNum == scanNum);
   thisParams.scanNum = params.scanNum(iScan);
   r2.params{scanNum} = thisParams;
+  aicc.params{scanNum} = thisParams;
   PrefCentreFreq.params{scanNum} = thisParams;
   PrefY.params{scanNum} = thisParams;
   rfHalfWidth.params{scanNum} = thisParams; 
-  hdrTimeLag.params{scanNum} = thisParams; 
+  hdrExp.params{scanNum} = thisParams; 
+  hdrtimelag.params{scanNum} = thisParams; 
+  hdrScale.params{scanNum} = thisParams; 
+  
   % display how long it took
   disp(sprintf('(pRF_auditory) Fitting for %s:%i took in total: %s',params.groupName,scanNum,mlrDispElapsedTime(toc)));
+  
 end
+
 
 % install analysis
 pRFAnal.name = params.saveName;
@@ -334,7 +359,7 @@ pRFAnal.reconcileFunction = 'defaultReconcileParams';
 pRFAnal.mergeFunction = 'pRFMergeParams';
 pRFAnal.guiFunction = 'pRF_auditoryGUI';
 pRFAnal.params = params;
-pRFAnal.overlays = [r2 PrefCentreFreq PrefY rfHalfWidth];
+pRFAnal.overlays = [r2 aicc PrefCentreFreq rfHalfWidth hdrExp hdrtimelag hdrScale];
 pRFAnal.curOverlay = 1;
 pRFAnal.date = dateString;
 v = viewSet(v,'newAnalysis',pRFAnal);
