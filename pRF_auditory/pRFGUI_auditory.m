@@ -118,6 +118,7 @@ end
 
 %all of these parameters are for pRFFit
 paramsInfo{end+1} = {'rfType',{'gaussian_Log', 'gaussian_Log-hdr','ROEX','ROEX-hdr','gaussian','gaussian-hdr'},'Type of pRF fit. Gaussian fits a gaussian with x,y,width as parameters to each voxel. gaussian-hdr fits also the hemodynamic response with the parameters of the hdr as below.'};
+paramsInfo{end+1} = {'voxelScale',{'lin', 'log','erb'},'Scaling domain of voxel function.'};
 paramsInfo{end+1} = {'betaEachScan',false,'type=checkbox','Compute a separate beta weight (scaling) for each scan in the concanetation. This may be useful if there is some reason to believe that different scans have different magnitude responses, this will allow the fit to scale the magnitude for each scan'};
 paramsInfo{end+1} = {'algorithm',{'levenberg-marquardt','nelder-mead'},'Which algorithm to use for optimization. Levenberg-marquardt seems to get stuck in local minimum, so the default is nelder-mead. However, levenberg-marquardt can set bounds for parameters, so may be better for when you are trying to fit the hdr along with the rf, since the hdr parameters can fly off to strange values.'};
 paramsInfo{end+1} = {'defaultConstraints',1,'type=checkbox','Sets how to constrain the search (i.e. what are the allowed range of stimulus parameters). The default is to constrain so that the x,y of the RF has to be within the stimulus extents (other parameter constrains will print to the matlab window). If you click this off a dialog box will come up after the stimulus has been calculated from the stimfiles allowing you to specify the constraints on the parameters of the model. You may want to custom constrain the parameters if you know something about the RFs you are trying to model (like how big they are) to keep the nonlinear fits from finding unlikely parameter estimates. Note that nelder-mead is an unconstrained fit so this will not do anything.'};
@@ -131,11 +132,12 @@ if ~isempty(v)
   paramsInfo{end+1} = {'dispStim',0,'type=pushbutton','buttonString=Display stimulus','Display the stimulus for scan number: dispStimScan with the current parameters','callback',@pRFGUIDispStimulus,'passParams=1','callbackArg',v};
   paramsInfo{end+1} = {'dispStimScan',viewGet(v,'curScan'),'incdec=[-1 1]',sprintf('minmax=[1 %i]',viewGet(v,'nScans')),'round=1','Sets which scans stimulus will be displayed when you press Display stimulus button'};
 end
+%% HDR params
+paramsInfo{end+1} = {'fitHDR',1,'type=checkbox','Set to true if you want to fit the HDR exponents'};
 paramsInfo{end+1} = {'timelag',1,'minmax=[0 inf]','incdec=[-0.5 0.5]','The timelag of the gamma function used to model the HDR. If using gaussian-hdr, this is just the initial value and the actual value will be fit.'};
 paramsInfo{end+1} = {'tau',0.6,'minmax=[0 inf]','incdec=[-0.1 0.1]','The tau (width) of the gamma function used to model the HDR. If using gaussian-hdr, this is just the initial value and the actual value will be fit.'};
 paramsInfo{end+1} = {'exponent',4,'minmax=[0 inf]','incdec=[-1 1]','The exponent of the gamma function used to model the HDR. This is always a fixed param.'};
 paramsInfo{end+1} = {'diffOfGamma',1,'type=checkbox','Set to true if you want the HDR to be a difference of gamma functions - i.e. have a positive and a delayed negative component'};
-paramsInfo{end+1} = {'fitexp',1,'type=checkbox','Set to true if you want to fit the HDR exponents'};
 paramsInfo{end+1} = {'amplitudeRatio',0.25,'minmax=[0 inf]','incdec=[-0.1 0.1]','Ratio of amplitude of 1st gamma to second gamma','contingent=diffOfGamma'};
 paramsInfo{end+1} = {'timelag2',2,'minmax=[0 inf]','incdec=[-0.5 0.5]','Time lag of 2nd ggamma for when you are using a difference of gamma functions','contingent=diffOfGamma'};
 paramsInfo{end+1} = {'tau2',1.2,'minmax=[0 inf]','incdec=[-0.1 0.1]','The tau (width) of the second gamma function.','contingent=diffOfGamma'};

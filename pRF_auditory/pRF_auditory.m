@@ -24,6 +24,10 @@
 % Create function to plot average HDR estimates of ROI
 % give option to fit in ERB space
 % make HDR fitting a tick box in GUI - to change case in pRF_auditoryFit
+% error check -
+%       - does it still work with continuous?
+%       - check pRF_auditoryFit to do list
+% space initial params on model scale
 function [v d] = pRF_auditory(v,params,varargin)
 
 % check arguments
@@ -98,17 +102,17 @@ r2.mergeFunction = 'pRFMergeParams';
 % create the parameters for the PrefCentreFreq overlay
 PrefCentreFreq = r2;
 PrefCentreFreq.name = 'PrefCentreFreq';
-PrefCentreFreq.range = [0 20]; %cf 0.5-3.5
-PrefCentreFreq.clip = [0 20];
+PrefCentreFreq.range = [0.02 20]; %cf 0.5-3.5
+PrefCentreFreq.clip = [0.02 20];
 PrefCentreFreq.colormapType = 'normal';
 PrefCentreFreq.colormap = jet(256); %Compare to hot...
 
-PrefY = r2;
-PrefY.name = 'PrefY';
-PrefY.range = [0 1]; %cf 0.5-3.5
-PrefY.clip = [0 1];
-PrefY.colormapType = 'normal';
-PrefY.colormap = jet(256); %Compare to hot...
+logpCF = r2;
+logpCF.name = 'logpCF';
+logpCF.range = [0.02 20]; %cf 0.5-3.5
+logpCF.clip = [0.02 20];
+logpCF.colormapType = 'normal';
+logpCF.colormap = jet(256); %Compare to hot...
 
 % create the paramteres for the rfHalfWidth overlay
 % deal with the sigma.
@@ -127,15 +131,15 @@ hdrExp.clip = [0 16];
 hdrExp.colormapType = 'setRangeToMax';
 hdrExp.colormap = jet(256);
 
-% create the parameters for the AICC overlay
-aicc = r2;
-aicc.name = 'aicc';
-aicc.range = [0 1];
-aicc.clip = [-700 0];
-aicc.colormapType = 'setRangeToMax';
-aicc.colormap = hot(312);
+% create the parameters for the NRMSD overlay
+NRMSD = r2;
+NRMSD.name = 'NRMSD';
+NRMSD.range = [0 1];
+NRMSD.clip = [-30 30];
+NRMSD.colormapType = 'setRangeToMax';
+NRMSD.colormap = hot(312);
 % colormap is made with a little bit less on the dark end
-aicc.colormap = aicc.colormap(end-255:end,:);
+NRMSD.colormap = NRMSD.colormap(end-255:end,:);
 
 % create the paramteres for the hdrtimelag overlay
 hdrtimelag = r2;
@@ -179,16 +183,16 @@ for scanNum = params.scanNum
   % get scan dims
   scanDims = viewGet(v,'scanDims',scanNum);
   
-  if params.pRFFit.supersampling == 1   
+%   if params.pRFFit.supersampling == 1   
       var.supersamplingMode = 'Automatic';
       params.pRFFit.d = getStimvolpRF(v,var);
-  end
+%   end
   
   % init overlays
   r2.data{scanNum} = nan(scanDims);
   PrefCentreFreq.data{scanNum} = nan(scanDims);
-  PrefY.data{scanNum} = nan(scanDims);
-  aicc.data{scanNum} = nan(scanDims);
+  logpCF.data{scanNum} = nan(scanDims);
+  NRMSD.data{scanNum} = nan(scanDims);
   rfHalfWidth.data{scanNum} = nan(scanDims);
   hdrExp.data{scanNum} = nan(scanDims);
   hdrtimelag.data{scanNum} = nan(scanDims);
@@ -224,7 +228,7 @@ for scanNum = params.scanNum
   rawParams = nan(fit.nParams,n);
   r = nan(n,fit.concatInfo.n);
   thisr2 = nan(1,n);
-  thisaicc = nan(1,n);
+  thisNRMSD = nan(1,n);
   thisRfHalfWidth = nan(1,n);
   thishdrExp = nan(1,n);
   thishdrtimelag = nan(1,n);
@@ -291,6 +295,7 @@ for scanNum = params.scanNum
     end
 
     % now loop over each voxel
+%     for i = blockStart:blockEnd
     parfor i = blockStart:blockEnd
       fit = pRF_auditoryFit(v,scanNum,x(i),y(i),z(i),'stim',stim,'concatInfo',concatInfo,'prefit',prefit,'fitTypeParams',params.pRFFit,'dispIndex',i,'dispN',n,'tSeries',loadROI.tSeries(i-blockStart+1,:)','framePeriod',framePeriod,'junkFrames',junkFrames,'paramsInfo',paramsInfo);
       if ~isempty(fit)
@@ -299,7 +304,7 @@ for scanNum = params.scanNum
         % then afterwords we put it into the actual overlay struct
         thisr2(i) = fit.r2;
         thisPrefCentreFreq(i) = fit.PrefCentreFreq;
-        thisPrefY(i) = fit.PrefY;
+        thislogpCF(i) = fit.logpCF;
         thisRfHalfWidth(i) = fit.rfHalfWidth;
         % keep parameters
         rawParams(:,i) = fit.params(:);
@@ -308,7 +313,7 @@ for scanNum = params.scanNum
         thishdrscale(i) = fit.scale(1);
         thishdroffset(i) = fit.scale(2);
         r(i,:) = fit.r;
-        thisaicc(i) = fit.aicc;
+        thisNRMSD(i) = fit.NRMSD;
         
       end
     end
@@ -316,9 +321,9 @@ for scanNum = params.scanNum
     % set overlays
     for i = 1:n
       r2.data{scanNum}(x(i),y(i),z(i)) = thisr2(i);
-      aicc.data{scanNum}(x(i),y(i),z(i)) = thisaicc(i);
+      NRMSD.data{scanNum}(x(i),y(i),z(i)) = thisNRMSD(i);
       PrefCentreFreq.data{scanNum}(x(i),y(i),z(i)) = thisPrefCentreFreq(i);
-      PrefY.data{scanNum}(x(i),y(i),z(i)) = thisPrefY(i);
+      logpCF.data{scanNum}(x(i),y(i),z(i)) = thislogpCF(i);
       rfHalfWidth.data{scanNum}(x(i),y(i),z(i)) = thisRfHalfWidth(i);
       hdrExp.data{scanNum}(x(i),y(i),z(i)) = thishdrExp(i);
       hdrtimelag.data{scanNum}(x(i),y(i),z(i)) = thishdrtimelag(i);
@@ -336,9 +341,9 @@ for scanNum = params.scanNum
   iScan = find(params.scanNum == scanNum);
   thisParams.scanNum = params.scanNum(iScan);
   r2.params{scanNum} = thisParams;
-  aicc.params{scanNum} = thisParams;
+  NRMSD.params{scanNum} = thisParams;
   PrefCentreFreq.params{scanNum} = thisParams;
-  PrefY.params{scanNum} = thisParams;
+  logpCF.params{scanNum} = thisParams;
   rfHalfWidth.params{scanNum} = thisParams; 
   hdrExp.params{scanNum} = thisParams; 
   hdrtimelag.params{scanNum} = thisParams; 
@@ -359,7 +364,7 @@ pRFAnal.reconcileFunction = 'defaultReconcileParams';
 pRFAnal.mergeFunction = 'pRFMergeParams';
 pRFAnal.guiFunction = 'pRF_auditoryGUI';
 pRFAnal.params = params;
-pRFAnal.overlays = [r2 aicc PrefCentreFreq rfHalfWidth hdrExp hdrtimelag hdrScale];
+pRFAnal.overlays = [r2 NRMSD PrefCentreFreq logpCF rfHalfWidth hdrExp hdrtimelag hdrScale];
 pRFAnal.curOverlay = 1;
 pRFAnal.date = dateString;
 v = viewSet(v,'newAnalysis',pRFAnal);

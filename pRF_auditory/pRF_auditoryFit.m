@@ -159,12 +159,16 @@ if isfield(fitParams,'prefit') && ~isempty(fitParams.prefit)
     % parfor i = 1:fitParams.prefit.n
     
     for i = 1:fitParams.prefit.n
-      % fit the model with these parameters
-      [residual modelResponse rfModel r scale] = getModelResidual([fitParams.prefit.x(i) fitParams.prefit.y(i) fitParams.prefit.rfHalfWidth(i) params(4:end)],tSeries,fitParams,1);
+        % fit the model with these parameters
+        if fitParams.fitHDR
+            [residual modelResponse rfModel r scale] = getModelResidual([fitParams.prefit.x(i) fitParams.prefit.y(i) fitParams.prefit.rfHalfWidth(i) fitParams.prefit.HDRExp(i) params(5:end)],tSeries,fitParams,1);
+        else
+            [residual modelResponse rfModel r scale] = getModelResidual([fitParams.prefit.x(i) fitParams.prefit.y(i) fitParams.prefit.rfHalfWidth(i) params(4:end)],tSeries,fitParams,1);
+        end
       % normalize to 0 mean unit length
       allModelResponse(i,:) = (modelResponse-mean(modelResponse))./sqrt(sum(modelResponse.^2))';
       if fitParams.verbose
-	disp(sprintf('(pRF_auditoryFit) Computing prefit model response %i/%i: Center [%6.2f,%6.2f] rfHalfWidth=%5.2f',i,fitParams.prefit.n,fitParams.prefit.x(i),fitParams.prefit.y(i),fitParams.prefit.rfHalfWidth(i)));
+	disp(sprintf('(pRF_auditoryFit) Computing prefit model response %i/%i: Center [%6.2f,%6.2f] rfHalfWidth=%5.2f HDRExp=%5.2f',i,fitParams.prefit.n,fitParams.prefit.x(i),fitParams.prefit.y(i),fitParams.prefit.rfHalfWidth(i),fitParams.prefit.HDRExp(i)));
       end
     end
     disppercent(inf);
@@ -187,6 +191,9 @@ if isfield(fitParams,'prefit') && ~isempty(fitParams.prefit)
   fitParams.initParams(1) = fitParams.prefit.x(bestModel);
   fitParams.initParams(2) = fitParams.prefit.y(bestModel);
   fitParams.initParams(3) = fitParams.prefit.rfHalfWidth(bestModel);
+  if fitParams.fitHDR
+  fitParams.initParams(4) = fitParams.prefit.HDRExp(bestModel);
+  end
   if fitParams.prefitOnly
     % return if we are just doing a prefit
     fit = getFitParams(fitParams.initParams,fitParams);
@@ -198,7 +205,7 @@ if isfield(fitParams,'prefit') && ~isempty(fitParams.prefit)
     fit.PrefCentreFreq = fit.x;
     fit.PrefY = fit.y;
     fit.rfHalfWidth = fit.std;
-    
+       
     % display
     if fitParams.verbose
       % disp(sprintf('%s[%2.f %2.f %2.f] r2=%0.2f polarAngle=%6.1f eccentricity=%6.1f rfHalfWidth=%6.1f',fitParams.dispstr,x,y,z,fit.r2,r2d(fit.polarAngle),fit.eccentricity,fit.std));
@@ -238,14 +245,21 @@ N = length(residual);
 nParams = fitParams.nParams; %nParams is the number of parameters in the model N is the number of datapoints error is the N-vector of differences between the modelle and actual data
 % aic = 2*nParams + N*(log(2*pi) + 1 - log(N) + log(sum(sum(error.^2))));
 % aicc = aic + 2*nParams*(nParams+1)/(N-nParams-1);
-fit.aic = 2*nParams + N*(log(2*pi) + 1 - log(N) + log(sum(sum(error.^2))));
+% fit.aic = 2*nParams + N*(log(2*pi) + 1 - log(N) + log(sum(sum(error.^2))));
+l =  0.5*(-nParams*(log(2*pi) +1 - log(nParams) + log(sum(error.^2))));
+fit.aic = 2*nParams - 2*l;
 fit.aicc = fit.aic + 2*nParams*(nParams+1)/(N-nParams-1);
+
+fit.RMSD = (sum(residual.^2))/fitParams.nParams;
+fit.NRMSD = fit.RMSD/max(residual)-min(residual);
 
 
 % save population receptive field properties
 % can convert values to other scales if not fitted in the desired scaling
 % [fit.polarAngle fit.eccentricity] = cart2pol(fit.x,fit.y);
 fit.PrefCentreFreq = fit.x;
+fit.logpCF = log(fit.x);
+fit.erbpCF = funNErb(fit.x);
 fit.PrefY = fit.y;
 fit.rfHalfWidth = fit.std;
 fit.hdrExp = fit.canonical.exponent;
@@ -257,7 +271,7 @@ fit.N = N;
 % display
 if fitParams.verbose
   % disp(sprintf('%s[%2.f %2.f %2.f] r2=%0.2f polarAngle=%6.1f eccentricity=%6.1f rfHalfWidth=%6.1f',fitParams.dispstr,x,y,z,fit.r2,r2d(fit.polarAngle),fit.eccentricity,fit.std));
-  disp(sprintf('%s[%2.f %2.f %2.f] r2=%0.2f pCF=%6.1f aicc=%6.1f rTW=%6.1f HDR exponent=%6.1f',fitParams.dispstr,x,y,z,fit.r2,fit.PrefCentreFreq,fit.aicc,fit.std,fit.hdrExp));
+  disp(sprintf('%s[%2.f %2.f %2.f] r2=%1.2f pCF=%1.3f rTW=%1.3f HDRexp=%1.2f NRMSD=%1.2f',fitParams.dispstr,x,y,z,fit.r2,fit.PrefCentreFreq,fit.std,fit.hdrExp,fit.NRMSD));
     
 end
 
@@ -276,88 +290,116 @@ fitParams.stimX = fitParams.stim{1}.x;
 fitParams.stimY = fitParams.stim{1}.y;
 fitParams.stimT = fitParams.stim{1}.t;
 
-% set stimulus extents
-fitParams.stimExtents(1) = 0.02;
-fitParams.stimExtents(3) = 20;
-fitParams.stimExtents(2) = 1;
-fitParams.stimExtents(4) = 1;
-% fitParams.stimExtents(1) = min(fitParams.stimX(:));
-% fitParams.stimExtents(3) = max(fitParams.stimX(:));
-% fitParams.stimExtents(2) = min(fitParams.stimY(:));
-% fitParams.stimExtents(4) = max(fitParams.stimY(:));
-if fitParams.stimExtents(2) == fitParams.stimExtents(4)
-    fitParams.stimExtents(4) = fitParams.stimExtents(4) + 0.1;
-end
+% this could be modified to be ERB : it would be different value for each
+% condition
 fitParams.stimWidth = 1;  % fitParams.stimExtents(3)-fitParams.stimExtents(1);
 fitParams.stimHeight = 1; % fitParams.stimExtents(4)-fitParams.stimExtents(2);
 
 if ~isfield(fitParams,'initParams')
-  % check the rfType to get the correct min/max arrays
-  switch (fitParams.rfType)
-   case {'gaussian','gaussian_Log','ROEX'}
+    
     % parameter names/descriptions and other information for allowing user to set them
     fitParams.paramNames = {'x','y','rfWidth'};
     fitParams.paramDescriptions = {'RF x position (Frequency)','RF y position (Unused)','RF width (std of gaussian)'};
-    fitParams.paramIncDec = [1 1 1];
-    fitParams.paramMin = [-inf -inf 0];
-    fitParams.paramMax = [inf inf inf];
+    fitParams.paramIncDec = [0.01 1 0.1];
+    fitParams.paramMin = [0.02 -1 0.001];
+    fitParams.paramMax = [20 1.1 inf];
     % set min/max and init
-    fitParams.minParams = [fitParams.stimExtents(1) fitParams.stimExtents(2) 0];
-    fitParams.maxParams = [fitParams.stimExtents(3) fitParams.stimExtents(4) inf];
-
+    fitParams.minParams = [0.02 1 0.001];
+    fitParams.maxParams = [20 1.1 inf];
     fitParams.initParams = [0 0 4];
-   case {'gaussian-hdr','gaussian_Log-hdr','ROEX-hdr'}
-    % parameter names/descriptions and other information for allowing user to set them
-    fitParams.paramNames = {'x','y','rfWidth','timelag','tau'};
-    fitParams.paramDescriptions = {'RF x position (Frequency)','RF y position (Unused)','RF width (std of gaussian)','Time before start of rise of hemodynamic function','Width of the hemodynamic function (tau parameter of gamma)'};
-    fitParams.paramIncDec = [1 1 1 0.1 0.5];
-    fitParams.paramMin = [-inf -inf 0 0 0];
-    fitParams.paramMax = [inf inf inf inf inf];
-    % set min/max and init
-    fitParams.minParams = [fitParams.stimExtents(1) fitParams.stimExtents(2) 0 0 0];
-    fitParams.maxParams = [fitParams.stimExtents(3) fitParams.stimExtents(4) inf 3 inf];
-    fitParams.initParams = [0 0 4 fitParams.timelag fitParams.tau];
-    if fitParams.fitexp
-        % fit exponent of gamma function
-        fitParams.paramNames = {fitParams.paramNames{:} 'exp'};
-        fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Exponent'};
-        fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1];
-        fitParams.paramMin = [fitParams.paramMin(:)' 0];
-        fitParams.paramMax = [fitParams.paramMax(:)' 16];
-        % set min/max and init
-        fitParams.minParams = [fitParams.minParams 0];
-        fitParams.maxParams = [fitParams.maxParams 16];
-        fitParams.initParams = [fitParams.initParams fitParams.exponent];
-    end
-    % add on parameters for difference of gamma
-    if fitParams.diffOfGamma
-        % parameter names/descriptions and other information for allowing user to set them
-        fitParams.paramNames = {fitParams.paramNames{:} 'amp2' 'timelag2','tau2'};
-        fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Amplitude of second gamma for HDR' 'Timelag for second gamma for HDR','tau for second gamma for HDR'};
-        fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1 0.1 0.5];
+    if fitParams.fitHDR     
+        fitParams.paramNames = {fitParams.paramNames{:} 'exp','timelag','tau'};
+        fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Exponent','Time before start of rise of hemodynamic function','Width of the hemodynamic function (tau parameter of gamma)'};
+        fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.5 0.1 0.1];
         fitParams.paramMin = [fitParams.paramMin(:)' 0 0 0];
-        fitParams.paramMax = [fitParams.paramMax(:)' inf inf inf];
+        fitParams.paramMax = [fitParams.paramMax(:)' 16 16 inf];
         % set min/max and init
         fitParams.minParams = [fitParams.minParams 0 0 0];
-        fitParams.maxParams = [fitParams.maxParams inf inf inf];
-        fitParams.initParams = [fitParams.initParams fitParams.amplitudeRatio fitParams.timelag2 fitParams.tau2];
-        if fitParams.fitexp
-            % Fit the exponent of second gamma function
-            fitParams.paramNames = {fitParams.paramNames{:} 'exp2'};
-            fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Exponent2'};
-            fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1];
-            fitParams.paramMin = [fitParams.paramMin(:)' 0];
-            fitParams.paramMax = [fitParams.paramMax(:)' 16];
+        fitParams.maxParams = [fitParams.maxParams 16 3 inf];
+        fitParams.initParams = [fitParams.initParams fitParams.exponent fitParams.timelag fitParams.tau];
+        
+        % add on parameters for difference of gamma
+        if fitParams.diffOfGamma
+            % parameter names/descriptions and other information for allowing user to set them
+            fitParams.paramNames = {fitParams.paramNames{:} 'exp2' 'amp2' 'timelag2','tau2'};
+            fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Exponent2' 'Amplitude of second gamma for HDR' 'Timelag for second gamma for HDR','tau for second gamma for HDR'};
+            fitParams.paramIncDec = [fitParams.paramIncDec(:)'  0.5 0.1 0.1 0.1];
+            fitParams.paramMin = [fitParams.paramMin(:)' 0 0 0 0];
+            fitParams.paramMax = [fitParams.paramMax(:)' 16 inf 16 inf];
             % set min/max and init
-            fitParams.minParams = [fitParams.minParams 0];
-            fitParams.maxParams = [fitParams.maxParams 16];
-            fitParams.initParams = [fitParams.initParams fitParams.exponent2];
+            fitParams.minParams = [fitParams.minParams 0 0 0 0];
+            fitParams.maxParams = [fitParams.maxParams 16 inf 16 inf];
+            fitParams.initParams = [fitParams.initParams fitParams.exponent2 fitParams.amplitudeRatio fitParams.timelag2 fitParams.tau2];
         end
-    end
-   otherwise
-    disp(sprintf('(pRFFit:setFitParams) Unknown rfType %s',rfType));
-    return
-  end
+    end  
+% end
+    
+  % check the rfType to get the correct min/max arrays
+%   switch (fitParams.rfType)
+%    case {'gaussian','gaussian_Log','ROEX'}
+%     % parameter names/descriptions and other information for allowing user to set them
+%     fitParams.paramNames = {'x','y','rfWidth'};
+%     fitParams.paramDescriptions = {'RF x position (Frequency)','RF y position (Unused)','RF width (std of gaussian)'};
+%     fitParams.paramIncDec = [1 1 1];
+%     fitParams.paramMin = [-inf -inf 0];
+%     fitParams.paramMax = [inf inf inf];
+%     % set min/max and init
+%     fitParams.minParams = [fitParams.stimExtents(1) fitParams.stimExtents(2) 0];
+%     fitParams.maxParams = [fitParams.stimExtents(3) fitParams.stimExtents(4) inf];
+% 
+%     fitParams.initParams = [0 0 4];
+%    case {'gaussian-hdr','gaussian_Log-hdr','ROEX-hdr'}
+%     % parameter names/descriptions and other information for allowing user to set them
+%     fitParams.paramNames = {'x','y','rfWidth','timelag','tau'};
+%     fitParams.paramDescriptions = {'RF x position (Frequency)','RF y position (Unused)','RF width (std of gaussian)','Time before start of rise of hemodynamic function','Width of the hemodynamic function (tau parameter of gamma)'};
+%     fitParams.paramIncDec = [1 1 1 0.1 0.5];
+%     fitParams.paramMin = [-inf -inf 0 0 0];
+%     fitParams.paramMax = [inf inf inf inf inf];
+%     % set min/max and init
+%     fitParams.minParams = [fitParams.stimExtents(1) fitParams.stimExtents(2) 0 0 0];
+%     fitParams.maxParams = [fitParams.stimExtents(3) fitParams.stimExtents(4) inf 3 inf];
+%     fitParams.initParams = [0 0 4 fitParams.timelag fitParams.tau];
+%     if fitParams.fitHDR
+%         % fit exponent of gamma function
+%         fitParams.paramNames = {fitParams.paramNames{:} 'exp'};
+%         fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Exponent'};
+%         fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1];
+%         fitParams.paramMin = [fitParams.paramMin(:)' 0];
+%         fitParams.paramMax = [fitParams.paramMax(:)' 16];
+%         % set min/max and init
+%         fitParams.minParams = [fitParams.minParams 0];
+%         fitParams.maxParams = [fitParams.maxParams 16 fitParams.initParams(4:end)];
+%         fitParams.initParams = [fitParams.initParams(1:3) fitParams.exponent fitParams.initParams(4:end)];
+%     end
+%     % add on parameters for difference of gamma
+%     if fitParams.diffOfGamma
+%         % parameter names/descriptions and other information for allowing user to set them
+%         fitParams.paramNames = {fitParams.paramNames{:} 'amp2' 'timelag2','tau2'};
+%         fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Amplitude of second gamma for HDR' 'Timelag for second gamma for HDR','tau for second gamma for HDR'};
+%         fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1 0.1 0.5];
+%         fitParams.paramMin = [fitParams.paramMin(:)' 0 0 0];
+%         fitParams.paramMax = [fitParams.paramMax(:)' inf inf inf];
+%         % set min/max and init
+%         fitParams.minParams = [fitParams.minParams 0 0 0];
+%         fitParams.maxParams = [fitParams.maxParams inf inf inf];
+%         fitParams.initParams = [fitParams.initParams fitParams.amplitudeRatio fitParams.timelag2 fitParams.tau2];
+%         if fitParams.fitHDR
+%             % Fit the exponent of second gamma function
+%             fitParams.paramNames = {fitParams.paramNames{:} 'exp2'};
+%             fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Exponent2'};
+%             fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1];
+%             fitParams.paramMin = [fitParams.paramMin(:)' 0];
+%             fitParams.paramMax = [fitParams.paramMax(:)' 16];
+%             % set min/max and init
+%             fitParams.minParams = [fitParams.minParams 0];
+%             fitParams.maxParams = [fitParams.maxParams 16];
+%             fitParams.initParams = [fitParams.initParams fitParams.exponent2];
+%         end
+%     end
+%    otherwise
+%     disp(sprintf('(pRFFit:setFitParams) Unknown rfType %s',rfType));
+%     return
+%   end
   
   % round constraints
   fitParams.minParams = round(fitParams.minParams*10)/10;
@@ -502,8 +544,7 @@ for i = 1:fitParams.concatInfo.n
     thisResidual = [];
     
   end
-  
-  % make into a column array
+    % make into a column array
   modelResponse = [modelResponse;thisModelResponse(:)];
   residual = [residual;thisResidual(:)];
 end
@@ -572,7 +613,8 @@ function [modelResponse residual beta] = scaleAndOffset(modelResponse,tSeries)
 
 designMatrix = modelResponse;
 designMatrix(:,2) = 1;
-
+residual = [];
+beta = [];
 % get beta weight for the modelResponse
 if ~any(isnan(modelResponse))
   beta = pinv(designMatrix)*tSeries;
@@ -580,64 +622,97 @@ if ~any(isnan(modelResponse))
   modelResponse = designMatrix*beta;
   residual = tSeries-modelResponse;
 else
-  residual = tSeries;
+  residual = tSeries;  
 end
 
 %%%%%%%%%%%%%%%%%%%%%%
 %%   getFitParams   %%
 %%%%%%%%%%%%%%%%%%%%%%
 function p = getFitParams(params,fitParams)
-
-p.rfType = fitParams.rfType;
-
-switch (fitParams.rfType)
-    case {'gaussian','gaussian_Log','ROEX'}
-        p.x = params(1);
-%         p.y = params(2);
-        p.y = 1;
-        p.std = params(3);
-        % use a fixed single gaussian
-        p.canonical.type = 'gamma';
-        p.canonical.lengthInSeconds = 25;
-        p.canonical.timelag = fitParams.timelag;
-        p.canonical.tau = fitParams.tau;
-        p.canonical.exponent = fitParams.exponent;
-        p.canonical.offset = 0;
-        p.canonical.diffOfGamma = fitParams.diffOfGamma;
-        p.canonical.amplitudeRatio = fitParams.amplitudeRatio;
-        p.canonical.timelag2 = fitParams.timelag2;
-        p.canonical.tau2 = fitParams.tau2;
-        p.canonical.exponent2 = fitParams.exponent2;
-        p.canonical.offset2 = 0;
-    case {'gaussian-hdr','gaussian_Log-hdr','ROEX-hdr'}
-        p.x = params(1);
-        %         p.y = params(2);
-        p.y = 1;
-        p.std = params(3);
-        % use a fixed single gaussian
-        p.canonical.type = 'gamma';
-        p.canonical.lengthInSeconds = 25;
-        p.canonical.timelag = params(4);
-        p.canonical.tau = params(5);
-        p.canonical.exponent = fitParams.exponent;
-        p.canonical.offset = 0;
-        if fitParams.fitexp
-            p.canonical.exponent = params(6);
-        end
+    
+    p.x = params(1);
+    %         p.y = params(2);
+    p.y = 1;
+    p.std = params(3);
+    % use a fixed single gaussian
+    p.canonical.type = 'gamma';
+    p.canonical.lengthInSeconds = 25;
+    p.canonical.timelag = fitParams.timelag;
+    p.canonical.tau = fitParams.tau;
+    p.canonical.exponent = fitParams.exponent;
+    p.canonical.offset = 0;
+    p.canonical.diffOfGamma = fitParams.diffOfGamma;
+    p.canonical.amplitudeRatio = fitParams.amplitudeRatio;
+    p.canonical.timelag2 = fitParams.timelag2;
+    p.canonical.tau2 = fitParams.tau2;
+    p.canonical.exponent2 = fitParams.exponent2;
+    p.canonical.offset2 = 0;
+    if fitParams.fitHDR
+        p.canonical.exponent = params(4);
+        p.canonical.timelag = params(5);
+        p.canonical.tau = params(6);
         p.canonical.diffOfGamma = fitParams.diffOfGamma;
         if fitParams.diffOfGamma
-            p.canonical.amplitudeRatio = params(7);
-            p.canonical.timelag2 = params(8);
-            p.canonical.tau2 = params(9);
-            p.canonical.exponent2 = fitParams.exponent2;
-            p.canonical.offset2 = 0;
-            if fitParams.fitexp
-                p.canonical.exponent2 = params(10);
-            end
+            p.canonical.exponent2 = params(7);
+            p.canonical.amplitudeRatio = params(8);
+            p.canonical.timelag2 = params(9);
+            p.canonical.tau2 = params(10);
+            p.canonical.offset2 = 0;            
         end
-    otherwise
-        disp(sprintf('(pRFFit) Unknown rfType %s',rfType));
-end
+    end
+
+% p.rfType = fitParams.rfType;
+
+% switch (fitParams.rfType)
+%     case {'gaussian','gaussian_Log','ROEX'}
+%         p.x = params(1);
+% %         p.y = params(2);
+%         p.y = 1;
+%         p.std = params(3);
+%         % use a fixed single gaussian
+%         p.canonical.type = 'gamma';
+%         p.canonical.lengthInSeconds = 25;
+%         p.canonical.timelag = fitParams.timelag;
+%         p.canonical.tau = fitParams.tau;
+%         p.canonical.exponent = fitParams.exponent;
+%         p.canonical.offset = 0;
+%         p.canonical.diffOfGamma = fitParams.diffOfGamma;
+%         p.canonical.amplitudeRatio = fitParams.amplitudeRatio;
+%         p.canonical.timelag2 = fitParams.timelag2;
+%         p.canonical.tau2 = fitParams.tau2;
+%         p.canonical.exponent2 = fitParams.exponent2;
+%         p.canonical.offset2 = 0;
+%     case {'gaussian-hdr','gaussian_Log-hdr','ROEX-hdr'}
+%         p.x = params(1);
+%         %         p.y = params(2);
+%         p.y = 1;
+%         p.std = params(3);
+%         % use a fixed single gaussian
+%         p.canonical.type = 'gamma';
+%         p.canonical.lengthInSeconds = 25;
+%         p.canonical.timelag = params(4);
+%         p.canonical.tau = params(5);
+%         p.canonical.exponent = fitParams.exponent;
+%         p.canonical.offset = 0;
+%         if fitParams.fitHDR
+%             p.canonical.exponent = params(4);
+%             p.canonical.timelag = params(5);
+%             p.canonical.tau = params(6);
+%         end
+%         p.canonical.diffOfGamma = fitParams.diffOfGamma;
+%         if fitParams.diffOfGamma
+%             p.canonical.amplitudeRatio = params(7);
+%             p.canonical.timelag2 = params(8);
+%             p.canonical.tau2 = params(9);
+%             p.canonical.exponent2 = fitParams.exponent2;
+%             p.canonical.offset2 = 0;
+%             if fitParams.fitexp
+%                 p.canonical.exponent2 = params(10);
+%             end
+%         end
+%     otherwise
+%         disp(sprintf('(pRFFit) Unknown rfType %s',rfType));
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%   convolveModelWithStimulus   %%
@@ -714,13 +789,24 @@ function rfModel = getRFModel(params,fitParams)
 
 rfModel = [];
 
+% convert stimulus spacing to voxel magnifcation domain
+if any(strcmp(fitParams.voxelScale,{'lin'}))
+elseif any(strcmp(fitParams.voxelScale,{'log'}))
+    params.x = log10(params.x);
+elseif any(strcmp(fitParams.voxelScale,{'erb'}))
+    params.x = funNErb(params.x);
+else
+  disp(sprintf('(pRFFit:getRFModel) Unknown voxelScale: %s',fitParams.voxelScale));
+end
+
+
 % now gernerate the rfModel
 if any(strcmp(fitParams.rfType,{'gaussian','gaussian-hdr'}))
     rfModel = makeRFGaussian(params,fitParams);
 elseif any(strcmp(fitParams.rfType,{'gaussian_Log','gaussian_Log-hdr'}))
     rfModel = makeRFGaussian_Log(params,fitParams);
 elseif any(strcmp(fitParams.rfType,{'ROEX','ROEX-hdr'}))
-    rfModel = makeRFGaussian_Log(params,fitParams);
+    rfModel = makeRFROEX(params,fitParams);
 else
   disp(sprintf('(pRFFit:getRFModel) Unknown rfType: %s',fitParams.rfType));
 end
@@ -745,11 +831,12 @@ rfModel = exp(-(((fitParams.stimX-log(params.x)).^2)/(2*(params.std^2))+((fitPar
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%   makeRFROEX   %%
 %%%%%%%%%%%%%%%%%%%%%%%%
-function rfModel = makeRFROEX_Log(params,fitParams)
+function rfModel = makeRFROEX(params,fitParams)
 
 % compute rf
 % rfModel = exp(-(((fitParams.stimX-log(params.x)).^2)/(2*(params.std^2))+((fitParams.stimY-params.y).^2)/(2*(params.std^2))));
-pCF = log(params.x);
+% pCF = log(params.x);
+pCF = params.x;
 fun = @(x,mu,sigma) 1 * exp(-(x - mu).^2/2/sigma^2);
 pTW = integral(@(x)fun(x,pCF,params.std),-100,100); 
 P = 4*pCF/pTW;
@@ -938,23 +1025,49 @@ if isempty(fitParams.prefit) || (fitParams.prefit.quickPrefit ~= fitParams.quick
     % values here are expressed as a factor of the screen
     % dimensions (1 being the width/height of the screen)
     % Later when the prefit is calculated, they will be multiplied
-    % by the screenWidth and screenHeight
+    % by the screenWidth and screenHeight  
     if fitParams.quickPrefit
         if fitParams.verbose,disp(sprintf('(pRFFit) Doing quick prefit'));end
+        % convert stimulus spacing to voxel magnifcation domain
+        StimLowFreq = 0.5;
+        StimHighFreq = 10;
+        nStimuli = 5;
+        if any(strcmp(fitParams.voxelScale,{'lin'}))
+        elseif any(strcmp(fitParams.voxelScale,{'log'}))
+            xspace = 10.^(linspace(log10(StimLowFreq), log10(StimHighFreq), nStimuli));
+        elseif any(strcmp(fitParams.voxelScale,{'erb'}))
+            xspace = funInvNErb(linspace(funNErb(StimLowFreq), funNErb(StimHighFreq), nStimuli));
+        else
+            disp(sprintf('(pRFFit:getRFModel) Unknown voxelScale: %s',fitParams.voxelScale));
+        end
         % make sure here that x and y points go through 0 symmetrically
         %     [prefitx prefity prefitrfHalfWidth] = ndgrid(-0.375:0.125:0.375,-0.375:0.125:0.375,[0.025 0.05 0.15 0.4]);
         % change this to be based on stimulus properties
-        [prefitx prefity prefitrfHalfWidth] = ndgrid(0.1:1:10,1,[0.1 0.2 0.4 0.8 1.6 3.2 6.4 12.8]);
+        [prefitx prefity prefitrfHalfWidth prefitHDRExp] = ndgrid(xspace,1,[0.5 1 2 5 10],2:2:8);
         
     else
-%     [prefitx prefity prefitrfHalfWidth] = ndgrid(-0.4:0.025:0.4,-0.4:0.025:0.4,[0.0125 0.025 0.05 0.1 0.25 0.5 0.75]);
-        [prefitx prefity prefitrfHalfWidth] = ndgrid(0.1:1:10,1,[0.1 0.2 0.4 0.8 1.6 3.2 6.4 12.8]);
-  end
-  fitParams.prefit.quickPrefit = fitParams.quickPrefit;
-  fitParams.prefit.n = length(prefitx(:));
-  fitParams.prefit.x = prefitx(:);
-  fitParams.prefit.y = prefity(:);
-  fitParams.prefit.rfHalfWidth = prefitrfHalfWidth(:);
+        % convert stimulus spacing to voxel magnifcation domain
+        StimLowFreq = 0.05;
+        StimHighFreq = 20;
+        nStimuli = 40;
+        if any(strcmp(fitParams.voxelScale,{'lin'}))
+        elseif any(strcmp(fitParams.voxelScale,{'log'}))
+            xspace = 10.^(linspace(log10(StimLowFreq), log10(StimHighFreq), nStimuli));
+        elseif any(strcmp(fitParams.voxelScale,{'erb'}))
+            xspace = funInvNErb(linspace(funNErb(StimLowFreq), funNErb(StimHighFreq), nStimuli));
+        else
+            disp(sprintf('(pRFFit:getRFModel) Unknown voxelScale: %s',fitParams.voxelScale));
+        end
+        %     [prefitx prefity prefitrfHalfWidth] = ndgrid(-0.4:0.025:0.4,-0.4:0.025:0.4,[0.0125 0.025 0.05 0.1 0.25 0.5 0.75]);
+        %         [prefitx prefity prefitrfHalfWidth prefitHDRExp] = ndgrid(0.1:1:20,1,[0.1 0.2 0.4 0.8 1.6 3.2 6.4 12.8],1:1:8);
+        [prefitx prefity prefitrfHalfWidth prefitHDRExp] = ndgrid(xspace,1,[0.5 1 1.5 2 3 5 10 20],1:0.5:8);
+    end
+    fitParams.prefit.quickPrefit = fitParams.quickPrefit;
+    fitParams.prefit.n = length(prefitx(:));
+    fitParams.prefit.x = prefitx(:);
+    fitParams.prefit.y = prefity(:);
+    fitParams.prefit.rfHalfWidth = prefitrfHalfWidth(:);
+    fitParams.prefit.HDRExp = prefitHDRExp(:);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1141,18 +1254,18 @@ tSeries = tSeries(:)';
 %%%%%%%%%%%%%
 %%   r2d   %%
 %%%%%%%%%%%%%
-function degrees = r2d(angle)
-
-degrees = (angle/(2*pi))*360;
-
-% if larger than 360 degrees then subtract
-% 360 degrees
-while (sum(degrees>360))
-  degrees = degrees - (degrees>360)*360;
-end
-
-% if less than 360 degreees then add 
-% 360 degrees
-while (sum(degrees<-360))
-  degrees = degrees + (degrees<-360)*360;
-end
+% function degrees = r2d(angle)
+% 
+% degrees = (angle/(2*pi))*360;
+% 
+% % if larger than 360 degrees then subtract
+% % 360 degrees
+% while (sum(degrees>360))
+%   degrees = degrees - (degrees>360)*360;
+% end
+% 
+% % if less than 360 degreees then add 
+% % 360 degrees
+% while (sum(degrees<-360))
+%   degrees = degrees + (degrees<-360)*360;
+% end
