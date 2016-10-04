@@ -107,12 +107,12 @@ PrefCentreFreq.clip = [0.02 20];
 PrefCentreFreq.colormapType = 'normal';
 PrefCentreFreq.colormap = jet(256); %Compare to hot...
 
-logpCF = r2;
-logpCF.name = 'logpCF';
-logpCF.range = [0.02 20]; %cf 0.5-3.5
-logpCF.clip = [0.02 20];
-logpCF.colormapType = 'normal';
-logpCF.colormap = jet(256); %Compare to hot...
+pCFscaled = r2;
+pCFscaled.name = 'pCFscaled';
+pCFscaled.range = [log10(0.02) log10(20)]; %cf 0.5-3.5
+pCFscaled.clip = [log10(0.02) log10(20)];
+pCFscaled.colormapType = 'normal';
+pCFscaled.colormap = jet(256); %Compare to hot...
 
 % create the paramteres for the rfHalfWidth overlay
 % deal with the sigma.
@@ -191,7 +191,7 @@ for scanNum = params.scanNum
   % init overlays
   r2.data{scanNum} = nan(scanDims);
   PrefCentreFreq.data{scanNum} = nan(scanDims);
-  logpCF.data{scanNum} = nan(scanDims);
+  pCFscaled.data{scanNum} = nan(scanDims);
   NRMSD.data{scanNum} = nan(scanDims);
   rfHalfWidth.data{scanNum} = nan(scanDims);
   hdrExp.data{scanNum} = nan(scanDims);
@@ -304,7 +304,7 @@ for scanNum = params.scanNum
         % then afterwords we put it into the actual overlay struct
         thisr2(i) = fit.r2;
         thisPrefCentreFreq(i) = fit.PrefCentreFreq;
-        thislogpCF(i) = fit.logpCF;
+        thispCFscaled(i) = fit.pCFscaled;
         thisRfHalfWidth(i) = fit.rfHalfWidth;
         % keep parameters
         rawParams(:,i) = fit.params(:);
@@ -323,7 +323,7 @@ for scanNum = params.scanNum
       r2.data{scanNum}(x(i),y(i),z(i)) = thisr2(i);
       NRMSD.data{scanNum}(x(i),y(i),z(i)) = thisNRMSD(i);
       PrefCentreFreq.data{scanNum}(x(i),y(i),z(i)) = thisPrefCentreFreq(i);
-      logpCF.data{scanNum}(x(i),y(i),z(i)) = thislogpCF(i);
+      pCFscaled.data{scanNum}(x(i),y(i),z(i)) = thispCFscaled(i);
       rfHalfWidth.data{scanNum}(x(i),y(i),z(i)) = thisRfHalfWidth(i);
       hdrExp.data{scanNum}(x(i),y(i),z(i)) = thishdrExp(i);
       hdrtimelag.data{scanNum}(x(i),y(i),z(i)) = thishdrtimelag(i);
@@ -343,7 +343,7 @@ for scanNum = params.scanNum
   r2.params{scanNum} = thisParams;
   NRMSD.params{scanNum} = thisParams;
   PrefCentreFreq.params{scanNum} = thisParams;
-  logpCF.params{scanNum} = thisParams;
+  pCFscaled.params{scanNum} = thisParams;
   rfHalfWidth.params{scanNum} = thisParams; 
   hdrExp.params{scanNum} = thisParams; 
   hdrtimelag.params{scanNum} = thisParams; 
@@ -364,7 +364,7 @@ pRFAnal.reconcileFunction = 'defaultReconcileParams';
 pRFAnal.mergeFunction = 'pRFMergeParams';
 pRFAnal.guiFunction = 'pRF_auditoryGUI';
 pRFAnal.params = params;
-pRFAnal.overlays = [r2 NRMSD PrefCentreFreq logpCF rfHalfWidth hdrExp hdrtimelag hdrScale];
+pRFAnal.overlays = [r2 NRMSD PrefCentreFreq pCFscaled rfHalfWidth hdrExp hdrtimelag hdrScale];
 pRFAnal.curOverlay = 1;
 pRFAnal.date = dateString;
 v = viewSet(v,'newAnalysis',pRFAnal);

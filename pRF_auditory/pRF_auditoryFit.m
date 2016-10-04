@@ -258,8 +258,8 @@ fit.NRMSD = fit.RMSD/max(residual)-min(residual);
 % can convert values to other scales if not fitted in the desired scaling
 % [fit.polarAngle fit.eccentricity] = cart2pol(fit.x,fit.y);
 fit.PrefCentreFreq = fit.x;
-fit.logpCF = log(fit.x);
-fit.erbpCF = funNErb(fit.x);
+
+
 fit.PrefY = fit.y;
 fit.rfHalfWidth = fit.std;
 fit.hdrExp = fit.canonical.exponent;
@@ -267,6 +267,15 @@ fit.hdrtimelag = fit.canonical.timelag;
 fit.hdr = fit.canonical;
 fit.scale = scale;
 fit.N = N;
+
+if any(strcmp(fitParams.voxelScale,{'lin'}))
+elseif any(strcmp(fitParams.voxelScale,{'log'}))
+fit.pCFscaled = log10(fit.x);
+elseif any(strcmp(fitParams.voxelScale,{'erb'}))
+fit.pCFscaled = funNErb(fit.x);
+else
+  disp(sprintf('(pRFFit:getRFModel) Unknown voxelScale: %s',fitParams.voxelScale));
+end
 
 % display
 if fitParams.verbose
@@ -332,74 +341,7 @@ if ~isfield(fitParams,'initParams')
             fitParams.initParams = [fitParams.initParams fitParams.exponent2 fitParams.amplitudeRatio fitParams.timelag2 fitParams.tau2];
         end
     end  
-% end
-    
-  % check the rfType to get the correct min/max arrays
-%   switch (fitParams.rfType)
-%    case {'gaussian','gaussian_Log','ROEX'}
-%     % parameter names/descriptions and other information for allowing user to set them
-%     fitParams.paramNames = {'x','y','rfWidth'};
-%     fitParams.paramDescriptions = {'RF x position (Frequency)','RF y position (Unused)','RF width (std of gaussian)'};
-%     fitParams.paramIncDec = [1 1 1];
-%     fitParams.paramMin = [-inf -inf 0];
-%     fitParams.paramMax = [inf inf inf];
-%     % set min/max and init
-%     fitParams.minParams = [fitParams.stimExtents(1) fitParams.stimExtents(2) 0];
-%     fitParams.maxParams = [fitParams.stimExtents(3) fitParams.stimExtents(4) inf];
-% 
-%     fitParams.initParams = [0 0 4];
-%    case {'gaussian-hdr','gaussian_Log-hdr','ROEX-hdr'}
-%     % parameter names/descriptions and other information for allowing user to set them
-%     fitParams.paramNames = {'x','y','rfWidth','timelag','tau'};
-%     fitParams.paramDescriptions = {'RF x position (Frequency)','RF y position (Unused)','RF width (std of gaussian)','Time before start of rise of hemodynamic function','Width of the hemodynamic function (tau parameter of gamma)'};
-%     fitParams.paramIncDec = [1 1 1 0.1 0.5];
-%     fitParams.paramMin = [-inf -inf 0 0 0];
-%     fitParams.paramMax = [inf inf inf inf inf];
-%     % set min/max and init
-%     fitParams.minParams = [fitParams.stimExtents(1) fitParams.stimExtents(2) 0 0 0];
-%     fitParams.maxParams = [fitParams.stimExtents(3) fitParams.stimExtents(4) inf 3 inf];
-%     fitParams.initParams = [0 0 4 fitParams.timelag fitParams.tau];
-%     if fitParams.fitHDR
-%         % fit exponent of gamma function
-%         fitParams.paramNames = {fitParams.paramNames{:} 'exp'};
-%         fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Exponent'};
-%         fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1];
-%         fitParams.paramMin = [fitParams.paramMin(:)' 0];
-%         fitParams.paramMax = [fitParams.paramMax(:)' 16];
-%         % set min/max and init
-%         fitParams.minParams = [fitParams.minParams 0];
-%         fitParams.maxParams = [fitParams.maxParams 16 fitParams.initParams(4:end)];
-%         fitParams.initParams = [fitParams.initParams(1:3) fitParams.exponent fitParams.initParams(4:end)];
-%     end
-%     % add on parameters for difference of gamma
-%     if fitParams.diffOfGamma
-%         % parameter names/descriptions and other information for allowing user to set them
-%         fitParams.paramNames = {fitParams.paramNames{:} 'amp2' 'timelag2','tau2'};
-%         fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Amplitude of second gamma for HDR' 'Timelag for second gamma for HDR','tau for second gamma for HDR'};
-%         fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1 0.1 0.5];
-%         fitParams.paramMin = [fitParams.paramMin(:)' 0 0 0];
-%         fitParams.paramMax = [fitParams.paramMax(:)' inf inf inf];
-%         % set min/max and init
-%         fitParams.minParams = [fitParams.minParams 0 0 0];
-%         fitParams.maxParams = [fitParams.maxParams inf inf inf];
-%         fitParams.initParams = [fitParams.initParams fitParams.amplitudeRatio fitParams.timelag2 fitParams.tau2];
-%         if fitParams.fitHDR
-%             % Fit the exponent of second gamma function
-%             fitParams.paramNames = {fitParams.paramNames{:} 'exp2'};
-%             fitParams.paramDescriptions = {fitParams.paramDescriptions{:} 'Exponent2'};
-%             fitParams.paramIncDec = [fitParams.paramIncDec(:)' 0.1];
-%             fitParams.paramMin = [fitParams.paramMin(:)' 0];
-%             fitParams.paramMax = [fitParams.paramMax(:)' 16];
-%             % set min/max and init
-%             fitParams.minParams = [fitParams.minParams 0];
-%             fitParams.maxParams = [fitParams.maxParams 16];
-%             fitParams.initParams = [fitParams.initParams fitParams.exponent2];
-%         end
-%     end
-%    otherwise
-%     disp(sprintf('(pRFFit:setFitParams) Unknown rfType %s',rfType));
-%     return
-%   end
+
   
   % round constraints
   fitParams.minParams = round(fitParams.minParams*10)/10;
@@ -661,59 +603,6 @@ function p = getFitParams(params,fitParams)
         end
     end
 
-% p.rfType = fitParams.rfType;
-
-% switch (fitParams.rfType)
-%     case {'gaussian','gaussian_Log','ROEX'}
-%         p.x = params(1);
-% %         p.y = params(2);
-%         p.y = 1;
-%         p.std = params(3);
-%         % use a fixed single gaussian
-%         p.canonical.type = 'gamma';
-%         p.canonical.lengthInSeconds = 25;
-%         p.canonical.timelag = fitParams.timelag;
-%         p.canonical.tau = fitParams.tau;
-%         p.canonical.exponent = fitParams.exponent;
-%         p.canonical.offset = 0;
-%         p.canonical.diffOfGamma = fitParams.diffOfGamma;
-%         p.canonical.amplitudeRatio = fitParams.amplitudeRatio;
-%         p.canonical.timelag2 = fitParams.timelag2;
-%         p.canonical.tau2 = fitParams.tau2;
-%         p.canonical.exponent2 = fitParams.exponent2;
-%         p.canonical.offset2 = 0;
-%     case {'gaussian-hdr','gaussian_Log-hdr','ROEX-hdr'}
-%         p.x = params(1);
-%         %         p.y = params(2);
-%         p.y = 1;
-%         p.std = params(3);
-%         % use a fixed single gaussian
-%         p.canonical.type = 'gamma';
-%         p.canonical.lengthInSeconds = 25;
-%         p.canonical.timelag = params(4);
-%         p.canonical.tau = params(5);
-%         p.canonical.exponent = fitParams.exponent;
-%         p.canonical.offset = 0;
-%         if fitParams.fitHDR
-%             p.canonical.exponent = params(4);
-%             p.canonical.timelag = params(5);
-%             p.canonical.tau = params(6);
-%         end
-%         p.canonical.diffOfGamma = fitParams.diffOfGamma;
-%         if fitParams.diffOfGamma
-%             p.canonical.amplitudeRatio = params(7);
-%             p.canonical.timelag2 = params(8);
-%             p.canonical.tau2 = params(9);
-%             p.canonical.exponent2 = fitParams.exponent2;
-%             p.canonical.offset2 = 0;
-%             if fitParams.fitexp
-%                 p.canonical.exponent2 = params(10);
-%             end
-%         end
-%     otherwise
-%         disp(sprintf('(pRFFit) Unknown rfType %s',rfType));
-% end
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%   convolveModelWithStimulus   %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -792,21 +681,23 @@ rfModel = [];
 % convert stimulus spacing to voxel magnifcation domain
 if any(strcmp(fitParams.voxelScale,{'lin'}))
 elseif any(strcmp(fitParams.voxelScale,{'log'}))
-    params.x = log10(params.x);
+    x = log10(fitParams.stimX);
+    mu = log10(params.x);
+    sigma = params.std;
 elseif any(strcmp(fitParams.voxelScale,{'erb'}))
-    params.x = funNErb(params.x);
+    x = funNErb(fitParams.stimX);
+    mu = funNErb(params.x);
+    sigma = params.std;
 else
   disp(sprintf('(pRFFit:getRFModel) Unknown voxelScale: %s',fitParams.voxelScale));
 end
 
 
 % now gernerate the rfModel
-if any(strcmp(fitParams.rfType,{'gaussian','gaussian-hdr'}))
-    rfModel = makeRFGaussian(params,fitParams);
-elseif any(strcmp(fitParams.rfType,{'gaussian_Log','gaussian_Log-hdr'}))
-    rfModel = makeRFGaussian_Log(params,fitParams);
-elseif any(strcmp(fitParams.rfType,{'ROEX','ROEX-hdr'}))
-    rfModel = makeRFROEX(params,fitParams);
+if any(strcmp(fitParams.rfType,{'gaussian'}))
+    rfModel = makeRFGaussian(params,fitParams,x,mu,sigma);
+elseif any(strcmp(fitParams.rfType,{'ROEX'}))
+    rfModel = makeRFROEX(params,fitParams,x,mu,sigma);
 else
   disp(sprintf('(pRFFit:getRFModel) Unknown rfType: %s',fitParams.rfType));
 end
@@ -815,50 +706,44 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%   makeRFGaussian   %%
 %%%%%%%%%%%%%%%%%%%%%%%%
-function rfModel = makeRFGaussian(params,fitParams)
+function rfModel = makeRFGaussian(params,fitParams,x,mu,sigma)
 
 % compute rf
-rfModel = exp(-(((fitParams.stimX-params.x).^2)/(2*(params.std^2))+((fitParams.stimY-params.y).^2)/(2*(params.std^2))));
+% rfModel = exp(-(((fitParams.stimX-params.x).^2)/(2*(params.std^2))+((fitParams.stimY-params.y).^2)/(2*(params.std^2))));
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%   makeRFGaussian_Log %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-function rfModel = makeRFGaussian_Log(params,fitParams)
+rfModel = exp(-(((x-mu).^2)/(2*(sigma^2))+((fitParams.stimY-params.y).^2)/(2*(sigma^2))));
 
-% compute rf
-rfModel = exp(-(((fitParams.stimX-log(params.x)).^2)/(2*(params.std^2))+((fitParams.stimY-params.y).^2)/(2*(params.std^2))));
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%   makeRFROEX   %%
 %%%%%%%%%%%%%%%%%%%%%%%%
-function rfModel = makeRFROEX(params,fitParams)
+function rfModel = makeRFROEX(params,fitParams,x,mu,sigma)
 
 % compute rf
 % rfModel = exp(-(((fitParams.stimX-log(params.x)).^2)/(2*(params.std^2))+((fitParams.stimY-params.y).^2)/(2*(params.std^2))));
 % pCF = log(params.x);
-pCF = params.x;
 fun = @(x,mu,sigma) 1 * exp(-(x - mu).^2/2/sigma^2);
-pTW = integral(@(x)fun(x,pCF,params.std),-100,100); 
-P = 4*pCF/pTW;
-g = abs(fitParams.stimX-pCF)/pCF;
+pTW = integral(@(x)fun(x,mu,sigma),-100,100); 
+P = 4*mu/pTW;
+g = abs(x-mu)/mu;
 rfModel = (1+P*g).*exp(-P*g);
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%   makeauditoryPRF    %%
 %%%%%%%%%%%%%%%%%%%%%%%%
-function pOut = makeauditoryPRF(pIn)
-% makeauditoryPRF - turn parameters into a pRF (here, 3x3)
-%
-%  9 parameters -- all independent, needs fixing...
-%
-% this function makes an appropriately shaped pRF from parameters
-
-if numel(pIn) ~= 9
-    error('# parameters needs to be 9 for this implementation of pRF')
-end
-
-% turn the list into a grid
-pOut = reshape(pIn, [3 3]);
+% function pOut = makeauditoryPRF(pIn)
+% % makeauditoryPRF - turn parameters into a pRF (here, 3x3)
+% %
+% %  9 parameters -- all independent, needs fixing...
+% %
+% % this function makes an appropriately shaped pRF from parameters
+% 
+% if numel(pIn) ~= 9
+%     error('# parameters needs to be 9 for this implementation of pRF')
+% end
+% 
+% % turn the list into a grid
+% pOut = reshape(pIn, [3 3]);
 
 % other versions of this might take another list of params, pIn (e.g. x0,
 % y0, sigma0) into a 3x3 pOut. It depends what shape we want to impose.
