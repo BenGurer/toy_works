@@ -158,6 +158,9 @@ if isfield(fitParams,'prefit') && ~isempty(fitParams.prefit)
     % compute all the model response, using parfor loop
     % parfor i = 1:fitParams.prefit.n
     
+    % save fitParams for external use
+    fit.fitParams = fitParams;
+    
     for i = 1:fitParams.prefit.n
         % fit the model with these parameters
         if fitParams.fitHDR
@@ -258,8 +261,6 @@ fit.NRMSD = fit.RMSD/max(residual)-min(residual);
 % can convert values to other scales if not fitted in the desired scaling
 % [fit.polarAngle fit.eccentricity] = cart2pol(fit.x,fit.y);
 fit.PrefCentreFreq = fit.x;
-
-
 fit.PrefY = fit.y;
 fit.rfHalfWidth = fit.std;
 fit.hdrExp = fit.canonical.exponent;
@@ -274,7 +275,7 @@ fit.pCFscaled = log10(fit.x);
 elseif any(strcmp(fitParams.voxelScale,{'erb'}))
 fit.pCFscaled = funNErb(fit.x);
 else
-  disp(sprintf('(pRFFit:getRFModel) Unknown voxelScale: %s',fitParams.voxelScale));
+  disp(sprintf('(pRFFit) Unknown voxelScale: %s',fitParams.voxelScale));
 end
 
 % display
@@ -936,6 +937,7 @@ if isempty(fitParams.prefit) || (fitParams.prefit.quickPrefit ~= fitParams.quick
         StimHighFreq = 20;
         nStimuli = 40;
         if any(strcmp(fitParams.voxelScale,{'lin'}))
+            xspace = linspace(StimLowFreq, StimHighFreq, nStimuli);
         elseif any(strcmp(fitParams.voxelScale,{'log'}))
             xspace = 10.^(linspace(log10(StimLowFreq), log10(StimHighFreq), nStimuli));
         elseif any(strcmp(fitParams.voxelScale,{'erb'}))

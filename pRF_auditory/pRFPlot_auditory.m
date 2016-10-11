@@ -6,7 +6,7 @@
 %       date: 11/22/11
 %    purpose: plot function for displaying results of pRF analysis
 %
-function pRFPlot(v,overlayNum,scanNum,x,y,z,roi)
+function pRFPlot_auditory(v,overlayNum,scanNum,x,y,z,roi)
 
 % check arguments
 if ~any(nargin == [7])

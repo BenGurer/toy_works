@@ -28,6 +28,8 @@
 %       - does it still work with continuous?
 %       - check pRF_auditoryFit to do list
 % space initial params on model scale
+% calculate the sigma search range. min = response to one stimulus. max =
+% respond to all equally/broadband
 function [v d] = pRF_auditory(v,params,varargin)
 
 % check arguments
@@ -105,14 +107,27 @@ PrefCentreFreq.name = 'PrefCentreFreq';
 PrefCentreFreq.range = [0.02 20]; %cf 0.5-3.5
 PrefCentreFreq.clip = [0.02 20];
 PrefCentreFreq.colormapType = 'normal';
-PrefCentreFreq.colormap = jet(256); %Compare to hot...
+PrefCentreFreq.colormap = jet(256);
 
+if any(strcmp(params.pRFFit.voxelScale,{'lin'}))
+elseif any(strcmp(params.pRFFit.voxelScale,{'log'}))
 pCFscaled = r2;
 pCFscaled.name = 'pCFscaled';
-pCFscaled.range = [log10(0.02) log10(20)]; %cf 0.5-3.5
+pCFscaled.range = [log10(0.02) log10(20)];
 pCFscaled.clip = [log10(0.02) log10(20)];
 pCFscaled.colormapType = 'normal';
-pCFscaled.colormap = jet(256); %Compare to hot...
+pCFscaled.colormap = jet(256);
+elseif any(strcmp(params.pRFFit.voxelScale,{'erb'}))
+pCFscaled = r2;
+pCFscaled.name = 'pCFscaled';
+pCFscaled.range = [funNErb(0.02) funNErb(20)];
+pCFscaled.clip = [funNErb(0.02) funNErb(20)];
+pCFscaled.colormapType = 'normal';
+pCFscaled.colormap = jet(256);
+else
+  disp(sprintf('(pRFFit) Unknown voxelScale: %s',fitParams.voxelScale));
+end
+
 
 % create the paramteres for the rfHalfWidth overlay
 % deal with the sigma.
@@ -208,7 +223,8 @@ for scanNum = params.scanNum
   pRFAnal.d{scanNum}.ver = pRFVersion;
   pRFAnal.d{scanNum}.linearCoords = [];
   pRFAnal.d{scanNum}.params = [];
-
+  pRFAnal.d{scanNum}.fitParams = [];
+  
   % get some information from pRFFit that will be used again in
   % the fits, including concatInfo, stim, prefit, etc.
   fit = pRF_auditoryFit(v,scanNum,[],[],[],'fitTypeParams',params.pRFFit,'returnPrefit',true);
@@ -223,6 +239,7 @@ for scanNum = params.scanNum
   prefit = fit.prefit;
   paramsInfo = fit.paramsInfo;
   pRFAnal.d{scanNum}.paramsInfo = paramsInfo;
+  pRFAnal.d{scanNum}.fitParams = fit.fitParams;
   % grab all these fields and stick them onto a structure called paramsInfo
   % preallocate some space
   rawParams = nan(fit.nParams,n);
@@ -337,7 +354,8 @@ for scanNum = params.scanNum
   
   pRFAnal.d{scanNum}.params = rawParams;
   pRFAnal.d{scanNum}.r = r;
-
+  pRFAnal.d{scanNum}.r2 = thisr2;
+  
   iScan = find(params.scanNum == scanNum);
   thisParams.scanNum = params.scanNum(iScan);
   r2.params{scanNum} = thisParams;
