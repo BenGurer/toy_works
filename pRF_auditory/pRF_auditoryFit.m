@@ -579,7 +579,7 @@ function p = getFitParams(params,fitParams)
     p.std = params(3);
     % use a fixed single gaussian
     p.canonical.type = 'gamma';
-    p.canonical.lengthInSeconds = 25;
+    p.canonical.lengthInSeconds = 16;
     p.canonical.timelag = fitParams.timelag;
     p.canonical.tau = fitParams.tau;
     p.canonical.exponent = fitParams.exponent;

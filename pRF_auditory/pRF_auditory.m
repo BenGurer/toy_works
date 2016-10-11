@@ -30,6 +30,8 @@
 % space initial params on model scale
 % calculate the sigma search range. min = response to one stimulus. max =
 % respond to all equally/broadband
+% change to stimulus domain - just change when creating stim.x
+% could add option to set hrf lendth in seconds
 function [v d] = pRF_auditory(v,params,varargin)
 
 % check arguments
@@ -90,7 +92,7 @@ r2.colormap = hot(312);
 r2.colormap = r2.colormap(end-255:end,:);
 r2.alpha = 1;
 r2.colormapType = 'setRangeToMax';
-r2.interrogator = 'pRFPlot_auditory';
+r2.interrogator = 'pRFPlot_HDRauditory';
 r2.mergeFunction = 'pRFMergeParams';
 
 % at this point we need to decide on which parameters we want to estimate

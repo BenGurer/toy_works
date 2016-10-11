@@ -144,6 +144,8 @@ paramsInfo{end+1} = {'tau2',1.2,'minmax=[0 inf]','incdec=[-0.1 0.1]','The tau (w
 paramsInfo{end+1} = {'exponent2',11,'minmax=[0 inf]','incdec=[-1 1]','The exponent of the 2nd gamma function.','contingent=diffOfGamma'};
 paramsInfo{end+1} = {'dispHDR',0,'type=pushbutton','buttonString=Display HDR','Display the HDR with the current parameters','callback',@pRFGUIDispHDR,'passParams=1'};
 %% stimulus image params
+
+paramsInfo{end+1} = {'dispFit',0,'type=checkbox','Display fit of model to each time series'};
 paramsInfo{end+1} = {'saveStimImage',0,'type=checkbox','Save the stim image back to the stimfile. This is useful in that the next time the stim image will not have to be recomputed but can be directly read from the file (it will get saved as a variable called stimImage'};
 paramsInfo{end+1} = {'recomputeStimImage',0,'type=checkbox','Even if there is an already computed stim image (see saveStimImage) above, this will force a recompute of the image. This is useful if there is an update to the code that creates the stim images and need to make sure that the stim image is recreated'};
 paramsInfo{end+1} = {'applyFiltering',1,'type=checkbox','If set to 1 then applies the same filtering that concatenation does to the model. Does not do any filtering applied by averages. If this is not a concat then does nothing besides mean subtraction. If turned off, will still do mean substraction on model.'};
