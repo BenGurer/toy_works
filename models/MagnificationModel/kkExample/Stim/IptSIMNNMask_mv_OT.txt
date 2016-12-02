@@ -1,0 +1,16 @@
+ePars(1) = struct('Ear',1,'SigF',0.5,'SigL',45,'MaskG',0);
+ePars(2) = struct('Ear',1,'SigF',1,'SigL',48.3333,'MaskG',0);
+ePars(3) = struct('Ear',1,'SigF',2,'SigL',43.3333,'MaskG',0);
+ePars(4) = struct('Ear',1,'SigF',4,'SigL',29.5833,'MaskG',0);
+ePars(5) = struct('Ear',1,'SigF',0.5,'SigL',45,'MaskG',0.1);
+ePars(6) = struct('Ear',1,'SigF',1,'SigL',48.3333,'MaskG',0.1);
+ePars(7) = struct('Ear',1,'SigF',2,'SigL',43.3333,'MaskG',0.1);
+ePars(8) = struct('Ear',1,'SigF',4,'SigL',29.5833,'MaskG',0.1);
+ePars(9) = struct('Ear',1,'SigF',0.5,'SigL',45,'MaskG',0.2);
+ePars(10) = struct('Ear',1,'SigF',1,'SigL',48.3333,'MaskG',0.2);
+ePars(11) = struct('Ear',1,'SigF',2,'SigL',43.3333,'MaskG',0.2);
+ePars(12) = struct('Ear',1,'SigF',4,'SigL',29.5833,'MaskG',0.2);
+ePars(13) = struct('Ear',1,'SigF',0.5,'SigL',45,'MaskG',0.3);
+ePars(14) = struct('Ear',1,'SigF',1,'SigL',48.3333,'MaskG',0.3);
+ePars(15) = struct('Ear',1,'SigF',2,'SigL',43.3333,'MaskG',0.3);
+ePars(16) = struct('Ear',1,'SigF',4,'SigL',29.5833,'MaskG',0.3);

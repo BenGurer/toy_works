@@ -681,6 +681,9 @@ rfModel = [];
 
 % convert stimulus spacing to voxel magnifcation domain
 if any(strcmp(fitParams.voxelScale,{'lin'}))
+    x = fitParams.stimX;
+    mu = params.x;
+    sigma = params.std;
 elseif any(strcmp(fitParams.voxelScale,{'log'}))
     x = log10(fitParams.stimX);
     mu = log10(params.x);
