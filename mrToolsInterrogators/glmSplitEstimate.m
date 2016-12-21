@@ -1,16 +1,24 @@
 function glmSplitEstimate
 
 dataDir = 'N:\data\CorticalMagnification\03644_012\';
-fileNameScanA = 'eGLM_GLM Double Gamma 8 bins SparseMotionComp_scanNum=1LeftPAC.mat';
-fileNameScanB = 'eGLM_GLM Double Gamma 8 bins SparseMotionComp_scanNum=3LeftPAC.mat';
+% fileNameScanA = 'eGLM_GLM Double Gamma 8 bins SparseMotionComp_scanNum=1LeftPAC.mat';
+% fileNameScanB = 'eGLM_GLM Double Gamma 8 bins SparseMotionComp_scanNum=3LeftPAC.mat';
 % 
 % fileNameScanA = 'eGLM_GLM Double Gamma 8 binsMotionComp_scanNum=2LeftPAC.mat';
 % fileNameScanB = 'eGLM_GLM Double Gamma 8 binsMotionComp_scanNum=4LeftPAC.mat';
-fileNameScanA ='eGLM_GLM Double Gamma 8 bins SparseMotionComp_scanNum=1PAC.mat';
-fileNameScanB ='eGLM_GLM Double Gamma 8 bins SparseMotionComp_scanNum=3PAC.mat';
+
+
+% fileNameScanA ='eGLM_GLM Double Gamma 8 bins SparseMotionComp_scanNum=1PAC.mat';
+% fileNameScanB ='eGLM_GLM Double Gamma 8 bins SparseMotionComp_scanNum=3PAC.mat';
 
 % fileNameScanA ='eGLM_GLM Double Gamma 8 binsMotionComp_scanNum=2PAC.mat';
 % fileNameScanB ='eGLM_GLM Double Gamma 8 binsMotionComp_scanNum=4PAC.mat';
+
+fileNameScanA ='eGLM_GLM Double Gamma SparseMotionComp_scanNum=1PAC.mat';
+fileNameScanB ='eGLM_GLM Double Gamma SparseMotionComp_scanNum=3PAC.mat';
+
+% fileNameScanA ='eGLM_GLM Double Gamma ContMotionComp_scanNum=2PAC.mat';
+% fileNameScanB ='eGLM_GLM Double Gamma ContMotionComp_scanNum=4PAC.mat';
 
 dScanA = load([dataDir fileNameScanA]);
 dScanB = load([dataDir fileNameScanB]);
@@ -81,7 +89,7 @@ ROISte = (ROISteC + ROISteD) ./2;
 ROISteAv = (ROISteAvC + ROISteAvD) ./2;
 ROIbetaCountSplit = ROIbetaSplitCountC + ROIbetaSplitCountD;
 
-ROIbetasNorm = ROIbetas ./ repmat(max(ROIbetas,2),1,length(ROIbetas));
+ROIbetasNorm = ROIbetas ./ repmat(max(ROIbetas')',1,size(ROIbetas,1));
 
 ROIbetasUncorrected = (ROIbetasA + ROIbetasB) ./2;
 ROISteUncorrected = (ROISteA + ROISteB) ./2;
@@ -91,22 +99,25 @@ ROIbetaCountUncorrected= ROIbetaCountA + ROIbetaCountB;
 %% make legend lables
 ROIbetaslabel = cell(size(ROIbetas,1),1);
 for i = 1:size(ROIbetas,1)
-ROIbetaslabel{i} = ['beta = ' num2str(i) ' AvSte = ' num2str(ROISteAv(i))];
+% ROIbetaslabel{i} = ['beta = ' num2str(i) ' AvSte = ' num2str(ROISteAv(i))];
+
+ROIbetaslabel{i} = ['beta = ' num2str(i)];
 end
-figure('name',fileNameScanA);
-subplot(2,2,1)
 
 %% Beta Estimates - Split data
+figure('name',fileNameScanA);
+subplot(2,2,1)
 for i = 1:size(ROIbetas,1)
 % errorbar(ROIbetas(i,:),ROISte(i,:),'LineWidth',2)
 plot(ROIbetas(i,:),'LineWidth',2)
 set(gca,'ColorOrder',jet(size(ROIbetas,1)))
+ylim([min(min(ROIbetas)) max(max(ROIbetas))]);
 xlabel('Beta ID')
 ylabel('Mean Response Level')
 hold on
 end
 plot([1 size(ROIbetas,1)],[0 0],'--k')
-legend(ROIbetaslabel)
+legend(ROIbetaslabel,'Location','southeastoutside')
 
 %% normalised Beta Estimates - Split data
 subplot(2,2,2)
@@ -115,7 +126,7 @@ for i = 1:size(ROIbetas,1)
 plot(ROIbetasNorm(i,:),'LineWidth',2)
 set(gca,'ColorOrder',jet(size(ROIbetas,1)))
 xlim([1 size(ROIbetas,1)]);
-ylim([min(ROIbetasNorm) max(ROIbetasNorm)]);
+ylim([min(min(ROIbetasNorm)) max(max(ROIbetasNorm))]);
 xlabel('Beta ID')
 ylabel('Mean Response Level')
 hold on
@@ -125,9 +136,9 @@ plot([1 size(ROIbetas,1)],[0 0],'--k')
 
 %% plot number of voxels responsing max to each beta
 subplot(2,2,3)
-plot(ROIbetaCountSplit)
+plot(ROIbetaCountSplit,'LineWidth',2)
 hold on
-plot(ROIbetaCountUncorrected)
+plot(ROIbetaCountUncorrected,'--','LineWidth',2)
 title('Number of Voxels with Max Response to Beta')
 xlabel('Beta ID')
 ylabel('Voxel Max Count')
@@ -151,7 +162,7 @@ plot([1 size(ROIbetas,1)],[0 0],'--k')
 % legend(ROIbetaslabelUncorrected)
 
 %% plot beta tuning width estimates
-figure
+figure('name',fileNameScanA);
 subIndex = [size(ROIbetas,1)/(size(ROIbetas,1)/2) size(ROIbetas,1)/2];
 for i = 1:size(ROIbetas,1)
 subplot(subIndex(1),subIndex(2),i)
@@ -159,7 +170,7 @@ errorbar(ROIbetas(i,:),ROISte(i,:),'LineWidth',1)
 % plot(ROIbetaSum(i,:),'LineWidth',2)
 set(gca,'ColorOrder',jet(size(ROIbetas,1)))
 xlim([1 size(ROIbetas,1)]);
-ylim([min(ROIbetasNorm) max(ROIbetasNorm)]);
+ylim([min(min(ROIbetas))-min(min(ROISte)) max(max(ROIbetas))+max(max(ROISte))]);
 xlabel(['Beta ID = ' num2str(i)])
 ylabel('Sum Response Level')
 hold on
