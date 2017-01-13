@@ -3,7 +3,7 @@
 
 %% RUN FREESURFER FIRST
 
-iSubj = 4;
+iSubj = 5;
 
 epiDims = [128 128 24 361]; % dims of contin
 
@@ -38,7 +38,7 @@ wholeheadPSIR{2} = '16';
 distCorrectionRefSparse{2} = {'9','10'};
 distCorrectionRefCont{2} = {'11','12'};
 freeSurferName{2} = '12013_001';
-sparseScans{2} =  {'7','14'}; 
+sparseScans{2} =  {'7','14'};
 contScans{2} =  {'8','15'};
 
 subjects{3} = '12022_001';
@@ -50,7 +50,7 @@ wholeheadPSIR{3} = '17';
 distCorrectionRefSparse{3} = {'9','10'};
 distCorrectionRefCont{3} = {'11','12'};
 freeSurferName{3} = '12022_001';
-sparseScans{3} =  {'7','15'}; 
+sparseScans{3} =  {'7','15'};
 contScans{3} =  {'8','16'};
 
 subjects{4} = '12023_001';
@@ -62,7 +62,7 @@ wholeheadPSIR{4} = '17';
 distCorrectionRefSparse{4} = {'10','11'};
 distCorrectionRefCont{4} = {'12','13'};
 freeSurferName{4} = '12023_001';
-sparseScans{4} =  {'8','15'}; 
+sparseScans{4} =  {'8','15'};
 contScans{4} =  {'9','16'};
 
 subjects{5} = '11108_006';
@@ -74,7 +74,7 @@ wholeheadPSIR{5} = '20';
 distCorrectionRefSparse{5} = {'13','14'};
 distCorrectionRefCont{5} = {'15','16'};
 freeSurferName{5} = '11108_006';
-sparseScans{5} =  {'8','18'}; 
+sparseScans{5} =  {'8','18'};
 contScans{5} =  {'12','19'};
 
 subjects{6} = '11020_002';
@@ -86,11 +86,26 @@ wholeheadPSIR{6} = '19';
 distCorrectionRefSparse{6} = {'10','11'};
 distCorrectionRefCont{6} = {'12','13'};
 freeSurferName{6} = '11020_002';
-sparseScans{6} =  {'08','15'}; 
+sparseScans{6} =  {'08','15'};
 contScans{6} =  {'09','18'};
 
 
 cd([dataDir '/scanner/' subjects{iSubj}])
+
+    %% check for filenames below 10 and add a zero before the number - make sure linking of stim files works later
+    % str =
+    % [token, remain] = strtok(str, ...)
+scanFiles = dir;
+for i = 1:length(scanFiles)
+    str = scanFiles(i).name;
+    strParts = strsplit(str,'_');
+    checkScanNum = char(strParts(4));
+    if 10>str2num(checkScanNum)
+        
+    end
+end
+    
+  
 
 system('ptoa -f -q -nii *.PAR')
 % or try
@@ -104,21 +119,21 @@ if ~isempty(wholeheadPSIR{iSubj})
     cd(fullfile(dataDir,'Anatomy/originals/',freeSurferName{iSubj}));
     system(sprintf('PSIR_script.sh . %s_%s_1 %s',psirNiftiBaseName{iSubj},wholeheadPSIR{iSubj},freeSurferName{iSubj}));
     %RUN RECON-AL_HIGHRES DIRECTLY IN TERMINAL
-    fprintf(['recon-all_highres ' freeSurferName{iSubj} ' ' fullfile(dataDir,'Anatomy','originals',freeSurferName{iSubj}) '/' freeSurferName{iSubj} '_PSIR_pos_-.7_thr\n'])
-%     recon-all -all -s $SUBJECT -hires -i $IMAGE -expert $EXPERT_FILE
-system(sprintf('fslmaths %s_PSIR_pos_-.7_thr -mul 200 %s_PSIR_pos_-.7_thr_200',freeSurferName{iSubj},freeSurferName{iSubj})); 
-% fprintf(['recon-all -all -s ' freeSurferName{iSubj} ' -hires -i ' fullfile(dataDir,'Anatomy','originals',freeSurferName{iSubj}) '/' freeSurferName{iSubj} '_PSIR_pos_-.7_thr.nii' ' -expert ' fullfile(dataDir,'Anatomy','freesurfer','high_res_options.txt\n')])
-fprintf(['recon-all -all -s ' freeSurferName{iSubj} ' -hires -i ' fullfile(dataDir,'Anatomy','originals',freeSurferName{iSubj}) '/' freeSurferName{iSubj} '_PSIR_pos_-.7_thr_200.nii' ' -expert ' fullfile(dataDir,'Anatomy','freesurfer','high_res_options.txt\n')])
-
+%     fprintf(['recon-all_highres ' freeSurferName{iSubj} ' ' fullfile(dataDir,'Anatomy','originals',freeSurferName{iSubj}) '/' freeSurferName{iSubj} '_PSIR_pos_-.7_thr\n'])
+    %     recon-all -all -s $SUBJECT -hires -i $IMAGE -expert $EXPERT_FILE
+    system(sprintf('fslmaths %s_PSIR_pos_-.7_thr -mul 200 %s_PSIR_pos_-.7_thr_200',freeSurferName{iSubj},freeSurferName{iSubj}));
+    % fprintf(['recon-all -all -s ' freeSurferName{iSubj} ' -hires -i ' fullfile(dataDir,'Anatomy','originals',freeSurferName{iSubj}) '/' freeSurferName{iSubj} '_PSIR_pos_-.7_thr.nii' ' -expert ' fullfile(dataDir,'Anatomy','freesurfer','high_res_options.txt\n')])
+    fprintf(['recon-all -all -s ' freeSurferName{iSubj} ' -hires -i ' fullfile(dataDir,'Anatomy','originals',freeSurferName{iSubj}) '/' freeSurferName{iSubj} '_PSIR_pos_-.7_thr_200.nii' ' -expert ' fullfile(dataDir,'Anatomy','freesurfer','high_res_options.txt\n')])
+    
 end
 
 correctDistortions = 1;
 if correctDistortions
-mkdir(fullfile(dataDir,studyDir,subjects{iSubj}));
-cd(fullfile(dataDir,studyDir,subjects{iSubj}));
+    mkdir(fullfile(dataDir,studyDir,subjects{iSubj}));
+    cd(fullfile(dataDir,studyDir,subjects{iSubj}));
 else
-mkdir(fullfile(dataDir,studyDir,subjects{iSubj},'_nonDistCorrected'));
-cd(fullfile(dataDir,studyDir,[subjects{iSubj} '_nonDistCorrected']));   
+    mkdir(fullfile(dataDir,studyDir,subjects{iSubj},'_nonDistCorrected'));
+    cd(fullfile(dataDir,studyDir,[subjects{iSubj} '_nonDistCorrected']));
 end
 
 
@@ -128,7 +143,7 @@ mkdir('Anatomy')
 mkdir('Raw')
 mkdir('Raw/TSeries')
 if correctDistortions
-mkdir('Distorted')
+    mkdir('Distorted')
 end
 % mkdir ('T2_star')
 
@@ -138,60 +153,62 @@ movefile(fullfile(dataDir,'scanner',subjects{iSubj},[niftiBaseName{iSubj} T2star
 
 %% Move the functional scans
 if correctDistortions
-movefile(fullfile(dataDir,'scanner',subjects{iSubj},'*.nii'),fullfile(dataDir,studyDir,subjects{iSubj},'Distorted'))
+    movefile(fullfile(dataDir,'scanner',subjects{iSubj},'*.nii'),fullfile(dataDir,studyDir,subjects{iSubj},'Distorted'))
+    
+    %% if distortion correction TEs are not interleaved
+    cd('Distorted')
 
-%% if distortion correction TEs are not interleaved
-cd('Distorted')
-check = 1;
-for n = 1:2
-    if n == 1
-        distCorrectionRef = distCorrectionRefSparse{iSubj};
-    elseif n ==2
-        distCorrectionRef = distCorrectionRefCont{iSubj};
-    end
-if length(distCorrectionRef) == 2
-    for i = 1:2
-        system(['fslsplit ' niftiBaseName{iSubj} distCorrectionRef{i} '_1_modulus ' niftiBaseName{iSubj} distCorrectionRef{i} '_modulus ']);
-        system(['fslsplit ' niftiBaseName{iSubj} distCorrectionRef{i} '_1_phase ' niftiBaseName{iSubj} distCorrectionRef{i} '_phase ']);
-    end
-    fslmergeArgMod = [];
-    fslmergeArgPhase = [];
-    for i = 0:4
-        fslmergeArgMod = [fslmergeArgMod niftiBaseName{iSubj} distCorrectionRef{1} '_modulus' '000' num2str(i) ' ' niftiBaseName{iSubj} distCorrectionRef{2} '_modulus' '000' num2str(i) ' '];
-        fslmergeArgPhase = [fslmergeArgPhase niftiBaseName{iSubj} distCorrectionRef{1} '_phase' '000' num2str(i) ' ' niftiBaseName{iSubj} distCorrectionRef{2} '_phase' '000' num2str(i) ' '];
+    
+    check = 1;
+    for n = 1:2
+        if n == 1
+            distCorrectionRef = distCorrectionRefSparse{iSubj};
+        elseif n ==2
+            distCorrectionRef = distCorrectionRefCont{iSubj};
+        end
+        if length(distCorrectionRef) == 2
+            for i = 1:2
+                system(['fslsplit ' niftiBaseName{iSubj} distCorrectionRef{i} '_1_modulus ' niftiBaseName{iSubj} distCorrectionRef{i} '_modulus ']);
+                system(['fslsplit ' niftiBaseName{iSubj} distCorrectionRef{i} '_1_phase ' niftiBaseName{iSubj} distCorrectionRef{i} '_phase ']);
+            end
+            fslmergeArgMod = [];
+            fslmergeArgPhase = [];
+            for i = 0:4
+                fslmergeArgMod = [fslmergeArgMod niftiBaseName{iSubj} distCorrectionRef{1} '_modulus' '000' num2str(i) ' ' niftiBaseName{iSubj} distCorrectionRef{2} '_modulus' '000' num2str(i) ' '];
+                fslmergeArgPhase = [fslmergeArgPhase niftiBaseName{iSubj} distCorrectionRef{1} '_phase' '000' num2str(i) ' ' niftiBaseName{iSubj} distCorrectionRef{2} '_phase' '000' num2str(i) ' '];
+                
+            end
+            system(['fslmerge -t ' niftiBaseName{iSubj} distCorrectionRef{1} '_' distCorrectionRef{2} '_modulus ' fslmergeArgMod]);
+            system(['fslmerge -t ' niftiBaseName{iSubj} distCorrectionRef{1} '_' distCorrectionRef{2} '_phase ' fslmergeArgPhase]);
+        end
         
+        %% take first fram
+        system(['fslroi ' niftiBaseName{iSubj} distCorrectionRef{1} '_1_modulus ' niftiBaseName{iSubj} distCorrectionRef{1} '_modulus_firstFrame 0 1']);
+        %%$ Skull strip
+        system(['bet ' niftiBaseName{iSubj} distCorrectionRef{1} '_modulus_firstFrame ' niftiBaseName{iSubj} distCorrectionRef{1} '_modulus_firstFrame_brain -f .1 -Z'],'-echo');
+        
+        if check == 1
+            system(['fslview '  niftiBaseName{iSubj} distCorrectionRef{1} '_modulus_firstFrame ' niftiBaseName{iSubj} distCorrectionRef{1} '_modulus_firstFrame_brain']);
+            %% find wait for keyboard or use input
+        end
     end
-    system(['fslmerge -t ' niftiBaseName{iSubj} distCorrectionRef{1} '_' distCorrectionRef{2} '_modulus ' fslmergeArgMod]);
-    system(['fslmerge -t ' niftiBaseName{iSubj} distCorrectionRef{1} '_' distCorrectionRef{2} '_phase ' fslmergeArgPhase]);
-end
-
-%% take first fram
-system(['fslroi ' niftiBaseName{iSubj} distCorrectionRef{1} '_1_modulus ' niftiBaseName{iSubj} distCorrectionRef{1} '_modulus_firstFrame 0 1']);
-%%$ Skull strip
-system(['bet ' niftiBaseName{iSubj} distCorrectionRef{1} '_modulus_firstFrame ' niftiBaseName{iSubj} distCorrectionRef{1} '_modulus_firstFrame_brain -f .1 -Z'],'-echo');
-
-if check == 1
-   system(['fslview '  niftiBaseName{iSubj} distCorrectionRef{1} '_modulus_firstFrame ' niftiBaseName{iSubj} distCorrectionRef{1} '_modulus_firstFrame_brain']);
-     %% find wait for keyboard or use input
-end
-end
-
-
-%% now do distortion correction
-% keyboard
-% opt = GetDistortionCorrectionParams(subjectID,distCorrectionScanNum,scanNum,refB0vol)
-optSparseFirst = GetDistortionCorrectionParams(subjects{iSubj},niftiBaseName{iSubj},'Sparse',distCorrectionRefSparse{iSubj},sparseScans{iSubj}{1, 1},'last');
-optSparseLast = GetDistortionCorrectionParams(subjects{iSubj},niftiBaseName{iSubj},'Sparse',distCorrectionRefSparse{iSubj},sparseScans{iSubj}{1, 2},'first');
-undistortProgram(optSparseFirst);
-undistortProgram(optSparseLast);
-optContFirst = GetDistortionCorrectionParams(subjects{iSubj},niftiBaseName{iSubj},'Cont',distCorrectionRefCont{iSubj},contScans{iSubj}{1, 1},'last');
-optContLast = GetDistortionCorrectionParams(subjects{iSubj},niftiBaseName{iSubj},'Cont',distCorrectionRefCont{iSubj},contScans{iSubj}{1, 2},'first');
-undistortProgram(optContFirst);
-undistortProgram(optContLast);
-cd('..')
-
-%% copy distortion corrected tseries to raw time series folder
-system('cp Distorted/dynB0map/*dynMod_U.nii Raw/TSeries/');
+    
+    
+    %% now do distortion correction
+    % keyboard
+    % opt = GetDistortionCorrectionParams(subjectID,distCorrectionScanNum,scanNum,refB0vol)
+    optSparseFirst = GetDistortionCorrectionParams(subjects{iSubj},niftiBaseName{iSubj},'Sparse',distCorrectionRefSparse{iSubj},sparseScans{iSubj}{1, 1},'last');
+    optSparseLast = GetDistortionCorrectionParams(subjects{iSubj},niftiBaseName{iSubj},'Sparse',distCorrectionRefSparse{iSubj},sparseScans{iSubj}{1, 2},'first');
+    undistortProgram(optSparseFirst);
+    undistortProgram(optSparseLast);
+    optContFirst = GetDistortionCorrectionParams(subjects{iSubj},niftiBaseName{iSubj},'Cont',distCorrectionRefCont{iSubj},contScans{iSubj}{1, 1},'last');
+    optContLast = GetDistortionCorrectionParams(subjects{iSubj},niftiBaseName{iSubj},'Cont',distCorrectionRefCont{iSubj},contScans{iSubj}{1, 2},'first');
+    undistortProgram(optContFirst);
+    undistortProgram(optContLast);
+    cd('..')
+    
+    %% copy distortion corrected tseries to raw time series folder
+    system('cp Distorted/dynB0map/*dynMod_U.nii Raw/TSeries/');
 end
 
 % crop last frame of reference EPI
@@ -199,7 +216,7 @@ end
 cd Raw/TSeries/
 
 
-system(['fslroi ' niftiBaseName{iSubj} num2str(refScan(iSubj)) '_1_modulus_dynMod_U.nii ' lastFrameEPI ' num2str(epiDims(4)-1) ' 1']);
+system(['fslroi ' niftiBaseName{iSubj} num2str(refScan(iSubj)) '_1_modulus_dynMod_U.nii lastFrameEPI ' num2str(epiDims(4)-1) ' 1']);
 
 !mv lastFrameEPI.nii ../../FNIRT
 cd ../../
@@ -296,8 +313,8 @@ cd ..
 logFiles = dir('Etc/*.mylog.mat');
 logFiles = {logFiles(:).name};
 for iFile = 1:length(logFiles)
-  fprintf(1,['Linking ' logFiles{iFile} ' to Group Raw, scan ' num2str(viewGet(thisView,'tseriesFile',iFile,1)) '\n']);
-  thisView = viewSet(thisView,'stimfilename',logFiles{iFile}, iFile,1);
+    fprintf(1,['Linking ' logFiles{iFile} ' to Group Raw, scan ' num2str(viewGet(thisView,'tseriesFile',iFile,1)) '\n']);
+    thisView = viewSet(thisView,'stimfilename',logFiles{iFile}, iFile,1);
 end
 
 %load reference EPI as anatomy
@@ -318,7 +335,7 @@ mrLoadRet
 % THE REST REQUIRES THE FLAT MAPS
 keyboard
 
-%IMPORT  FREESURFER SURFACE 
+%IMPORT  FREESURFER SURFACE
 cd(fullfile(dataDir,'Anatomy/freesurfer/subjects/',freeSurferName{iSubj}));
 % mlrImportFreeSurfer('defaultParams=1','volumeCropSize=[336 336 336]'); % this will depend on the resolution of the PSIR
 mlrImportFreeSurfer('defaultParams=1','volumeCropSize=[240 240 175]');
@@ -326,8 +343,8 @@ mlrImportFreeSurfer('defaultParams=1','volumeCropSize=[240 240 175]');
 %apply FNIRT warping coefficient to surfaces
 cd(fullfile(dataDir,studyDir,subjects{iSubj}));
 fslApplyWarpSurfOFF(fullfile(dataDir,studyDir,subjects{iSubj},'FNIRT/',[niftiBaseName{iSubj} T2star{iSubj} '_1_modulus_crop_resampled_2_lastFrameEPI_warpcoef.nii']),...
-                    fullfile(dataDir,studyDir,subjects{iSubj},'FNIRT/','lastFrameEPI.nii'),...
-                    fullfile(dataDir,'Anatomy/freesurfer/subjects/',freeSurferName{iSubj},'surfRelax',[freeSurferName{iSubj} '_mprage_pp.nii']),...
-                    subjects{iSubj});
-                
+    fullfile(dataDir,studyDir,subjects{iSubj},'FNIRT/','lastFrameEPI.nii'),...
+    fullfile(dataDir,'Anatomy/freesurfer/subjects/',freeSurferName{iSubj},'surfRelax',[freeSurferName{iSubj} '_mprage_pp.nii']),...
+    subjects{iSubj});
+
 % add how to do freesurfer stuff
