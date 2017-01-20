@@ -1,8 +1,0 @@
-ePars(1) = struct('Ear',1,'MaskG',0,'SigF',30,'SigL',1);
-ePars(2) = struct('Ear',1,'MaskG',0,'SigF',23.75,'SigL',4);
-ePars(3) = struct('Ear',1,'MaskG',0.1,'SigF',30,'SigL',1);
-ePars(4) = struct('Ear',1,'MaskG',0.1,'SigF',23.75,'SigL',4);
-ePars(5) = struct('Ear',1,'MaskG',0.2,'SigF',30,'SigL',1);
-ePars(6) = struct('Ear',1,'MaskG',0.2,'SigF',23.75,'SigL',4);
-ePars(7) = struct('Ear',1,'MaskG',0.3,'SigF',30,'SigL',1);
-ePars(8) = struct('Ear',1,'MaskG',0.3,'SigF',23.75,'SigL',4);

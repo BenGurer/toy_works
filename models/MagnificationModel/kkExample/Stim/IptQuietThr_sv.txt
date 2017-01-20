@@ -1,2 +1,0 @@
-ePars(1) = struct('Ear',1,'MaskG',NaN,'MaskL',0,'SigF',1);
-ePars(2) = struct('Ear',1,'MaskG',NaN,'MaskL',0,'SigF',4);
