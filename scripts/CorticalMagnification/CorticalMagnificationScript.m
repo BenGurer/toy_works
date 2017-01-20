@@ -3,7 +3,7 @@
 
 %% RUN FREESURFER FIRST
 
-iSubj = 5;
+iSubj = 6;
 
 epiDims = [128 128 24 361]; % dims of contin
 
@@ -21,7 +21,7 @@ studyDir = 'CorticalMagnification';
 subjects{1} = '03644_012';
 niftiBaseName{1} = 'pRFpilot2_';
 T2star{1} = '16';
-refScan(1) = 15; % scan before t2 structural
+refScan{1} = '15'; % scan before t2 structural
 wholeheadPSIR{1} = [];
 distCorrectionRefSparse{1} = {'17','18'};
 distCorrectionRefCont{2} = {'20','21'};
@@ -33,7 +33,7 @@ subjects{2} = '12013_001';
 niftiBaseName{2} = 'cm_12013_001_';
 psirNiftiBaseName{2} = 'cm_12013_001';
 T2star{2} = '13';
-refScan(2) = 8; % scan before t2 structural
+refScan{2} = '8'; % scan before t2 structural
 wholeheadPSIR{2} = '16';
 distCorrectionRefSparse{2} = {'9','10'};
 distCorrectionRefCont{2} = {'11','12'};
@@ -45,7 +45,7 @@ subjects{3} = '12022_001';
 niftiBaseName{3} = 'cm_12022_001_';
 psirNiftiBaseName{3} = 'cm_12022_001';
 T2star{3} = '13';
-refScan(3) = 8; % scan before t2 structural
+refScan{3} = '8'; % scan before t2 structural
 wholeheadPSIR{3} = '17';
 distCorrectionRefSparse{3} = {'9','10'};
 distCorrectionRefCont{3} = {'11','12'};
@@ -57,7 +57,7 @@ subjects{4} = '12023_001';
 niftiBaseName{4} = 'cm_12023_001_';
 psirNiftiBaseName{4} = 'cm_12023_001';
 T2star{4} = '14';
-refScan(4) = 9; % scan before t2 structural
+refScan{4} = '9'; % scan before t2 structural
 wholeheadPSIR{4} = '17';
 distCorrectionRefSparse{4} = {'10','11'};
 distCorrectionRefCont{4} = {'12','13'};
@@ -69,19 +69,19 @@ subjects{5} = '11108_006';
 niftiBaseName{5} = 'cm_11108_006_';
 psirNiftiBaseName{5} = 'cm_11108_006';
 T2star{5} = '17';
-refScan(5) = 12; % scan before t2 structural
+refScan{5} = '12'; % scan before t2 structural
 wholeheadPSIR{5} = '20';
 distCorrectionRefSparse{5} = {'13','14'};
 distCorrectionRefCont{5} = {'15','16'};
 freeSurferName{5} = '11108_006';
-sparseScans{5} =  {'8','18'};
+sparseScans{5} =  {'08','18'};
 contScans{5} =  {'12','19'};
 
 subjects{6} = '11020_002';
 niftiBaseName{6} = 'cm_11020_002_';
 psirNiftiBaseName{6} = 'cm_11020_002';
 T2star{6} = '14';
-refScan(6) = 9; % scan before t2 structural
+refScan{6} = '09'; % scan before t2 structural
 wholeheadPSIR{6} = '19';
 distCorrectionRefSparse{6} = {'10','11'};
 distCorrectionRefCont{6} = {'12','13'};
@@ -96,18 +96,24 @@ cd([dataDir '/scanner/' subjects{iSubj}])
     % str =
     % [token, remain] = strtok(str, ...)
 scanFiles = dir;
-for i = 1:length(scanFiles)
-    str = scanFiles(i).name;
+for id = 1:length(scanFiles)
+    str = scanFiles(id).name;
     strParts = strsplit(str,'_');
-    checkScanNum = char(strParts(4));
-    if 10>str2num(checkScanNum)
-        
+    if length(strParts) > 1
+    if strcmp([char(strParts(2)) '_' char(strParts(3))],subjects{iSubj})
+        checkScanNum = char(strParts(4));
+        numStrParts = length(strParts);
+        if 10>str2num(checkScanNum) && numel(checkScanNum)==1
+            newName = [char(strParts(1)) '_' char(strParts(2)) '_' char(strParts(3)) '_' ['0' checkScanNum] '_' char(strParts(5))];
+            movefile(scanFiles(id).name,newName);
+        end
+    end
     end
 end
     
   
 
-system('ptoa -f -q -nii *.PAR')
+% system('ptoa -f -q -nii *.PAR')
 % or try
 !ptoa -f -q -nii *.PAR
 
@@ -216,7 +222,7 @@ end
 cd Raw/TSeries/
 
 
-system(['fslroi ' niftiBaseName{iSubj} num2str(refScan(iSubj)) '_1_modulus_dynMod_U.nii lastFrameEPI ' num2str(epiDims(4)-1) ' 1']);
+system(['fslroi ' niftiBaseName{iSubj} refScan{iSubj} '_1_modulus_dynMod_U.nii lastFrameEPI ' num2str(epiDims(4)-1) ' 1']);
 
 !mv lastFrameEPI.nii ../../FNIRT
 cd ../../
@@ -260,6 +266,7 @@ keyboard
 % for i = 1:length(scanList)
 % alignFunctional2HighResT2Star(sprintf('lastFrameEPI2%s_crop_resampled.affmat',T2starFile),[T2starFile '_crop.nii'],fullfile(dataDir,studyDir,subjects{iSubj},'Raw/TSeries',[niftiBaseName{iSubj} num2str(scanList(i)) '_1_modulus_dynMod_U.nii']));
 % end
+
 lastFrameNames = struct2cell(dir('lastFrameEPI*.nii'));
 lastFrameNames = lastFrameNames(1,:);
 alignFunctional2HighResT2Star(sprintf('lastFrameEPI2%s_crop_resampled.affmat',T2starFile),[T2starFile '_crop.nii'],lastFrameNames);
@@ -293,16 +300,16 @@ mrInit(sessionParams,groupParams,'makeReadme=0');
 
 %motion correction
 thisView = newView;
-refScanNum = viewGet(thisView,'scannum',sprintf('%s%02d_1_modulus_dynMod_U.nii',niftiBaseName{iSubj},refScan(iSubj)));
+refScanNum = viewGet(thisView,'scannum',sprintf('%s%s_1_modulus_dynMod_U.nii',niftiBaseName{iSubj},refScan{iSubj}));
 [thisView, motionCompParams] = motionComp(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(1:nScans)]);
 motionCompParams.baseFrame='last';
 motionCompParams.baseScan = refScanNum;
 [thisView, motionCompParams] = motionComp(thisView,motionCompParams);
 
 %concatenation
-thisView = viewSet(thisView,'curGroup','MotionComp');
-[thisView, concatParams] = concatTSeries(thisView,[],'defaultParams=1',['scanList=' mat2str(1:nScans)]);
-
+% thisView = viewSet(thisView,'curGroup','MotionComp');
+% [thisView, concatParams] = concatTSeries(thisView,[],'defaultParams=1',['scanList=' mat2str(1:nScans)]);
+% 
 
 %GLM analysis
 system(sprintf('cp %s/*.txt Etc/',fullfile(dataDir,'scanner',subjects{iSubj},'logFiles')));
@@ -325,8 +332,8 @@ thisView = loadAnat(thisView,'lastFrameEPI.nii',fullfile(dataDir,studyDir,subjec
 mrSaveView(thisView);
 deleteView(thisView);
 
-save('preProcessParams.mat','motionCompParams','concatParams');
-
+% save('preProcessParams.mat','motionCompParams','concatParams');
+save('preProcessParams.mat','motionCompParams');
 
 
 mrLoadRet
