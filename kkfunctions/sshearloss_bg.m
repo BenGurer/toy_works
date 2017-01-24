@@ -12,14 +12,30 @@ thr_HL = min(thr_HL,Thr_8);
 retSPL = xlsread('dBcalculator.xls','dB HL','A4:B14');
 thr_SPL = thr_HL+interp1(retSPL(:,1)/1000,retSPL(:,2),f,'linear');
 
-figure(2), clf
+[f_hz, ThresholdOfHearing_FreeField_db_SPL, ThresholdOfHearing_DiffuseField_db_SPL] = getThresholdOfHearing;
+[f_measured_hz, CriticalRatio] = getCriticalRatio_HawkinsAndStevens1950;
+W = 2*pi*f*1000;
+erb = 24.7*(4.37*f+1);
+% erb = 24.7 * (4.37 * f / 1000 + 1);
+k_bells = 10*(log10(2*pi*(erb*1000)));
+% k_bells = 10*log10(erb);
+
+
+figure, clf
 subplot(2,1,1), hold on
-plot(retSPL(:,1)/1000,retSPL(:,2),'ro-')
+semilogx(retSPL(:,1),retSPL(:,2),'ro-')
+semilogx(f_hz,ThresholdOfHearing_DiffuseField_db_SPL)
+semilogx(f_hz,ThresholdOfHearing_FreeField_db_SPL)
+semilogx(f_measured_hz,CriticalRatio)
+plot(f,k_bells,'k--')
+% plot(f,W,'b--')
+plot(f,erb,'g--')
 title('Threshold of audibility ANSI S3.6 - 1996')
 ylabel('dB SPL')
 subplot(2,1,2), hold on
 plot(f,thr_HL,'k--')
 plot(f,thr_SPL,'b-')
+
 legend('Thr in dB HL',...
     'Thr in dB SPL',...
     'Location','best')
