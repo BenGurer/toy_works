@@ -15,21 +15,13 @@ function simulateHearingLoss
 % dBHL values taken from BS EN ISO 389-2:1997 (125Hz to 8kHZ) and ISO 389-5:2006 (8kHz to 16kHz).
 % ERBs are calculated as per Glasberg and Moore (1990).
 
-f = 10.^(linspace(log10(20),log10(20000),10));
+f = 10.^(linspace(log10(20),log10(20000),100));
 
 %% Create masking noise
 % The masking noise aims to equalise the thresholds of hearing as a function of ERB. This means that stimuli presented above this masking noise will be of
 % the same dB Sensation Level ie same level above threshold of perception.
 
-CriticalRatio_int = getCriticalRatio_HawkinsAndStevens1950(f);
-ERB = getERB(f/1000);
 
-CriticalRatioPerERB = CriticalRatio_int-10*log10(ERB);
-CriticalRatio_Zwicker = 10*log10(10^(1/10)-1)*ones(size(f));
-
-Nee_lev = -10*log10(ERB);
-Nten_lev = -10*log10(ERB)-CriticalRatioPerERB;
-Nee_CR_Zwicker_lev = -10*log10(ERB)-CriticalRatio_Zwicker;
 
 
 %% Create hearing loss simulation masking noise
@@ -44,19 +36,39 @@ Threshold_dBSPL = Threshold_dBHL + RETSPL_int;
 figure
 plot(f,Threshold_dBSPL)
 hold on
-plot(f,RETSPL_int)
+plot(f,Threshold_dBHL)
+legend('Threshold in dB HL',...
+    'Threshold in dB SPL',...
+    'Location','best')
+set(gca,'XLim',[min(f) max(f)])
+title('Steeply sloping hearig loss according to screening crtiterion')
+xlabel('Frequency (kHz)') 
+ylabel('dB (HL/SPL)')
 
 figure
-plot(f,CriticalRatio_int,'r')
+plot(f,CriticalRatio_int,'k--')
 hold on
-plot(f,CriticalRatioPerERB,'b')
-plot(f,CriticalRatio_Zwicker,'g')
+plot(f,CriticalRatioPerERB,'r--')
+plot(f,CriticalRatio_Zwicker,'b--')
+legend('critical ratio (per Hz)',...
+    'critical ratio (per ERB)',...
+    'critical ratio (accroding to Zwicker)',...
+    'Location','best')
+xlabel('Frequency (kHz)') 
+ylabel('dB')
 
 figure
-plot(f,Nee_lev,'b')
+plot(f,Nee_lev,'k--')
 hold on
-plot(f,Nten_lev,'r')
-plot(f,Nee_CR_Zwicker_lev,'g')
+plot(f,Nten_lev,'r--')
+plot(f,Nee_CR_Zwicker_lev,'b--')
+
+legend('EE filter',...
+    'TEN filter (EE - CR)',...
+    'EE filter - Zwicker CR',...
+    'Location','best')
+xlabel('Frequency (kHz)') 
+ylabel('dB')
 
 % 
 % figure

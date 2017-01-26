@@ -32,9 +32,19 @@ RETSPL_8000_1600Hz = [19, 16, 20, 30.5, 37, 43.5, 53];
 % f = linspace(20,20000,20);
 
 figure
-plot(f_hz_measured_125_8000Hz,RETSPL_125_8000Hz,'g')
+plot(f_hz_measured_125_8000Hz,RETSPL_125_8000Hz,'ko-')
 hold on
-plot(f_hz_measured_8000_16000Hz,RETSPL_8000_1600Hz,'b')
+plot(f_hz_measured_8000_16000Hz,RETSPL_8000_1600Hz,'ko-')
 
 RETSPL_int = interp1([f_hz_measured_125_8000Hz f_hz_measured_8000_16000Hz(2:end)],[RETSPL_125_8000Hz RETSPL_8000_1600Hz(2:end)],f,'spline');
 plot(f,RETSPL_int,'r--')
+
+legend('Threshold - 125 - 8000 Hz',...
+    'Threshold - 8000 - 16000Hz',...
+    'Threshold - Interpolated',...
+    'Location','best')
+set(gca,'XLim',[min(f) max(f)])
+title('Threshold of Hearing - Inserts')
+xlabel('Frequency (kHz)') 
+ylabel('dB (SPL)')
+end

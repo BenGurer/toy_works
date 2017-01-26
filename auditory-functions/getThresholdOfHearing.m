@@ -1,6 +1,6 @@
-function [f_hz, ThresholdOfHearing_FreeField_db_SPL, ThresholdOfHearing_DiffuseField_db_SPL] = getThresholdOfHearing
+function [f_measured_hz, ThresholdOfHearing_FreeField_db_SPL, ThresholdOfHearing_DiffuseField_db_SPL] = getThresholdOfHearing
 
-f_hz = [20,25,31.5,40,50,63,80,100,125,160,200,250,315,400,500,630,750,...
+f_measured_hz = [20,25,31.5,40,50,63,80,100,125,160,200,250,315,400,500,630,750,...
     800,1000,1250,1500,1600,2000,2500,3000,3150,4000,5000,6000,6300,8000,...
     9000,10000,11200,12500,14000,16000,18000];
 
@@ -15,5 +15,12 @@ ThresholdOfHearing_DiffuseField_db_SPL = [78.1, 68.7, 59.5, 51.1, 44.0,...
     2.5, 6.8, 8.4, 9.8, 11.5, 14.4, 23.2, 43.7, nan];
 
 
-figure; semilogx(f_hz,ThresholdOfHearing_FreeField_db_SPL); hold on
-semilogx(f_hz,ThresholdOfHearing_DiffuseField_db_SPL); 
+figure; plot(f_measured_hz,ThresholdOfHearing_FreeField_db_SPL); hold on
+plot(f_measured_hz,ThresholdOfHearing_DiffuseField_db_SPL);
+legend('Threshold - Free Field',...
+    'Threshold - Diffuse Field',...
+    'Location','best')
+set(gca,'XLim',[min(f_measured_hz) max(f_measured_hz)])
+title('Threshold of Hearing - Free and Diffuse Field')
+xlabel('Frequency (Hz)') 
+ylabel('dB (SPL)')
