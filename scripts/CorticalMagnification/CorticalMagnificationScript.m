@@ -3,7 +3,7 @@
 
 %% RUN FREESURFER FIRST
 
-iSubj = 3;
+iSubj = 6;
 
 epiDims = [128 128 24 361]; % dims of contin
 
@@ -16,6 +16,8 @@ elseif isunix
 end
 studyDir = 'CorticalMagnification';
 
+sides = {'left','right'};
+Sides = {'Left','Right'};
 
 % Subject info
 subjects{1} = '03644_012';
@@ -42,18 +44,20 @@ sparseScans{2} =  {'7','14'};
 contScans{2} =  {'8','15'};
 
 subjects{3} = '12022_001';
+psirSubject{3} = '12022_001';
 niftiBaseName{3} = 'cm_12022_001_';
 psirNiftiBaseName{3} = 'cm_12022_001';
 T2star{3} = '13';
-refScan{3} = '8'; % scan before t2 structural
+refScan{3} = '08'; % scan before t2 structural
 wholeheadPSIR{3} = '17';
-distCorrectionRefSparse{3} = {'9','10'};
+distCorrectionRefSparse{3} = {'09','10'};
 distCorrectionRefCont{3} = {'11','12'};
 freeSurferName{3} = '12022_001';
 sparseScans{3} =  {'7','15'};
 contScans{3} =  {'8','16'};
 
 subjects{4} = '12023_001';
+psirSubject{4} = '12023_001';
 niftiBaseName{4} = 'cm_12023_001_';
 psirNiftiBaseName{4} = 'cm_12023_001';
 T2star{4} = '14';
@@ -251,6 +255,19 @@ keyboard
 % Click 'Compute Coarse Aligment' then
 % Click 'Compute fine Aligment'
 
+%% New - BET skull scrip removed sform matrix so:...
+% load cropped t2* as source then reload as destination
+% load cropped and stripped t2* as source
+% Click Manual Alignment-> Set Alignment to Identity
+% Translation -18 -18 0; 0 0 1
+% Save alignment to file
+% load PSIR .7_thr as destination
+% Compute Alignment->Advanced Alignment Menu
+% then select Reverse Contrast (T2*)
+% Click 'Compute Coarse Aligment' then % may not work so just do fine alignment
+% Click 'Compute fine Aligment'
+
+
 % once done
 % save alignment to file and files (structural T2* images of the SAME size)
 
@@ -306,10 +323,16 @@ motionCompParams.baseFrame='last';
 motionCompParams.baseScan = refScanNum;
 [thisView, motionCompParams] = motionComp(thisView,motionCompParams);
 
-%concatenation
-% thisView = viewSet(thisView,'curGroup','MotionComp');
-% [thisView, concatParams] = concatTSeries(thisView,[],'defaultParams=1',['scanList=' mat2str(1:nScans)]);
-% 
+%concatenation of sparse data
+thisView = viewSet(thisView,'curGroup','MotionComp');
+params = getConcatParams_withNewGroupName(thisView,'ConcatenationSparse','defaultParams=1',['scanList=' mat2str([1 3])]);
+[thisView, concatParamsSparse] = concatTSeries(thisView,params);
+% [thisView, concatParams] = concatTSeries(thisView,[],'defaultParams=1',['scanList=' mat2str([1 3])]);
+
+%concatenation of continuous data
+thisView = viewSet(thisView,'curGroup','MotionComp');
+params = getConcatParams_withNewGroupName(thisView,'ConcatenationCont','defaultParams=1',['scanList=' mat2str([2 4])]);
+[thisView, concatParamsCont] = concatTSeries(thisView,params);
 
 %GLM analysis
 system(sprintf('cp %s/*.txt Etc/',fullfile(dataDir,'scanner',subjects{iSubj},'logFiles')));
@@ -324,23 +347,128 @@ for iFile = 1:length(logFiles)
     thisView = viewSet(thisView,'stimfilename',logFiles{iFile}, iFile,1);
 end
 
+%delayS = 2.5
+%durationS = 2.5
+% stimDurationMode = 'From File'
+% stimDuration = []
+% supersamplingMode = 'Set value'
+% DesignSupersampling = 3
+% acquistionDelay = 0.75
+% numberContrasts = 0
+% numberFtests = 0
+% outputEstimatesAsOverlays = 1
+
+thisView = viewSet(thisView,'curGroup','ConcatenationSparse');
+[thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
+glmParams.hrfModel = 'hrfBoxcar';
+[thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
+glmParams.saveName = 'GLM_BoxCar';
+glmParams.hrfParams.description = 'GLM Box Car -Sparse Concat';
+glmParams.hrfParams.delayS =  2.5;
+glmParams.hrfParams.durationS = 2.5;
+
+%   glmParams.EVnames = {'A251Hz','A507Hz','A899Hz','A1501Hz','A2423Hz','A3839Hz','A6009Hz','A507P3839Hz','A899P3839Hz','A1501P3839Hz','A2423P3839Hz','A3839P3839Hz','P3839Hz'};
+%   glmParams.numberContrasts = 18;
+%   glmParams.contrasts(14:18,:) = [0 -1 0 0 0 0 0 1 0 0 0 0 0;...
+%                                   0 0 -1 0 0 0 0 0 1 0 0 0 0;...
+%                                   0 0 0 -1 0 0 0 0 0 1 0 0 0;...
+%                                   0 0 0 0 -1 0 0 0 0 0 1 0 0;...
+%                                   0 0 0 0 0 -1 0 0 0 0 0 1 0];
+%   glmParams.restrictions{1} = zeros(12,13);
+%   glmParams.restrictions{1}([1 14 27 40 53 66 79])=1;
+
+glmParams.scanParams{1}.stimDurationMode = 'fromFile';
+glmParams.scanParams{1}.supersamplingMode =  'Set value';
+glmParams.scanParams{1}.designSupersampling = 3;
+glmParams.scanParams{1}.acquisitionDelay = .75;
+glmParams.numberFtests = 1;
+glmParams.fTestNames{1} = 'fTest 1';
+glmParams.numberContrasts = 0;
+glmParams.parametricTests = 0;
+glmParams.outputEstimatesAsOverlays = 1; 
+[thisView, glmParams] = glmAnalysis(thisView,glmParams);
+
+%Tonotopy analysis
+[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:33])]);
+params.combineFunction='indexMax';
+params.nOutputOverlays=2;
+[thisView,params] = combineTransformOverlays(thisView,params);
+curOverlay=viewGet(thisView,'curOverlay');
+thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-1);
+% thisView = viewSet(thisView,'alphaOverlay',curOverlay,curOverlay-1);
+% thisView = viewSet(thisView,'alphaOverlayExponent',0,curOverlay-1);
+% thisView = viewSet(thisView,'overlaymin',1);
+
+params.combineFunction='weightedMeanStd';
+params.nOutputOverlays=4;
+[thisView,params] = combineTransformOverlays(thisView,params);
+curOverlay=viewGet(thisView,'curOverlay');
+thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-3);
+thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-2);
+thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay-1);
+thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay);
+% thisView = viewSet(thisView,'alphaOverlay',curOverlay-4,curOverlay-(0:3));
+% thisView = viewSet(thisView,'alphaOverlayExponent',0,curOverlay-(0:3));
+
+%% save analysis
+saveAnalysis(thisView,'GLM_BoxCar')
+
+thisView = viewSet(thisView,'curGroup','ConcatenationCont');
+refreshMLRDisplay(thisView);
+
+[thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
+glmParams.hrfModel = 'hrfDeconvolution';
+[thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
+glmParams.scanParams{1, 1}.preprocess  = 'binStimFreq';
+glmParams.hrfParams.hdrlenS = 15;
+glmParams.numberContrasts = 8;
+glmParams.componentsToTest = [0 1 1 1 1 0 0 0 0 0];
+glmParams.numberEVs = 8;
+[thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
+glmParams.saveName = 'GLM_RevCorr';
+glmParams.hrfParams.description = 'GLM Reverse Correlation - Cont Concat';
+% glmParams.hrfParams.hdrlenS = 15;
+% glmParams.numberContrasts = 8;
+% glmParams.componentsToTest = [0 1 1 1 1 0 0 0 0 0];
+
+[thisView, glmParams] = glmAnalysis(thisView,glmParams);
+
+
+% use interrogator getOverlayFromGlmAnalysis
+
+%Tonotopy analysis
+[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([17:25])]);
+params.combineFunction='indexMax';
+params.nOutputOverlays=2;
+[thisView,params] = combineTransformOverlays(thisView,params);
+curOverlay=viewGet(thisView,'curOverlay');
+thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-1);
+% thisView = viewSet(thisView,'alphaOverlay',curOverlay,curOverlay-1);
+% thisView = viewSet(thisView,'alphaOverlayExponent',0,curOverlay-1);
+% thisView = viewSet(thisView,'overlaymin',1);
+
+% import PSIR and PD
+% Change to be aligned version
+thisView = viewSet(thisView,'newGroup','PSIR');
+thisView = viewSet(thisView,'curGroup','PSIR');
+thisView = importTSeries(thisView,[],'defaultParams=1',['pathname=' fullfile(dataDir,'Anatomy/originals/',psirSubject{iSubj},[psirSubject{iSubj} '_PSIR_pos_-.7_thr.nii'])]);
+thisView = newAnalysis(thisView,'dummy');
+thisView = importOverlay(thisView,[],'defaultParams=1',['pathname=' fullfile(dataDir,'Anatomy/originals/',psirSubject{iSubj},[psirSubject{iSubj} '_PSIR_pos_-.7_thr.nii'])]);
+thisView = viewSet(thisView,'overlaycolorrange',[.5 1]);
+thisView = importOverlay(thisView,[],'defaultParams=1',['pathname=' fullfile(dataDir,'Anatomy/originals/',psirSubject{iSubj},[psirSubject{iSubj} '_PD_smooth7.nii'])]);
+%load PSIR as anatomy
+thisView = loadAnat(thisView,[psirSubject{iSubj} '_PSIR_pos_-.7_thr.nii'],fullfile(dataDir,'Anatomy/originals/',psirSubject{iSubj}));
+
 %load reference EPI as anatomy
 thisView = loadAnat(thisView,'lastFrameEPI.nii',fullfile(dataDir,studyDir,subjects{iSubj},'FNIRT'));
 %load skull-stripped  EPI as overlay
-[thisView,params] = importOverlay(thisView,[],'defaultParams=1',['pathname=' fullfile(niftiBaseName, subjects{iSubj},'/FNIRT/lastFrameEPI_stripped.nii')]);
+[thisView,params] = importOverlay(thisView,[],'defaultParams=1',['pathname=' fullfile(dataDir,studyDir,subjects{iSubj},'/FNIRT/lastFrameEPI_stripped.nii')]);
 
-mrSaveView(thisView);
-deleteView(thisView);
+
 
 % save('preProcessParams.mat','motionCompParams','concatParams');
 save('preProcessParams.mat','motionCompParams');
 
-
-mrLoadRet
-
-
-% THE REST REQUIRES THE FLAT MAPS
-keyboard
 
 %IMPORT  FREESURFER SURFACE
 cd(fullfile(dataDir,'Anatomy/freesurfer/subjects/',freeSurferName{iSubj}));
@@ -354,4 +482,43 @@ fslApplyWarpSurfOFF(fullfile(dataDir,studyDir,subjects{iSubj},'FNIRT/',[niftiBas
     fullfile(dataDir,'Anatomy/freesurfer/subjects/',freeSurferName{iSubj},'surfRelax',[freeSurferName{iSubj} '_mprage_pp.nii']),...
     subjects{iSubj});
 
-% add how to do freesurfer stuff
+%import surfaces (this step has not been made scriptable yet) 
+for iSide=1:2
+  base = importSurfaceOFF(fullfile(dataDir,'Anatomy/freesurfer/subjects/',freeSurferName{iSubj},'surfRelax',...
+   [freeSurferName{iSubj} '_' sides{iSide} '_GM.off']));
+  thisView = viewSet(thisView, 'newbase', base);
+  thisView = viewSet(thisView,'corticalDepth',[0.2 0.8]);
+end
+
+
+% save view and quit
+mrSaveView(thisView);
+deleteView(thisView);
+
+
+mrLoadRet
+thisView = getMLRView;
+
+% THE REST REQUIRES THE FLAT MAPS
+keyboard
+
+% create flat maps if not done already
+params=[];
+%import flat maps
+params.path = fullfile(dataDir,'Anatomy/freesurfer/subjects/',freeSurferName{iSubj},'surfRelax');
+for iSide=1:2
+  params.anatFileName = [freeSurferName{iSubj} '_mprage_pp.nii'];
+  params.flatRes=3;
+  params.threshold = 1;
+  params.baseValues = 'curvature';
+  params.flatFileName = [freeSurferName{iSubj} '_' sides{iSide} '_WM_Flat_' flatName{iSubj,iSide} '.off'];
+  params.outerCoordsFileName = [freeSurferName{iSubj} '_' sides{iSide} '_GM.off'];
+  params.innerCoordsFileName = [freeSurferName{iSubj} '_' sides{iSide} '_WM.off'];
+  params.curvFileName = [freeSurferName{iSubj} '_' sides{iSide} '_Curv.vff'];
+  base = importFlatOFF(params);
+  base.name = [freeSurferName{iSubj} '_' sides{iSide} '_Flat'];
+  thisView = viewSet(thisView, 'newbase', base);
+%   thisView = viewSet(thisView,'rotate',flatRotation(iSubj,iSide));
+  thisView = viewSet(thisView,'corticalDepth',[0.2 0.8]);
+end
+refreshMLRDisplay(thisView);
