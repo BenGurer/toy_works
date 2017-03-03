@@ -191,7 +191,7 @@ thisView = viewSet(thisView,'curGroup','ConcatenationHLsim');
 glmParams.hrfModel = 'hrfBoxcar';
 [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
 glmParams.saveName = 'GLM_BoxCar';
-glmParams.hrfParams.description = 'GLM Box Car -Sparse Concat';
+glmParams.hrfParams.description = 'GLM Box Car -HLsim Concat';
 glmParams.hrfParams.delayS =  2.5;
 glmParams.hrfParams.durationS = 2.5;
 glmParams.scanParams{1}.stimDurationMode = 'fromFile';
@@ -230,7 +230,7 @@ thisView = viewSet(thisView,'curGroup','ConcatenationNH');
 glmParams.hrfModel = 'hrfBoxcar';
 [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
 glmParams.saveName = 'GLM_BoxCar';
-glmParams.hrfParams.description = 'GLM Box Car -Sparse Concat';
+glmParams.hrfParams.description = 'GLM Box Car -NH Concat';
 glmParams.hrfParams.delayS =  2.5;
 glmParams.hrfParams.durationS = 2.5;
 glmParams.scanParams{1}.stimDurationMode = 'fromFile';
@@ -273,6 +273,9 @@ saveAnalysis(thisView,'GLM_BoxCar')
 % save('preProcessParams.mat','motionCompParams','concatParams');
 save('preProcessParams.mat','motionCompParams');
 
+% script running glm on each scan individually and performing split
+% analysis
+
 
 %IMPORT  FREESURFER SURFACE
 cd(fullfile(dataDir,'Anatomy/freesurfer/subjects/',freeSurferName{iSubj}));
@@ -300,4 +303,5 @@ deleteView(thisView);
 
 
 mrLoadRet
+% wait until it loads
 thisView = getMLRView;
