@@ -97,8 +97,10 @@ keyboard
 % identity and save (t2*_stripped to t2*)
 
 T2starFile = [T2star{iSubj} '_modulus'];
-T2StarDims = [400 400 29];
-EPIDims = [128 128 24];
+T2StarDims_Index = [400 400 29];
+EPIDims_Index = [128 128 24];
+T2StarDims_mm = [0.55 0.55 1.5];
+EPIDims_mm = [1.359375  1.359375 1.5];
 % 400 400 29
 % 0.55 0.55 1.5
 % 220 220 1
@@ -107,6 +109,7 @@ EPIDims = [128 128 24];
 % 174 mm diff = 46 mm
 % 316
 % 46/0.55 = 83 /2 = 42
+% fslroi input = (first index) (number of frames)
 % system(sprintf('fslroi %s %s_crop 22 316 22 316 3 24 0 1',T2starFile,T2starFile)); %% cropping t2 inplane structural image to match size of functional data
 system(sprintf('fslroi %s %s_crop 42 316 42 316 3 24 0 1',T2starFile,T2starFile)); %% cropping t2 inplane structural image to match size of functional data
 
@@ -305,3 +308,165 @@ deleteView(thisView);
 mrLoadRet
 % wait until it loads
 thisView = getMLRView;
+
+flatmapInfo{1} = {'80_131_81_Rad60', '181_127_85_Rad60'};
+concatenationGroup = {'ConcatenationHLsim', 'ConcatenationNH'};
+functionalAnalysis = {'GLM_BoxCar'};
+mainOverlays(1) = 38;
+ROInames = {'LeftPAC','RightPAC'};
+
+% analysisType = viewGet(thisView,'analysisType');
+roiNum = 2;
+roi{roiNum} = viewGet(thisView,'roi',ROInames{roiNum});
+% need to export to new group because over rights / need one for each
+% flatmap/hemisphere
+for iGroup = 1:length(concatenationGroup)
+for iAnalysis = 1:length(functionalAnalysis)
+for iSide=1:2
+  % gradient reversals
+  thisView = viewSet(thisView,'curgroup',concatenationGroup{iGroup});
+  thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',functionalAnalysis{iAnalysis}));
+  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['x' freeSurferName{iSubj} '_' sides{iSide} '_WM_Flat_' flatmapInfo{iSubj}{iSide}]));
+  [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(mainOverlays(iSubj,1))]);
+  params.combineFunction='gradientReversal';
+  params.additionalArgs = '[18 18 21]';
+  params.baseSpaceInterp = 'linear';
+  params.nOutputOverlays=7;
+  params.baseSpace = 1;
+%   params.exportToNewGroup=1;
+  [thisView,params] = combineTransformOverlays(thisView,params);
+  curOverlay=viewGet(thisView,'curOverlay');
+  thisView = viewSet(thisView,'overlayMin',15,curOverlay-1);
+  thisView = viewSet(thisView,'overlayMax',180,curOverlay-1);
+  thisView = viewSet(thisView,'overlaycolorRange',[45 180],curOverlay-1);
+  thisView = viewSet(thisView,'overlayMax',75);
+  thisView = viewSet(thisView,'overlaycolorRange',[0 90]);
+end
+end
+end
+
+for iGroup = 1:length(concatenationGroup)
+for iAnalysis = 1:length(functionalAnalysis)
+    %roi loop here
+  thisView = viewSet(thisView,'curgroup',concatenationGroup{iGroup});
+  thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',functionalAnalysis{iAnalysis}));
+  
+  analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',functionalAnalysis{iAnalysis}));
+  glmData{iGroup} = analysisData.d{1};
+  analysisParams{iGroup} = analysisData.params;
+  r2data = analysisData.overlays(1).data{1};
+  roi{roiNum}.scanCoords = getROICoordinates(thisView,roi{roiNum});
+  %get ROI estimates
+  volumeIndices = sub2ind(size(r2data),roi{roiNum}.scanCoords(1,:),roi{roiNum}.scanCoords(2,:),roi{roiNum}.scanCoords(3,:));
+  [e_contGroups{iGroup},volumeIndices] = getEstimates(glmData{iGroup} ,analysisParams{iGroup} ,volumeIndices');
+  nVoxels = length(volumeIndices);
+end
+end
+[ROIbetasSum_groups{1}, ROIStesSum_groups{1}] = plotROIav_GLMBetaEstimates_SplitRuns(e_contGroups{1},e_contGroups{2});
+betasCondA = squeeze(e_contGroups{1}.betas);
+betasCondB = squeeze(e_contGroups{2}.betas);
+
+figure
+plot(sum(betasCondA,2))
+figure
+plot(sum(betasCondB,2))
+
+stimBins = 8;
+for iScan = 1:nScans
+thisView = viewSet(thisView,'curGroup','MotionComp',['curScan=' mat2str(iScan)]);
+[thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
+glmParams.hrfModel = 'hrfBoxcar';
+glmParams.hrfParams.delayS =  2.5;
+glmParams.hrfParams.durationS = 2.5;
+% [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
+glmParams.hrfParams.description = ['GLM Box Car - Scan ' mat2str(iScan)];
+glmParams.scanParams{1, iScan}.preprocess  = 'binStimFreq';
+glmParams.numberContrasts = stimBins;
+glmParams.numberEVs = stimBins;
+glmParams.EVnames = {'1','2','3','4','5','6','7','8'};
+[thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
+glmParams.scanParams{iScan}.stimDurationMode = 'fromFile';
+glmParams.scanParams{iScan}.supersamplingMode =  'Set value';
+glmParams.scanParams{iScan}.designSupersampling = 3;
+glmParams.scanParams{iScan}.acquisitionDelay = .75;
+
+glmParams.numberFtests = 1;
+glmParams.fTestNames{1} = 'fTest 1';
+glmParams.numberContrasts = 0;
+glmParams.parametricTests = 0;
+glmParams.outputEstimatesAsOverlays = 1; 
+glmParams.saveName = ['GLM Box Car - Scan ' mat2str(iScan)];
+[thisView, glmParams] = glmAnalysis(thisView,glmParams,['scanList=' mat2str(iScan)]);
+
+%Tonotopy analysis
+[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:stimBins+1])],['scanList=' mat2str(iScan)]);
+params.combineFunction='indexMax';
+params.nOutputOverlays=2;
+[thisView,params] = combineTransformOverlays(thisView,params);
+curOverlay=viewGet(thisView,'curOverlay');
+thisView = viewSet(thisView,'overlaycolorrange',[0 stimBins],curOverlay-1);
+% 
+params.combineFunction='weightedMeanStd';
+params.nOutputOverlays=4;
+[thisView,params] = combineTransformOverlays(thisView,params);
+curOverlay=viewGet(thisView,'curOverlay');
+thisView = viewSet(thisView,'overlaycolorrange',[0 stimBins],curOverlay-3);
+thisView = viewSet(thisView,'overlaycolorrange',[0 stimBins],curOverlay-2);
+thisView = viewSet(thisView,'overlaycolorrange',[0 stimBins*1.25],curOverlay-1);
+thisView = viewSet(thisView,'overlaycolorrange',[0 stimBins*1.25],curOverlay);
+
+% save analysis
+saveAnalysis(thisView,['GLM_BoxCar - Scan ' mat2str(iScan)])
+end
+
+
+thisView = getMLRView;
+ROInames = {'LeftPAC','RightPAC'};
+
+analysisType = viewGet(thisView,'analysisType');
+% analysisParams = convertOldGlmParams(viewGet(thisView,'analysisParams'));
+roiNum = 2;
+% 
+%     roiList = selectInList(thisView,'rois');
+%     
+%   roi = viewGet(thisView,'roi',iRoi);
+%   
+%   roi{roiNum} = viewGet(thisView,'roi','RightPAC');
+  
+  roi{roiNum} = viewGet(thisView,'roi',ROInames{roiNum});
+  e = cell(1,4);
+  thisView = viewSet(thisView,'curgroup','MotionComp');
+for iScan = 1:nScans
+% for iSide=1:2
+%   thisView = viewSet(thisView,'curgroup','MotionComp',['curScan=' mat2str(iScan)]);
+  
+  thisView = viewSet(thisView,'curScan' ,iScan);
+%    refreshMLRDisplay(thisView.viewNum);
+  thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',['GLM Box Car - Scan ' mat2str(iScan)]));
+%   refreshMLRDisplay(thisView.viewNum);
+  
+% r2data = viewGet(thisView,'overlaydata',1);
+
+ 
+analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',['GLM Box Car - Scan ' mat2str(iScan)]));
+glmData{iScan} = analysisData.d{iScan};
+analysisParams{iScan} = analysisData.params;
+r2data = analysisData.overlays(1).data{iScan}; 
+% glmData = viewGet(thisView,'d',viewGet(thisView,'analysisNum',['GLM Box Car - Scan ' mat2str(iScan)]))
+% glmData = viewGet(thisView,'d',viewGet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',['GLM Box Car - Scan ' mat2str(iScan)])));
+      % get roi scan coords
+    roi{roiNum}.scanCoords = getROICoordinates(thisView,roi{roiNum});
+        %get ROI estimates 
+    volumeIndices = sub2ind(size(r2data),roi{roiNum}.scanCoords(1,:),roi{roiNum}.scanCoords(2,:),roi{roiNum}.scanCoords(3,:));
+%     roiIndices = (r2data(volumeIndices)>r2clip(1)) & (r2data(volumeIndices)<r2clip(2));% & (~isnan(volumeBetas(volumeIndices,1,1)))';
+%     volumeIndices = volumeIndices(roiIndices);
+    [e{iScan},volumeIndices] = getEstimates(glmData{iScan} ,analysisParams{iScan} ,volumeIndices');
+    nVoxels = length(volumeIndices);
+%     nTotalVoxels = length(roiIndices);
+  
+% end
+end
+[ROIbetasSum{1}, ROIStesSum{1}] = plotROIav_GLMBetaEstimates_SplitRuns(e{1},e{3});
+
+[ROIbetasSum{2}, ROIStesSum{2}] = plotROIav_GLMBetaEstimates_SplitRuns(e{2},e{4});
+

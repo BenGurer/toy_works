@@ -3,7 +3,7 @@
 
 %% RUN FREESURFER FIRST
 
-iSubj = 6;
+iSubj = 7;
 
 epiDims = [128 128 24 361]; % dims of contin
 
@@ -93,6 +93,29 @@ freeSurferName{6} = '11020_002';
 sparseScans{6} =  {'08','15'};
 contScans{6} =  {'09','18'};
 
+subjects{7} = '08773_007';
+niftiBaseName{7} = 'cm_08773_007_';
+psirNiftiBaseName{7} = 'cm_08773_007';
+T2star{7} = '16';
+refScan{7} = '10'; % scan before t2 structural
+wholeheadPSIR{7} = '17';
+distCorrectionRefSparse{7} = {'14','15'};
+distCorrectionRefCont{7} = {'21','22'};
+freeSurferName{7} = '08773_007';
+sparseScans{7} =  {'10','23'};
+contScans{7} =  {'20',[]};
+
+subjects{8} = '09933_005';
+niftiBaseName{8} = 'cm_09933_005_';
+psirNiftiBaseName{8} = 'cm_09933_005';
+T2star{8} = '15';
+refScan{8} = '14'; % scan before t2 structural
+wholeheadPSIR{8} = '14_scan1';
+distCorrectionRefSparse{8} = {'07','08'};
+distCorrectionRefCont{8} = {'09','10'};
+freeSurferName{8} = '09933_005';
+sparseScans{8} =  {'07_scan1','13'};
+contScans{8} =  {'06','14'};
 
 cd([dataDir '/scanner/' subjects{iSubj}])
 
