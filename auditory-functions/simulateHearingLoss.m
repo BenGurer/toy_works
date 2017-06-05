@@ -14,7 +14,7 @@ function simulateHearingLoss
 
 % dBHL values taken from BS EN ISO 389-2:1997 (125Hz to 8kHZ) and ISO 389-5:2006 (8kHz to 16kHz).
 % ERBs are calculated as per Glasberg and Moore (1990).
-
+sampleDuration = 1/24.4140625;
 f = 10.^(linspace(log10(20),log10(20000),100));
 
 %% Create masking noise
@@ -70,6 +70,19 @@ legend('EE filter',...
 xlabel('Frequency (kHz)') 
 ylabel('dB')
 
+
+    
+    lev = -10*log10(lcfErb(frq));
+%     lev = lev/sqrt(mean(lev.^2));
+    
+    ee_1kHz = lev - (interp1(frq,lev,1));
+    
+    fftTotal = ee_1kHz + levelFFT;
+    IntensityTotal = sum(10.^(fftTotal/10))*2;
+    levelTotaldB = 10*log10(IntensityTotal);
+    
+    levelFFT = [levelFFT fliplr(levelFFT)];
+    
 % 
 % figure
 % plot(f,ERB)

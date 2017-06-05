@@ -1,6 +1,5 @@
 function CriticalRatioPerERB_int = getCriticalRatioPerERB(f)
-
-f = 10.^(linspace(log10(20),log10(20000),100));
+% f = 10.^(linspace(log10(20),log10(20000),100));
 CriticalRatio_int = zeros(1,length(f));
 
 [CriticalRatio_int CriticalRatioMeasured f_measured_hz] = getCriticalRatio_HawkinsAndStevens1950(f);
