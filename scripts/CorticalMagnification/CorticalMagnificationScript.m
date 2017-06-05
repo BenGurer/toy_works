@@ -3,7 +3,7 @@
 
 %% RUN FREESURFER FIRST
 
-iSubj = 7;
+iSubj = 5;
 
 epiDims = [128 128 24 361]; % dims of contin
 
@@ -105,6 +105,16 @@ freeSurferName{7} = '08773_007';
 sparseScans{7} =  {'10','23'};
 contScans{7} =  {'20',[]};
 
+% subject 9 is subject 7's repeat session of 3 functional scans
+subjects{9} = '08773_008';
+niftiBaseName{9} = 'cm_08773_008_';
+T2star{9} = '11';
+refScan{9} = '10'; % scan before t2 structural
+distCorrectionRefSparse{9} = {'12','13'};
+distCorrectionRefCont{9} = {'14','15'};
+sparseScans{9} =  {'10',[]};
+contScans{9} =  {'09','18'};
+
 subjects{8} = '09933_005';
 niftiBaseName{8} = 'cm_09933_005_';
 psirNiftiBaseName{8} = 'cm_09933_005';
@@ -171,7 +181,6 @@ end
 
 
 mkdir('Etc')
-
 mkdir('Anatomy')
 mkdir('Raw')
 mkdir('Raw/TSeries')
@@ -246,7 +255,7 @@ end
 
 % crop last frame of reference EPI
 !mkdir FNIRT
-cd Raw/TSeries/
+cd Raw/TSeries/conver
 
 
 system(['fslroi ' niftiBaseName{iSubj} refScan{iSubj} '_1_modulus_dynMod_U.nii lastFrameEPI ' num2str(epiDims(4)-1) ' 1']);
@@ -265,10 +274,6 @@ system(['bet ' niftiBaseName{iSubj} T2star{iSubj} '_1_modulus ' niftiBaseName{iS
 
 cd ../
 
-%run FNIRT
-cd FNIRT
-system(sprintf('fnirtEpi2T2star lastFrameEPI %s_crop -separateFLIRT',T2starFile));
-
 mrAlign
 keyboard
 % align cropped hi res t2* to PSIR .7_thr
@@ -277,6 +282,12 @@ keyboard
 % then select Reverse Contrast (T2*)
 % Click 'Compute Coarse Aligment' then
 % Click 'Compute fine Aligment'
+
+%run FNIRT
+cd FNIRT
+system(sprintf('fnirtEpi2T2star lastFrameEPI %s_crop -separateFLIRT',T2starFile));
+
+
 
 %% New - BET skull scrip removed sform matrix so:...
 % load cropped t2* as source then reload as destination
@@ -381,6 +392,8 @@ end
 % numberFtests = 0
 % outputEstimatesAsOverlays = 1
 
+%% add Ftest
+
 thisView = viewSet(thisView,'curGroup','ConcatenationSparse');
 [thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
 glmParams.hrfModel = 'hrfBoxcar';
@@ -404,7 +417,8 @@ glmParams.scanParams{1}.stimDurationMode = 'fromFile';
 glmParams.scanParams{1}.supersamplingMode =  'Set value';
 glmParams.scanParams{1}.designSupersampling = 3;
 glmParams.scanParams{1}.acquisitionDelay = .75;
-glmParams.numberFtests = 1;
+% glmParams.numberFtests = 1;
+% [1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 glmParams.fTestNames{1} = 'fTest 1';
 glmParams.numberContrasts = 0;
 glmParams.parametricTests = 0;
@@ -433,8 +447,12 @@ thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay);
 % thisView = viewSet(thisView,'alphaOverlay',curOverlay-4,curOverlay-(0:3));
 % thisView = viewSet(thisView,'alphaOverlayExponent',0,curOverlay-(0:3));
 
-%% save analysis
+% save analysis
 saveAnalysis(thisView,'GLM_BoxCar')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% GLM Reverse Correlation - Continuous data concatenated %%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 thisView = viewSet(thisView,'curGroup','ConcatenationCont');
 refreshMLRDisplay(thisView);
@@ -447,8 +465,17 @@ glmParams.hrfParams.hdrlenS = 15;
 glmParams.numberContrasts = 8;
 glmParams.componentsToTest = [0 1 1 1 1 0 0 0 0 0];
 glmParams.numberEVs = 8;
+glmParams.computeTtests = 1;
+glmParams.numberFtests  = 1;
+glmParams.fTestNames{1, 1} = 'fTest - all conditions';
+glmParams.restrictions{1, 1} = [1,0,0,0,0,0,0,0;0,1,0,0,0,0,0,0;0,0,1,0,0,0,0,0;0,0,0,1,0,0,0,0;0,0,0,0,0,1,0,0;0,0,0,0,0,0,1,0;0,0,0,0,0,0,0,1];
+glmParams.alphaContrastOverlay = 'Uncorrected';
+glmParams.parametricTests = 1;
+glmParams.fweAdjustment = 0;
+glmParams.fdrAdjustment = 0;
+glmParams.outputStatistic = 0;
 [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
-glmParams.saveName = 'GLM_RevCorr';
+glmParams.saveName = 'GLM_RevCorr_8bins';
 glmParams.hrfParams.description = 'GLM Reverse Correlation - Cont Concat';
 % glmParams.hrfParams.hdrlenS = 15;
 % glmParams.numberContrasts = 8;
@@ -456,11 +483,11 @@ glmParams.hrfParams.description = 'GLM Reverse Correlation - Cont Concat';
 
 [thisView, glmParams] = glmAnalysis(thisView,glmParams);
 
-
-% use interrogator getOverlayFromGlmAnalysis
+%% use interrogator getOverlayFromGlmAnalysis
+% converts events to beta weights
 
 %Tonotopy analysis
-[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([17:25])]);
+[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:33])]);
 params.combineFunction='indexMax';
 params.nOutputOverlays=2;
 [thisView,params] = combineTransformOverlays(thisView,params);
@@ -469,6 +496,8 @@ thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-1);
 % thisView = viewSet(thisView,'alphaOverlay',curOverlay,curOverlay-1);
 % thisView = viewSet(thisView,'alphaOverlayExponent',0,curOverlay-1);
 % thisView = viewSet(thisView,'overlaymin',1);
+
+%% Use interrogator GLM plot to find average HRF shape of ROI
 
 % import PSIR and PD
 % Change to be aligned version
@@ -487,8 +516,6 @@ thisView = loadAnat(thisView,'lastFrameEPI.nii',fullfile(dataDir,studyDir,subjec
 %load skull-stripped  EPI as overlay
 [thisView,params] = importOverlay(thisView,[],'defaultParams=1',['pathname=' fullfile(dataDir,studyDir,subjects{iSubj},'/FNIRT/lastFrameEPI_stripped.nii')]);
 
-
-
 % save('preProcessParams.mat','motionCompParams','concatParams');
 save('preProcessParams.mat','motionCompParams');
 
@@ -506,6 +533,7 @@ fslApplyWarpSurfOFF(fullfile(dataDir,studyDir,subjects{iSubj},'FNIRT/',[niftiBas
     subjects{iSubj});
 
 %import surfaces (this step has not been made scriptable yet) 
+
 for iSide=1:2
   base = importSurfaceOFF(fullfile(dataDir,'Anatomy/freesurfer/subjects/',freeSurferName{iSubj},'surfRelax',...
    [freeSurferName{iSubj} '_' sides{iSide} '_GM.off']));
@@ -526,6 +554,7 @@ thisView = getMLRView;
 keyboard
 
 % create flat maps if not done already
+% repeat for distorted and non-distorted
 params=[];
 %import flat maps
 params.path = fullfile(dataDir,'Anatomy/freesurfer/subjects/',freeSurferName{iSubj},'surfRelax');
@@ -545,3 +574,212 @@ for iSide=1:2
   thisView = viewSet(thisView,'corticalDepth',[0.2 0.8]);
 end
 refreshMLRDisplay(thisView);
+
+%% GLM Double Gamma - Sparse Concatenated
+
+thisView = viewSet(thisView,'curGroup','ConcatenationSparse');
+[thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
+glmParams.hrfModel = 'hrfDoubleGamma';
+[thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
+glmParams.saveName = 'GLM_hrfDoubleGamma';
+glmParams.hrfParams.description = 'GLM hrfDoubleGamma -Sparse Concat';
+glmParams.hrfParams.x =  4;
+glmParams.hrfParams.y = 11;
+glmParams.hrfParams.z = 4;
+glmParams.scanParams{1}.stimDurationMode = 'fromFile';
+glmParams.scanParams{1}.supersamplingMode =  'Set value';
+glmParams.scanParams{1}.designSupersampling = 3;
+glmParams.scanParams{1}.acquisitionDelay = .75;
+% glmParams.numberFtests = 1;
+% [1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+glmParams.fTestNames{1} = 'fTest 1';
+glmParams.numberContrasts = 0;
+glmParams.parametricTests = 0;
+glmParams.outputEstimatesAsOverlays = 1; 
+[thisView, glmParams] = glmAnalysis(thisView,glmParams);
+
+%Tonotopy analysis
+[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:33])]);
+params.combineFunction='weightedMeanStd';
+params.nOutputOverlays=4;
+[thisView,params] = combineTransformOverlays(thisView,params);
+curOverlay=viewGet(thisView,'curOverlay');
+thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-3);
+thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-2);
+thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay-1);
+thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay);
+
+%% GLM Double Gamma - 
+
+thisView = viewSet(thisView,'curGroup','ConcatenationCont');
+[thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
+glmParams.hrfModel = 'hrfDoubleGamma';
+[thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
+glmParams.saveName = 'GLM_hrfDoubleGamma';
+glmParams.hrfParams.description = 'GLM hrfDoubleGamma -Sparse Concat';
+glmParams.hrfParams.x =  4;
+glmParams.hrfParams.y = 11;
+glmParams.hrfParams.z = 4;
+glmParams.scanParams{1}.stimDurationMode = 'fromFile';
+glmParams.scanParams{1}.supersamplingMode =  'Set value';
+glmParams.scanParams{1}.designSupersampling = 3;
+glmParams.scanParams{1}.acquisitionDelay = .75;
+% glmParams.numberFtests = 1;
+% [1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+glmParams.fTestNames{1} = 'fTest 1';
+glmParams.numberContrasts = 0;
+glmParams.parametricTests = 0;
+glmParams.outputEstimatesAsOverlays = 1; 
+[thisView, glmParams] = glmAnalysis(thisView,glmParams);
+
+%Tonotopy analysis
+[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:33])]);
+params.combineFunction='weightedMeanStd';
+params.nOutputOverlays=4;
+[thisView,params] = combineTransformOverlays(thisView,params);
+curOverlay=viewGet(thisView,'curOverlay');
+thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-3);
+thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-2);
+thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay-1);
+thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay);
+
+thisView = getMLRView;
+
+flatmapInfo{5} = {'80_131_81_Rad60', 'dist'};
+concatenationGroup = {'ConcatenationSparse', 'ConcatenationCont'};
+functionalAnalysis = {'GLM_hrfDoubleGamma'};
+mainOverlays(5) = 36;
+ROInames = {'LeftPAC','RightPAC'};
+
+%% Gradient reversals
+% analysisType = viewGet(thisView,'analysisType');
+
+% need to export to new group because over rights / need one for each
+% flatmap/hemisphere
+for iGroup = 1:length(concatenationGroup)
+for iAnalysis = 1:length(functionalAnalysis)
+for iSide=1:2
+  % gradient reversals
+  thisView = viewSet(thisView,'curgroup',concatenationGroup{iGroup});
+  thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',functionalAnalysis{iAnalysis}));
+  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['x' freeSurferName{iSubj} '_' sides{iSide} '_WM_Flat_' flatmapInfo{iSubj}{iSide}]));
+  
+refreshMLRDisplay(thisView);
+  [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(mainOverlays(iSubj))]);
+  params.combineFunction='gradientReversal';
+  params.additionalArgs = '[18 18 21]';
+  params.baseSpaceInterp = 'linear';
+  params.nOutputOverlays=7;
+  params.baseSpace = 1;
+%   params.exportToNewGroup=1;
+  [thisView,params] = combineTransformOverlays(thisView,params);
+  curOverlay=viewGet(thisView,'curOverlay');
+  thisView = viewSet(thisView,'overlayMin',15,curOverlay-1);
+  thisView = viewSet(thisView,'overlayMax',180,curOverlay-1);
+  thisView = viewSet(thisView,'overlaycolorRange',[45 180],curOverlay-1);
+  thisView = viewSet(thisView,'overlayMax',75);
+  thisView = viewSet(thisView,'overlaycolorRange',[0 90]);
+end
+end
+end
+
+%% Split run analysis
+% concatenationGroup = {'ConcatenationHLsim', 'ConcatenationNH'};
+functionalAnalysis = {'GLM_BoxCar'};
+ROInames = {'LeftPAC','RightPAC'};
+stimBins = 8;
+for iScan = 1:nScans
+thisView = viewSet(thisView,'curGroup','MotionComp',['curScan=' mat2str(iScan)]);
+[thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
+glmParams.hrfModel = 'hrfBoxcar';
+glmParams.hrfParams.delayS =  2.5;
+glmParams.hrfParams.durationS = 2.5;
+% [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
+glmParams.hrfParams.description = ['GLM Box Car - Scan ' mat2str(iScan)];
+glmParams.scanParams{1, iScan}.preprocess  = 'binStimFreq';
+glmParams.numberContrasts = stimBins;
+glmParams.numberEVs = stimBins;
+glmParams.EVnames = {'1','2','3','4','5','6','7','8'};
+[thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
+glmParams.scanParams{iScan}.stimDurationMode = 'fromFile';
+glmParams.scanParams{iScan}.supersamplingMode =  'Set value';
+glmParams.scanParams{iScan}.designSupersampling = 3;
+glmParams.scanParams{iScan}.acquisitionDelay = .75;
+
+glmParams.numberFtests = 1;
+glmParams.fTestNames{1} = 'fTest 1';
+glmParams.numberContrasts = 0;
+glmParams.parametricTests = 0;
+glmParams.outputEstimatesAsOverlays = 1; 
+glmParams.saveName = ['GLM Box Car - Scan ' mat2str(iScan)];
+[thisView, glmParams] = glmAnalysis(thisView,glmParams,['scanList=' mat2str(iScan)]);
+
+%Tonotopy analysis
+[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:stimBins+1])],['scanList=' mat2str(iScan)]);
+params.combineFunction='indexMax';
+params.nOutputOverlays=2;
+[thisView,params] = combineTransformOverlays(thisView,params);
+curOverlay=viewGet(thisView,'curOverlay');
+thisView = viewSet(thisView,'overlaycolorrange',[0 stimBins],curOverlay-1);
+% 
+params.combineFunction='weightedMeanStd';
+params.nOutputOverlays=4;
+[thisView,params] = combineTransformOverlays(thisView,params);
+curOverlay=viewGet(thisView,'curOverlay');
+thisView = viewSet(thisView,'overlaycolorrange',[0 stimBins],curOverlay-3);
+thisView = viewSet(thisView,'overlaycolorrange',[0 stimBins],curOverlay-2);
+thisView = viewSet(thisView,'overlaycolorrange',[0 stimBins*1.25],curOverlay-1);
+thisView = viewSet(thisView,'overlaycolorrange',[0 stimBins*1.25],curOverlay);
+
+% save analysis
+saveAnalysis(thisView,['GLM_BoxCar - Scan ' mat2str(iScan)])
+end
+
+
+thisView = getMLRView;
+%% Get split run estiamtes
+% need to loop over roiNum
+analysisType = viewGet(thisView,'analysisType');
+roiNum = 2; 
+for roiNum = 1:length(ROInames)
+roi{roiNum} = viewGet(thisView,'roi',ROInames{roiNum});
+end
+  roi{roiNum} = viewGet(thisView,'roi',ROInames{roiNum});
+  e = cell(1,4);
+  thisView = viewSet(thisView,'curgroup','MotionComp');
+for iScan = 1:nScans
+% for iSide=1:2
+%   thisView = viewSet(thisView,'curgroup','MotionComp',['curScan=' mat2str(iScan)]);
+  
+  thisView = viewSet(thisView,'curScan' ,iScan);
+%    refreshMLRDisplay(thisView.viewNum);
+  thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',['GLM Box Car - Scan ' mat2str(iScan)]));
+%   refreshMLRDisplay(thisView.viewNum);
+  
+% r2data = viewGet(thisView,'overlaydata',1);
+
+ 
+analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',['GLM Box Car - Scan ' mat2str(iScan)]));
+glmData{iScan} = analysisData.d{iScan};
+analysisParams{iScan} = analysisData.params;
+r2data = analysisData.overlays(1).data{iScan}; 
+% glmData = viewGet(thisView,'d',viewGet(thisView,'analysisNum',['GLM Box Car - Scan ' mat2str(iScan)]))
+% glmData = viewGet(thisView,'d',viewGet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',['GLM Box Car - Scan ' mat2str(iScan)])));
+      % get roi scan coords
+    roi{roiNum}.scanCoords = getROICoordinates(thisView,roi{roiNum});
+        %get ROI estimates 
+    volumeIndices = sub2ind(size(r2data),roi{roiNum}.scanCoords(1,:),roi{roiNum}.scanCoords(2,:),roi{roiNum}.scanCoords(3,:));
+%     roiIndices = (r2data(volumeIndices)>r2clip(1)) & (r2data(volumeIndices)<r2clip(2));% & (~isnan(volumeBetas(volumeIndices,1,1)))';
+%     volumeIndices = volumeIndices(roiIndices);
+    [e{iScan},volumeIndices] = getEstimates(glmData{iScan} ,analysisParams{iScan} ,volumeIndices');
+    nVoxels = length(volumeIndices);
+%     nTotalVoxels = length(roiIndices);
+  
+% end
+end
+[ROIbetasSum{1}, ROIStesSum{1}] = plotROIav_GLMBetaEstimates_SplitRuns(e{1},e{3});
+
+[ROIbetasSum{2}, ROIStesSum{2}] = plotROIav_GLMBetaEstimates_SplitRuns(e{2},e{4});
+
+
+[ROIbetas, ROIStes] = plotROIav_GLMBetaEstimates_SplitRuns([e{1} e{3}],[e{2} e{4}]);
