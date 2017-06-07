@@ -3,7 +3,7 @@
 
 %% RUN FREESURFER FIRST
 
-iSubj = 5;
+iSubj = 9;
 
 epiDims = [128 128 24 361]; % dims of contin
 

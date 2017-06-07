@@ -1,8 +1,7 @@
+%% Setup Subject info
 iSubj = 1;
 
 epiDims = [128 128 24 73]; % dims of functional scans
-
-% add check from startup
 
 if ispc
     dataDir = 'N:/data';
@@ -43,13 +42,11 @@ freeSurferName{4} = '11108_007';
 T2star{4} = '7';
 refScan{4} = '04'; % scan before t2 structural
 
-% distCorrectionRefSparse{1} = {'17','18'};
-% distCorrectionRefCont{2} = {'20','21'};
-% % scanList = [13,15,19,22];
-% distCorrectionRef = {'20','21'};
+%% Move data from scanner to study/subject folders
 
 cd([dataDir '/scanner/' subjects{iSubj}]) 
- 
+
+% convert from Par/Rec to niffti format
 !ptoa -f -q -nii *.PAR
 
 if ~isempty(wholeheadMPRAGE{iSubj})
@@ -62,6 +59,7 @@ if ~isempty(wholeheadMPRAGE{iSubj})
 
 end
 
+% make subject directory
 mkdir(fullfile(dataDir,studyDir,subjects{iSubj}));
 cd(fullfile(dataDir,studyDir,subjects{iSubj}));
 
@@ -71,11 +69,11 @@ mkdir('Raw')
 mkdir('Raw/TSeries')
 !mkdir FNIRT
 
-%% Move in-plane T2 star
+% Move in-plane T2 star
 movefile(fullfile(dataDir,'scanner',subjects{iSubj},[niftiBaseName{iSubj} T2star{iSubj} '*.nii']),fullfile(dataDir,studyDir,subjects{iSubj},'Anatomy'))
 movefile(fullfile(dataDir,'scanner',subjects{iSubj},[niftiBaseName{iSubj} '*.nii']),fullfile(dataDir,studyDir,subjects{iSubj},'Raw/TSeries'))
 
-%% check for filenames below 10 and add a zero before the number - make sure linking of stim files works later
+% check for filenames below 10 and add a zero before the number - make sure linking of stim files works later
 cd Raw/TSeries/
 scanFiles = dir;
 for id = 1:length(scanFiles)
@@ -94,13 +92,16 @@ for id = 1:length(scanFiles)
    
     end
 end
-% crop last frame of reference EPI
 
+
+%% Pre-process
+% crop last frame of reference EPI
 system(['fslroi ' subjects{iSubj} '_' refScan{iSubj} '.nii lastFrameEPI ' num2str(epiDims(4)-1) ' 1']);
 
 !mv lastFrameEPI.nii ../../FNIRT
 cd ../../
 
+% align T2* in-plane to T1 wholehead
 % crop T2*
 cd Anatomy/
 mrAlign
@@ -119,8 +120,9 @@ keyboard
 % skull stripping removes the s-form matrix so using set alignment to
 % identity and save (t2*_stripped to t2*)
 
+% align EPI to T2* in-plane
+% crop T2* in-plane to use with FNIRT and FLIRT
 T2starFile = [niftiBaseName{iSubj} T2star{iSubj} '_1_modulus'];
-
 T2starFile = [T2star{iSubj} '_modulus']; % subject 1
 T2StarDims_Index = [400 400 29];
 EPIDims_Index = [128 128 24];
@@ -137,8 +139,6 @@ EPIDims_mm = [1.359375  1.359375 1.5];
 % fslroi input = (first index) (number of frames)
 % system(sprintf('fslroi %s %s_crop 22 316 22 316 3 24 0 1',T2starFile,T2starFile)); %% cropping t2 inplane structural image to match size of functional data
 system(sprintf('fslroi %s %s_crop 42 316 42 316 3 24 0 1',T2starFile,T2starFile)); %% cropping t2 inplane structural image to match size of functional data
-
-% system(sprintf('fslroi %s %s_crop 18 348 18 348 2 24 0 1',T2starFile,T2starFile)); %% cropping t2 inplane structural image to match size of functional data
 system(sprintf('cp %s_crop.nii ../FNIRT',T2starFile));
 % system(['bet ' niftiBaseName{iSubj} T2star{iSubj} '_1_modulus_crop ' niftiBaseName{iSubj} T2star{iSubj} '_1_modulus_crop_stripped -f .2 -Z'])
 system(['bet ' niftiBaseName{iSubj} T2star{iSubj} '_1_modulus ' niftiBaseName{iSubj} T2star{iSubj} '_1_modulus_stripped -f .2 -Z'])
@@ -148,8 +148,8 @@ keyboard
 % skull stripping removes the s-form matrix so using set alignment to
 % identity and save (t2*_stripped to t2*)
 
+% Use FLIRT AND FNIRT to register functional to structural
 cd ../FNIRT
-
 %run FNIRT
 system(sprintf('fnirtEpi2T2star lastFrameEPI %s_crop -separateFLIRT',T2starFile));
 
@@ -166,12 +166,10 @@ alignFunctional2HighResT2Star(sprintf('lastFrameEPI2%s_crop_resampled.affmat',T2
 
 cd ../
 
-
-%Pre-process functional#
+%% Pre-processing DONE
 
 
 %% Set up mrTools mrLoadRet
-
 [sessionParams, groupParams] = mrInit([],[],'justGetParams=1','defaultParams=1'); % looks in Raw/Tseries to find out how many scans there are
 sessionParams.subject = subjects{iSubj};
 sessionParams.description = studyDir;
@@ -183,7 +181,7 @@ nScans = length(groupParams.name);
 
 mrInit(sessionParams,groupParams,'makeReadme=0');
 
-%motion correction
+% Motion correction
 thisView = newView;
 refScanNum = viewGet(thisView,'scannum',sprintf('%s_%s.nii',subjects{iSubj},refScan{iSubj}));
 [thisView, motionCompParams] = motionComp(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(1:nScans)]);
@@ -191,17 +189,17 @@ motionCompParams.baseFrame='last';
 motionCompParams.baseScan = refScanNum;
 [thisView, motionCompParams] = motionComp(thisView,motionCompParams);
 
-%concatenation of Hearing Loss Simulation data
+% Concatenation of Hearing Loss Simulation data
 thisView = viewSet(thisView,'curGroup','MotionComp');
 params_ConcatenationHLsim = getConcatParams_withNewGroupName(thisView,'ConcatenationHLsim','defaultParams=1',['scanList=' mat2str([1 3])]);
 [thisView, concatParamsSparse] = concatTSeries(thisView,params_ConcatenationHLsim);
 
-%concatenation of Normal Hearing data
+% Concatenation of Normal Hearing data
 thisView = viewSet(thisView,'curGroup','MotionComp');
 params_ConcatenationNH = getConcatParams_withNewGroupName(thisView,'ConcatenationNH','defaultParams=1',['scanList=' mat2str([2 4])]);
 [thisView, concatParamsCont] = concatTSeries(thisView,params_ConcatenationNH);
 
-%GLM analysis
+% link stim files to scans
 system(sprintf('cp %s/*.txt Etc/',fullfile(dataDir,'scanner',subjects{iSubj},'logFiles')));
 cd Etc/
 logFiles = dir('*.txt');
@@ -214,6 +212,52 @@ for iFile = 1:length(logFiles)
     thisView = viewSet(thisView,'stimfilename',logFiles{iFile}, iFile,1);
 end
 
+%% Statistical Analyses
+% Loop between groups - NH and sHL
+% GLM analysis
+    % Box car
+    % Double gamma
+% pRF analysis
+    % Box car
+    % Double gamma
+% Loop over scans in motioncomp group
+% GLM analysis
+    % Box car
+% pRF analysis
+    % Box car
+
+%% Get Data
+% Get ROI
+    % Define using anatomy
+        % AC
+    % Define using functional properties
+        % gradient reversals
+        % pTW    
+% n = length(ROI)
+% data.analysis.estimate(n)
+% estimate = pCF,pTW,r2
+% Threshold data
+    % r2 values
+    % f-test
+    % beta weight
+    
+%% Visualise Data
+% Within Condition
+% Voxel pCF v pTW
+% Binned pCF v averaged pTW
+
+% Between Condition
+% Condition A vs B
+% Condition x: Run 1 vs 2
+% Distrubtion of pCF estimates
+% Binned pCF estimates
+% Binned pCF v averaged pTW
+% Voxel pCF agreement
+% Voxel pTW agreement
+% Voxel r2 agreement
+% Voxel vector
+
+%GLM analysis
 thisView = viewSet(thisView,'curGroup','ConcatenationHLsim');
 [thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
 glmParams.hrfModel = 'hrfBoxcar';
@@ -355,7 +399,6 @@ saveAnalysis(thisView,[analysisSaveName mat2str(iScan)])
 end
 
 
-
 % %load reference EPI as anatomy
 % thisView = loadAnat(thisView,'lastFrameEPI.nii',fullfile(dataDir,studyDir,subjects{iSubj},'FNIRT'));
 %load skull-stripped  EPI as overlay
@@ -397,7 +440,6 @@ end
 % save view and quit
 mrSaveView(thisView);
 deleteView(thisView);
-
 
 mrLoadRet
 % wait until it loads
