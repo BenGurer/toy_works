@@ -212,6 +212,9 @@ for iFile = 1:length(logFiles)
     thisView = viewSet(thisView,'stimfilename',logFiles{iFile}, iFile,1);
 end
 
+% save('preProcessParams.mat','motionCompParams','concatParams');
+save('preProcessParams.mat','motionCompParams','params_ConcatenationNH','params_ConcatenationHLsim');
+
 %% Statistical Analyses
 % Loop between groups - NH and sHL
 % GLM analysis
@@ -257,155 +260,101 @@ end
 % Voxel r2 agreement
 % Voxel vector
 
-%GLM analysis
-thisView = viewSet(thisView,'curGroup','ConcatenationHLsim');
-[thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
-glmParams.hrfModel = 'hrfBoxcar';
-[thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
-glmParams.saveName = 'GLM_BoxCar';
-glmParams.hrfParams.description = 'GLM Box Car -HLsim Concat';
-glmParams.hrfParams.delayS =  2.5;
-glmParams.hrfParams.durationS = 2.5;
-glmParams.scanParams{1}.stimDurationMode = 'fromFile';
-glmParams.scanParams{1}.supersamplingMode =  'Set value';
-glmParams.scanParams{1}.designSupersampling = 3;
-glmParams.scanParams{1}.acquisitionDelay = .75;
-glmParams.numberFtests = 1;
-glmParams.fTestNames{1} = 'fTest 1';
-glmParams.numberContrasts = 0;
-glmParams.parametricTests = 0;
-glmParams.outputEstimatesAsOverlays = 1; 
-[thisView, glmParams] = glmAnalysis(thisView,glmParams);
 
-%Tonotopy analysis
-[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:33])]);
-params.combineFunction='indexMax';
-params.nOutputOverlays=2;
-[thisView,params] = combineTransformOverlays(thisView,params);
-curOverlay=viewGet(thisView,'curOverlay');
-thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-1);
-
-params.combineFunction='weightedMeanStd';
-params.nOutputOverlays=4;
-[thisView,params] = combineTransformOverlays(thisView,params);
-curOverlay=viewGet(thisView,'curOverlay');
-thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-3);
-thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-2);
-thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay-1);
-thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay);
-
-%% save analysis
-saveAnalysis(thisView,'GLM_BoxCar')
-
-concatenationGroup = {'ConcatenationHLsim', 'ConcatenationNH'};
-functionalAnalysis = {'GLM_BoxCar'};
-for i = 1:length(concatenationGroup)
-thisView = viewSet(thisView,'curGroup',concatenationGroup{i});
-[thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
-glmParams.hrfModel = 'hrfBoxcar';
-[thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
-glmParams.saveName = functionalAnalysis{1};
-glmParams.hrfParams.description = 'GLM Box Car';
-glmParams.hrfParams.delayS =  2.5;
-glmParams.hrfParams.durationS = 2.5;
-glmParams.scanParams{1}.stimDurationMode = 'fromFile';
-glmParams.scanParams{1}.supersamplingMode =  'Set value';
-glmParams.scanParams{1}.designSupersampling = 3;
-glmParams.scanParams{1}.acquisitionDelay = .75;
-glmParams.computeTtests = 1;
-glmParams.numberFtests  = 1;
-glmParams.fTestNames{1, 1} = 'fTest - all conditions';
-glmParams.restrictions{1, 1} = [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0;...
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1];
-glmParams.alphaContrastOverlay = 'Uncorrected';
-glmParams.parametricTests = 1;
-glmParams.fweAdjustment = 0;
-glmParams.fdrAdjustment = 0;
-glmParams.outputStatistic = 0;
-glmParams.numberContrasts = 0;
-glmParams.outputEstimatesAsOverlays = 1; 
-[thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
-[thisView, glmParams] = glmAnalysis(thisView,glmParams);
-
-%Tonotopy analysis
-% Index max
-[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:33])]);
-params.combineFunction='indexMax';
-params.nOutputOverlays=2;
-[thisView,params] = combineTransformOverlays(thisView,params);
-curOverlay=viewGet(thisView,'curOverlay');
-thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-1);
-
-% Weighted mean and corrected weighted mean
-params.combineFunction='weightedMeanStd';
-params.nOutputOverlays=4;
-[thisView,params] = combineTransformOverlays(thisView,params);
-curOverlay=viewGet(thisView,'curOverlay');
-thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-3);
-thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-2);
-thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay-1);
-thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay);
-
-%% save analysis
-saveAnalysis(thisView,functionalAnalysis{1})
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% use functionalAnalysis to select next analysis below %%%%%
-thisView = viewSet(thisView,'curGroup','MotionComp');
-thisView = viewSet(thisView,'curScan', iScan);
-[thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
-
-pRFParams.saveName = [analysisSaveName mat2str(iScan)];
-pRFParams.restrict = ['ROI: ' roi{1, roiNum}.name];
-pRFParams.pRFFit.supersampling = 1;
-pRFParams.pRFFit.fitHDR = 0;
-pRFParams.pRFFit.dispStimScan = iScan;
-
-% [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1',['scanList=' mat2str(iScan)]);
-
-[thisView, pRFParams] = pRF_auditory(thisView,pRFParams,['scanList=' mat2str(iScan)]);
-
-% save analysis
-saveAnalysis(thisView,[analysisSaveName mat2str(iScan)])
-end
+thisView = getMLRView;
+%% Statistical Analyses
+% Loop between groups - NH and sHL
+% GLM analysis
+    concatenationGroup = {'ConcatenationHLsim', 'ConcatenationNH'};
+    hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
+    for i = 1:length(concatenationGroup)        
+        for ii = 1:length(hrfModel)
+            analysisName = ['glm_' hrfModel{ii}];
+            thisView = viewSet(thisView,'curGroup',concatenationGroup{i});
+            [thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
+            glmParams.hrfModel = hrfModel{ii};
+            [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
+            glmParams.saveName = analysisName;
+            glmParams.hrfParams.description = 'GLM Box Car';
+            glmParams.hrfParams.delayS =  2.5;
+            glmParams.hrfParams.durationS = 2.5;
+            glmParams.scanParams{1}.stimDurationMode = 'fromFile';
+            glmParams.scanParams{1}.supersamplingMode =  'Set value';
+            glmParams.scanParams{1}.designSupersampling = 3;
+            glmParams.scanParams{1}.acquisitionDelay = .75;
+            glmParams.computeTtests = 1;
+            glmParams.numberFtests  = 1;
+            glmParams.fTestNames{1, 1} = 'fTest - all conditions';
+            glmParams.restrictions{1, 1} = [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0;...
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1];
+            glmParams.alphaContrastOverlay = 'Uncorrected';
+            glmParams.parametricTests = 1;
+            glmParams.fweAdjustment = 0;
+            glmParams.fdrAdjustment = 0;
+            glmParams.outputStatistic = 0;
+            glmParams.numberContrasts = 0;
+            glmParams.outputEstimatesAsOverlays = 1;
+            [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
+            [thisView, glmParams] = glmAnalysis(thisView,glmParams);
+            
+            %Tonotopy analysis
+            % Index max
+            [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:33])]);
+            params.combineFunction='indexMax';
+            params.nOutputOverlays=2;
+            [thisView,params] = combineTransformOverlays(thisView,params);
+            curOverlay=viewGet(thisView,'curOverlay');
+            thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-1);
+            
+            % Weighted mean and corrected weighted mean
+            params.combineFunction='weightedMeanStd';
+            params.nOutputOverlays=4;
+            [thisView,params] = combineTransformOverlays(thisView,params);
+            curOverlay=viewGet(thisView,'curOverlay');
+            thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-3);
+            thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-2);
+            thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay-1);
+            thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay);
+            
+            %% save analysis
+            saveAnalysis(thisView,analysisName)            
+        end         
+    end
 
 
 % %load reference EPI as anatomy
-% thisView = loadAnat(thisView,'lastFrameEPI.nii',fullfile(dataDir,studyDir,subjects{iSubj},'FNIRT'));
+thisView = loadAnat(thisView,'lastFrameEPI.nii',fullfile(dataDir,studyDir,subjects{iSubj},'FNIRT'));
 %load skull-stripped  EPI as overlay
 % [thisView,params] = importOverlay(thisView,[],'defaultParams=1',['pathname=' fullfile(dataDir,studyDir,subjects{iSubj},'/FNIRT/lastFrameEPI_stripped.nii')]);
-
-% save('preProcessParams.mat','motionCompParams','concatParams');
-save('preProcessParams.mat','motionCompParams','params_ConcatenationNH','params_ConcatenationHLsim');
 
 % script running glm on each scan individually and performing split
 % analysis
@@ -659,6 +608,25 @@ thisView = viewSet(thisView,'overlaycolorrange',[0 nStim*1.25],curOverlay);
 
 % save analysis
 saveAnalysis(thisView,[analysisSaveName mat2str(iScan)])
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %% use functionalAnalysis to select next analysis below %%%%%
+% thisView = viewSet(thisView,'curGroup','MotionComp');
+% thisView = viewSet(thisView,'curScan', iScan);
+% [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
+% 
+% pRFParams.saveName = [analysisSaveName mat2str(iScan)];
+% pRFParams.restrict = ['ROI: ' roi{1, roiNum}.name];
+% pRFParams.pRFFit.supersampling = 1;
+% pRFParams.pRFFit.fitHDR = 0;
+% pRFParams.pRFFit.dispStimScan = iScan;
+% 
+% % [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1',['scanList=' mat2str(iScan)]);
+% 
+% [thisView, pRFParams] = pRF_auditory(thisView,pRFParams,['scanList=' mat2str(iScan)]);
+% 
+% % save analysis
+% saveAnalysis(thisView,[analysisSaveName mat2str(iScan)])
 end
 
 

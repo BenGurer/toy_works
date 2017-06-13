@@ -3,7 +3,7 @@
 
 %% RUN FREESURFER FIRST
 
-iSubj = 9;
+iSubj = 7;
 
 epiDims = [128 128 24 361]; % dims of contin
 
@@ -93,6 +93,9 @@ freeSurferName{6} = '11020_002';
 sparseScans{6} =  {'08','15'};
 contScans{6} =  {'09','18'};
 
+
+% Import raw scans from subject 9 post motion correction
+% Import to one group
 subjects{7} = '08773_007';
 niftiBaseName{7} = 'cm_08773_007_';
 psirNiftiBaseName{7} = 'cm_08773_007';
@@ -255,7 +258,8 @@ end
 
 % crop last frame of reference EPI
 !mkdir FNIRT
-cd Raw/TSeries/conver
+cd Raw/TSeries/
+% conver
 
 
 system(['fslroi ' niftiBaseName{iSubj} refScan{iSubj} '_1_modulus_dynMod_U.nii lastFrameEPI ' num2str(epiDims(4)-1) ' 1']);
@@ -263,16 +267,11 @@ system(['fslroi ' niftiBaseName{iSubj} refScan{iSubj} '_1_modulus_dynMod_U.nii l
 !mv lastFrameEPI.nii ../../FNIRT
 cd ../../
 
-% crop T2*
+
 
 cd Anatomy/
-T2starFile = [niftiBaseName{iSubj} T2star{iSubj} '_1_modulus'];
-system(sprintf('fslroi %s %s_crop 18 348 18 348 2 24 0 1',T2starFile,T2starFile)); %% cropping t2 inplane structural image to match size of functional data
-system(sprintf('cp %s_crop.nii ../FNIRT',T2starFile));
-% system(['bet ' niftiBaseName{iSubj} T2star{iSubj} '_1_modulus_crop ' niftiBaseName{iSubj} T2star{iSubj} '_1_modulus_crop_stripped -f .2 -Z'])
-system(['bet ' niftiBaseName{iSubj} T2star{iSubj} '_1_modulus ' niftiBaseName{iSubj} T2star{iSubj} '_1_modulus_stripped -f .2 -Z'])
 
-cd ../
+
 
 mrAlign
 keyboard
@@ -282,6 +281,20 @@ keyboard
 % then select Reverse Contrast (T2*)
 % Click 'Compute Coarse Aligment' then
 % Click 'Compute fine Aligment'
+
+
+% crop T2* - this should be aligned to the wholehead PSIR
+T2starFile = [niftiBaseName{iSubj} T2star{iSubj} '_1_modulus'];
+system(sprintf('fslroi %s %s_crop 18 348 18 348 2 24 0 1',T2starFile,T2starFile)); %% cropping t2 inplane structural image to match size of functional data
+system(sprintf('cp %s_crop.nii ../FNIRT',T2starFile));
+system(['bet ' niftiBaseName{iSubj} T2star{iSubj} '_1_modulus ' niftiBaseName{iSubj} T2star{iSubj} '_1_modulus_stripped -f .2 -Z'])
+
+mrAlign
+keyboard
+% skull stripping removes the s-form matrix so using set alignment to
+% identity and save (t2*_stripped to t2*)
+
+cd ../
 
 %run FNIRT
 cd FNIRT
