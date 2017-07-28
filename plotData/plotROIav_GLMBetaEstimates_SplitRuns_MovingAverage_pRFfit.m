@@ -1,40 +1,33 @@
-function [ROIbetas, ROISte] = plotROIav_GLMBetaEstimates_SplitRuns_MovingAverage(e1,e2,restrictIndex)
+function [ROIbetas, ROISte] = plotROIav_GLMBetaEstimates_SplitRuns_MovingAverage_pRFfit(e1,e2,restrictIndex)
 
-betasA = squeeze(e1.betas);
-betasB = squeeze(e2.betas);
-betasA =betasA(:,restrictIndex);
-betasB =betasB(:,restrictIndex);
+betasAin = squeeze(e1.betas);
+betasBin = squeeze(e2.betas);
+betasA = betasAin(:,restrictIndex);
+betasB = betasBin(:,restrictIndex);
 
-betaSteA = squeeze(e1.betaSte);
-betaSteB = squeeze(e2.betaSte);
-betaSteA = betaSteA(:,restrictIndex);
-betaSteB = betaSteB(:,restrictIndex);
+betaSteAin = squeeze(e1.betaSte);
+betaSteA = betaSteAin(:,restrictIndex);
+betaSteBin = squeeze(e2.betaSte);
+betaSteB = betaSteBin(:,restrictIndex);
+
 nBins = 8;
 groupSize = size(betasA,1)/nBins;
 % loopLength = (length(d.stimNames))/groupSize;
 % loopLength = size(betasA,1) - groupSize;
-loopLength = size(betasA,1) - nBins;
+loopLength = size(betasA,1) - groupSize;
 betasScanA = zeros(loopLength,size(betasA,2));
 betasScanB = zeros(loopLength,size(betasB,2));
 betaSteScanA = zeros(loopLength,size(betaSteA,2));
 betaSteScanB = zeros(loopLength,size(betaSteB,2));
-% c = 1;
-for i = 1:loopLength
-% for i = 1:nBins
-% betasScanA(i) = mean(betasScanA(c:c+groupSize-1));
+% 
+% [row, col] = find(isnan(ROIbetaSplitSumD));
 
+for i = 1:loopLength
 betasScanA(i,:) = mean(betasA(i:i+groupSize-1,:));
 betasScanB(i,:) = mean(betasB(i:i+groupSize-1,:));
 
 betaSteScanA(i,:) = mean(betaSteA(i:i+groupSize-1,:));
 betaSteScanB(i,:) = mean(betaSteB(i:i+groupSize-1,:));
-
-% betasScanA(i,:) = mean(betasA(i:i+nBins-1,:));
-% betasScanB(i,:) = mean(betasB(i:i+nBins-1,:));
-% 
-% betaSteScanA(i,:) = mean(betaSteA(i:i+nBins-1,:));
-% betaSteScanB(i,:) = mean(betaSteB(i:i+nBins-1,:));
-% %     c = c + groupSize;
 end
 
 ROIbetaSplitSumC = zeros(size(betasScanA,1));
@@ -76,20 +69,26 @@ for i = 1:size(betasScanA,2)
 end
 ROIbetasC = ROIbetaSplitSumC./repmat(ROIbetaSplitCountC,1,size(betasScanA,1));
 ROISteC = ROISteSplitSumC./repmat(ROIbetaSplitCountC,1,size(betasScanA,1));
+ROIbetasC(isnan(ROIbetasC)) = 0;
+ROISteC(isnan(ROISteC)) = 0;
 ROISteAvC = mean(ROISteC,2);
 
 ROIbetasD = ROIbetaSplitSumD./repmat(ROIbetaSplitCountD,1,size(betasScanA,1));
 ROISteD = ROISteSplitSumD./repmat(ROIbetaSplitCountD,1,size(betasScanA,1));
+ROIbetasD(isnan(ROIbetasD)) = 0;
+ROISteD(isnan(ROISteD)) = 0;
 ROISteAvD = mean(ROISteD,2);
-
-
 
 ROIbetasA = ROIbetaSumA./repmat(ROIbetaCountA,1,size(betasScanA,1));
 ROISteA = ROISteSumA./repmat(ROIbetaCountA,1,size(betasScanA,1));
+ROIbetasA(isnan(ROIbetasA)) = 0;
+ROISteA(isnan(ROISteA)) = 0;
 ROISteAvA = mean(ROISteA,2);
 
 ROIbetasB = ROIbetaSumB./repmat(ROIbetaCountB,1,size(betasScanA,1));
 ROISteB = ROISteSumB./repmat(ROIbetaCountB,1,size(betasScanA,1));
+ROIbetasB(isnan(ROIbetasB)) = 0;
+ROISteB(isnan(ROISteB)) = 0;
 ROISteAvB = mean(ROISteB,2);
 
 ROIbetas = (ROIbetasC + ROIbetasD) ./2;
@@ -120,7 +119,7 @@ for i = 1:size(ROIbetas,1)
     % errorbar(ROIbetas(i,:),ROISte(i,:),'LineWidth',2)
     plot(ROIbetas(i,:),'LineWidth',2)
     set(gca,'ColorOrder',jet(size(ROIbetas,1)))
-    ylim([min(min(ROIbetas)) max(max(ROIbetas))]);
+    ylim(abs([min(min(ROIbetas)) max(max(ROIbetas))]));
     xlabel('Condition ID')
     ylabel('Mean Response Level')
     hold on
@@ -173,15 +172,17 @@ plot([1 size(ROIbetas,1)],[0 0],'--k')
 
 %% plot Condition tuning width estimates
 figure
-subIndex = [size(ROIbetas,1)/(size(ROIbetas,1)/2) size(ROIbetas,1)/2];
+subIndex = [size(ROIbetas,1)/(size(ROIbetas,1)/4) size(ROIbetas,1)/4];
+fpRF = [];
+rfModel = [];
 for i = 1:size(ROIbetas,1)
     subplot(subIndex(1),subIndex(2),i)
 %     errorbar(ROIbetas(i,:),ROISte(i,:),'LineWidth',1)
-    plot(ROIbetas(i,:),'LineWidth',2)
+    plot(ROIbetas(i,:),'b','LineWidth',2)
     hold on
-    plot(ROIbetasC(i,:),'--','LineWidth',1)
-    plot(ROIbetasD(i,:),'--','LineWidth',1)
-    plot(ROIbetasUncorrected(i,:),':','LineWidth',1)
+    plot(ROIbetasC(i,:),'g--','LineWidth',1)
+    plot(ROIbetasD(i,:),'c--','LineWidth',1)
+    plot(ROIbetasUncorrected(i,:),'m:','LineWidth',1)
     
     % plot(ROIbetaSum(i,:),'LineWidth',2)
     set(gca,'ColorOrder',jet(size(ROIbetas,1)))
@@ -191,9 +192,37 @@ for i = 1:size(ROIbetas,1)
     ylabel('Sum Response Level')
     
     plot([1 size(ROIbetas,1)],[0 0],'--k')
+    
+    % fit pRF
+   fun = @(x,xdata) x(4) .* exp(-(((xdata-x(1)).^2)/(2*(x(2)^2)))) + x(5);
+% fun = @(x,xdata) x(4) .* (exp(-(((xdata-x(1)).^2)/(2*(x(2)^2))))).^x(3) + x(5);
+% fun = @(x,xdata) max(x(4) .* 1 + x(3).*log10((exp(-(((xdata-x(1)).^2)/(2*(x(2)^2)))))) + x(5),0);
+xdata = 1:length(ROIbetas);
+x0 = [i,1,2,1,1];
+[fpRF(i,:),resnorm(i,:),residual(i,:)] = lsqcurvefit(fun,x0,xdata,ROIbetas(i,:));
+rfModel{i} = fun(fpRF(i,:),xdata);
+plot(rfModel{i},'r--','LineWidth',2)
 end
-legend('Split Mean','Run A', 'Run b', 'Mean')
+legend('Split Mean','Run A', 'Run b', 'Mean','0','pRF model')
 
+% use average to label - google f-test to see how to do it (degrees of freedom)
+% use RSS to compare models
+% RSS = resnorm
+% n = data points
+% p = parameters
+% F = (RSSa - RRSb/p2-p1)/(RSSb/n-p2)
+
+figure
+xpRFplot = -32:32;
+pRFshift = [];
+for i = 1:size(ROIbetas,1)
+pRFshift(i,:) = fun([0 fpRF(i,2:end)],xpRFplot);
+plot(xpRFplot,pRFshift(i,:));
+axis tight
+hold on
+end
+plot(xpRFplot,mean(pRFshift),'b','LineWidth',2)
+% plot(mean(cell2mat(rfModel')),'b','LineWidth',2)
 
 figure
 f = 1:size(betasScanA,1);
@@ -268,7 +297,6 @@ fit = polyfit(VoxelCntrd,VoxelSprd,1);
 plot(polyval(fit,f));
 
 figure
-subIndex = [nBins/(nBins/2) nBins/2];
 c = 1;
 % per group recentre on max and average
 ROIbetasSum = zeros(nBins-1,(length(ROIbetas)+groupSize).*2);
@@ -306,10 +334,39 @@ legend('Split Mean','Run A', 'Run b', 'Mean')
 
 
 figure
-c = 1;
+% c = 1;
 for i = 1:nBins-1
 fun = @(x,xdata) x(4) .* exp(-(((xdata-x(1)).^2)/(2*(x(2)^2)))) + x(5);
 % fun = @(x,xdata) x(4) .* (exp(-(((xdata-x(1)).^2)/(2*(x(2)^2))))).^x(3) + x(5);
+% fun = @(x,xdata) max(x(4) .* 1 + x(3).*log10((exp(-(((xdata-x(1)).^2)/(2*(x(2)^2)))))) + x(5),0);
+xdata = 1:length(ROIbetasSum);
+y = ROIbetasSum(i,:);
+[m index] = max(ROIbetasSum(i,:));
+
+x0 = [index,1,2,1,1];
+fpRF(i,:) = lsqcurvefit(fun,x0,xdata,y);
+rfModel{i} = fun(fpRF(i,:),xdata);
+
+subplot(subIndexSum(1),subIndexSum(2),i)
+plot(xdata,y)
+hold on
+plot(xdata,rfModel{i})
+% c = c+1;
+end
+
+figure
+xpRFplot = -32:32;
+for i = 1:nBins-1     
+plot(xpRFplot,fun([0 fpRF(i,2:end)],xpRFplot));
+axis tight
+hold on
+end
+
+figure
+c = 1;
+for i = 1:nBins-1
+% fun = @(x,xdata) x(4) .* exp(-(((xdata-x(1)).^2)/(2*(x(2)^2)))) + x(5);
+fun = @(x,xdata) x(4) .* (exp(-(((xdata-x(1)).^2)/(2*(x(2)^2))))).^x(3) + x(5);
 % fun = @(x,xdata) max(x(4) .* 1 + x(3).*log10((exp(-(((xdata-x(1)).^2)/(2*(x(2)^2)))))) + x(5),0);
 xdata = 1:length(ROIbetasSum);
 y = ROIbetasSum(i,:);
@@ -334,4 +391,31 @@ axis tight
 hold on
 end
 
+figure
+c = 1;
+for i = 1:nBins-1
+% fun = @(x,xdata) x(4) .* exp(-(((xdata-x(1)).^2)/(2*(x(2)^2)))) + x(5);
+% fun = @(x,xdata) x(4) .* (exp(-(((xdata-x(1)).^2)/(2*(x(2)^2))))).^x(3) + x(5);
+fun = @(x,xdata) max(x(4) .* 1 + x(3).*log10((exp(-(((xdata-x(1)).^2)/(2*(x(2)^2)))))) + x(5),0);
+xdata = 1:length(ROIbetasSum);
+y = ROIbetasSum(i,:);
+[m index] = max(ROIbetasSum(i,:));
 
+x0 = [index,1,2,1,1];
+fpRF(i,:) = lsqcurvefit(fun,x0,xdata,y);
+rfModel{i} = fun(fpRF(i,:),xdata);
+
+subplot(subIndexSum(1),subIndexSum(2),i)
+plot(xdata,y)
+hold on
+plot(xdata,rfModel{i})
+c = c+1;
+end
+
+figure
+xpRFplot = -32:32;
+for i = 1:nBins-1     
+plot(xpRFplot,fun([0 fpRF(i,2:end)],xpRFplot));
+axis tight
+hold on
+end

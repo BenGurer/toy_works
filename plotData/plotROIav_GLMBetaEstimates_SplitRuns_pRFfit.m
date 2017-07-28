@@ -1,41 +1,10 @@
-function [ROIbetas, ROISte] = plotROIav_GLMBetaEstimates_SplitRuns_MovingAverage(e1,e2,restrictIndex)
+function [ROIbetas, ROISte] = plotROIav_GLMBetaEstimates_SplitRuns_pRFfit(e1,e2)
 
-betasA = squeeze(e1.betas);
-betasB = squeeze(e2.betas);
-betasA =betasA(:,restrictIndex);
-betasB =betasB(:,restrictIndex);
+betasScanA = squeeze(e1.betas);
+betasScanB = squeeze(e2.betas);
 
-betaSteA = squeeze(e1.betaSte);
-betaSteB = squeeze(e2.betaSte);
-betaSteA = betaSteA(:,restrictIndex);
-betaSteB = betaSteB(:,restrictIndex);
-nBins = 8;
-groupSize = size(betasA,1)/nBins;
-% loopLength = (length(d.stimNames))/groupSize;
-% loopLength = size(betasA,1) - groupSize;
-loopLength = size(betasA,1) - nBins;
-betasScanA = zeros(loopLength,size(betasA,2));
-betasScanB = zeros(loopLength,size(betasB,2));
-betaSteScanA = zeros(loopLength,size(betaSteA,2));
-betaSteScanB = zeros(loopLength,size(betaSteB,2));
-% c = 1;
-for i = 1:loopLength
-% for i = 1:nBins
-% betasScanA(i) = mean(betasScanA(c:c+groupSize-1));
-
-betasScanA(i,:) = mean(betasA(i:i+groupSize-1,:));
-betasScanB(i,:) = mean(betasB(i:i+groupSize-1,:));
-
-betaSteScanA(i,:) = mean(betaSteA(i:i+groupSize-1,:));
-betaSteScanB(i,:) = mean(betaSteB(i:i+groupSize-1,:));
-
-% betasScanA(i,:) = mean(betasA(i:i+nBins-1,:));
-% betasScanB(i,:) = mean(betasB(i:i+nBins-1,:));
-% 
-% betaSteScanA(i,:) = mean(betaSteA(i:i+nBins-1,:));
-% betaSteScanB(i,:) = mean(betaSteB(i:i+nBins-1,:));
-% %     c = c + groupSize;
-end
+betaSteScanA = squeeze(e1.betaSte);
+betaSteScanB = squeeze(e2.betaSte);
 
 ROIbetaSplitSumC = zeros(size(betasScanA,1));
 ROISteSplitSumC = zeros(size(betasScanA,1));
@@ -194,27 +163,57 @@ for i = 1:size(ROIbetas,1)
 end
 legend('Split Mean','Run A', 'Run b', 'Mean')
 
-
 figure
-f = 1:size(betasScanA,1);
-for i = 1:size(betasScanA,2)    
-    [VoxelMax VoxelIndexA(i)] = max(betasScanA(:,i));
-     wA = betasScanA(:,i)';
-     wA = (wA-min(wA))./(max(wA)-min(wA));
-     VoxelCntrdA(i) = sum(wA.*f)./sum(wA);
-     VoxelSprdA(i) = sqrt(sum(wA.*(f-VoxelCntrdA(i)).^2)/sum(wA));
-    [VoxelMax VoxelIndexB(i)] = max(betasScanB(:,i));
-     wB = betasScanB(:,i)';
-     wB = (wB-min(wB))./(max(wB)-min(wB));
-     VoxelCntrdB(i) = sum(wB.*f)./(sum(wB));
-     VoxelSprdB(i) = sqrt(sum(wB.*(f-VoxelCntrdB(i)).^2)/sum(wB));
-     
-% %           VoxelCntrdC(i) = sum(f.*wA)/(sum(wA));
-%      VoxelSprC(i) = sqrt(sum(wB.*(f-VoxelCntrdA(i)).^2)/sum(wB));
-%      VoxelSprD(i) = sqrt(sum(wA.*(f-VoxelCntrdB(i)).^2)/sum(wA));
-     VoxelCntrd(i) = mean([VoxelCntrdA(i) VoxelCntrdB(i)]);
-     VoxelSprd(i) = mean([VoxelSprdA(i) VoxelSprdB(i)]);
+for i = 1:length(ROIbetas)
+    
+% fun = @(x,xdata) exp(-(((xdata-x(1)).^2)/(2*(x(2)^2))));
+fun = @(x,xdata) (exp(-(((xdata-x(1)).^2)/(2*(x(2)^2))))).^x(3);
+% fun = @(x,xdata) max(1 + x(3).*log10((exp(-(((xdata-x(1)).^2)/(2*(x(2)^2)))))),0);
+xdata = 1:length(ROIbetas);
+y = ROIbetas(i,:);
+x0 = [i,0.5,1];
+f(i,:) = lsqcurvefit(fun,x0,xdata,y);
+rfModel{i} = fun(f(i,:),xdata);
+subplot(subIndex(1),subIndex(2),i)
+plot(xdata,y)
+hold on
+plot(xdata,rfModel{i})
 end
+figure
+for i = 3:length(ROIbetas)-2
+    
+plot(fun([4 f(i,2:3)],xdata));
+hold on
+end
+
+
+% 
+% ub= [20, 100];
+% fun = @lcfROEX;
+% options = optimoptions('lsqcurvefit','TolFun',1e-10, 'MaxFunEvals', 400, 'MaxIter', 400); % default=1e-6
+% [x, error] = lsqcurvefit(fun,x0,1:length(ROIbetas),ROIbetas,lb,ub,options);
+
+
+% figure
+% f = 1:size(betasScanA,1);
+% for i = 1:size(betasScanA,2)    
+%     [VoxelMax VoxelIndexA(i)] = max(betasScanA(:,i));
+%      wA = betasScanA(:,i)';
+%      wA = (wA-min(wA))./(max(wA)-min(wA));
+%      VoxelCntrdA(i) = sum(wA.*f)./sum(wA);
+%      VoxelSprdA(i) = sqrt(sum(wA.*(f-VoxelCntrdA(i)).^2)/sum(wA));
+%     [VoxelMax VoxelIndexB(i)] = max(betasScanB(:,i));
+%      wB = betasScanB(:,i)';
+%      wB = (wB-min(wB))./(max(wB)-min(wB));
+%      VoxelCntrdB(i) = sum(wB.*f)./(sum(wB));
+%      VoxelSprdB(i) = sqrt(sum(wB.*(f-VoxelCntrdB(i)).^2)/sum(wB));
+%      
+% % %           VoxelCntrdC(i) = sum(f.*wA)/(sum(wA));
+% %      VoxelSprC(i) = sqrt(sum(wB.*(f-VoxelCntrdA(i)).^2)/sum(wB));
+% %      VoxelSprD(i) = sqrt(sum(wA.*(f-VoxelCntrdB(i)).^2)/sum(wA));
+%      VoxelCntrd(i) = mean([VoxelCntrdA(i) VoxelCntrdB(i)]);
+%      VoxelSprd(i) = mean([VoxelSprdA(i) VoxelSprdB(i)]);
+% end
 % betaEstAvB = hist3([VoxelIndexA',VoxelIndexB'],[8 8]);
 % pcolor(betaEstAvB)
 % % surf(n)
@@ -223,21 +222,21 @@ end
 % ylabel('Condition Estimate Run B')
 % 
 % figure
-subplot(2,2,1)
-scatter(VoxelCntrdA,VoxelCntrdB)
-title('Centriod')
-hold on
-fit = polyfit(VoxelCntrdA,VoxelCntrdB,1);
-xlim([1 size(betasScanA,1)]);
-ylim([1 size(betasScanA,1)]);
-plot(polyval(fit,f));
-correlation = corrcoef([VoxelCntrdA' VoxelCntrdB']);
-text(max(xlim),max(ylim),sprintf('correlation = %.2f \n fit = %.2f %.2f',correlation(2), fit(1), fit(2)))
-plot(f,f,'--')
+% subplot(2,2,1)
+% scatter(VoxelCntrdA,VoxelCntrdB)
+% title('Centriod')
+% hold on
+% fit = polyfit(VoxelCntrdA,VoxelCntrdB,1);
+% xlim([1 size(betasScanA,1)]);
+% ylim([1 size(betasScanA,1)]);
+% plot(polyval(fit,f));
+% correlation = corrcoef([VoxelCntrdA' VoxelCntrdB']);
+% text(max(xlim),max(ylim),sprintf('correlation = %.2f \n fit = %.2f %.2f',correlation(2), fit(1), fit(2)))
+% plot(f,f,'--')
 
-
+% 
 % subplot(2,2,2)
-% scatter(VoxelSprdC,VoxelSprdD)
+% scatter(VoxelSprC,VoxelSprD)
 % title('Spread: Split Est')
 % hold on
 % xlim([1 4]);
@@ -247,91 +246,24 @@ plot(f,f,'--')
 % correlation = corrcoef([VoxelSprC' VoxelSprD']);
 % text(max(xlim),max(ylim),sprintf('correlation = %.2f \n fit = %.2f %.2f',correlation(2), fit(1), fit(2)))
 
-subplot(2,2,3)
-scatter(VoxelSprdA,VoxelSprdB)
-title('Spread')
-hold on
-xlim auto
-ylim auto
-fit = polyfit(VoxelSprdA,VoxelSprdB,1);
-plot(polyval(fit,f));
-correlation = corrcoef([VoxelSprdA' VoxelSprdB']);
-text(max(xlim),max(ylim),sprintf('correlation = %.2f \n fit = %.2f %.2f',correlation(2), fit(1), fit(2)))
-
-subplot(2,2,4)
-scatter(VoxelCntrd,VoxelSprd)
-title('Centriod vs Spread')
-hold on
-xlim auto
-ylim auto
-fit = polyfit(VoxelCntrd,VoxelSprd,1);
-plot(polyval(fit,f));
-
-figure
-subIndex = [nBins/(nBins/2) nBins/2];
-c = 1;
-% per group recentre on max and average
-ROIbetasSum = zeros(nBins-1,(length(ROIbetas)+groupSize).*2);
-
-subIndexSum = round([size(ROIbetasSum,1)/(size(ROIbetasSum,1)/2) size(ROIbetasSum,1)/2]);
-for i = 1:nBins-1
-    subplot(subIndexSum(1),subIndexSum(2),i)
-%     plot(ROIbetas(c,:),'LineWidth',2)
-% ROIbetasSum(i,:) = sum(ROIbetas(c:c + groupSize,:))./groupSize;
-c = c + groupSize;
-for ii =1:groupSize
-    a = c-ii;    
-    b = c-ii+length(ROIbetas(ii,:))-1;
-%     b = c+groupSize-ii:c-1+groupSize-ii+length(ROIbetas(ii,:));
-    ROIbetasSum(i,a:b) = ROIbetasSum(i,a:b) + ROIbetas(a,:);
-end
-ROIbetasSum(i,:) = ROIbetasSum(i,:)./groupSize;
-    plot(ROIbetasSum(i,:),'LineWidth',2)
-%     hold on
-%     plot(ROIbetasC(c,:),'--','LineWidth',1)
-%     plot(ROIbetasD(c,:),'--','LineWidth',1)
-%     plot(ROIbetasUncorrected(c,:),':','LineWidth',1)
-%     set(gca,'ColorOrder',jet(size(ROIbetas,1)))
-%     xlim([1 size(ROIbetas,1)]);
-%     ylim([min(min(ROIbetas))-min(min(ROISte)) max(max(ROIbetas))+max(max(ROISte))]);
-%     xlabel(['Condition ID = ' num2str((c+groupSize-1)-(groupSize/2))])
-%     ylabel('Sum Response Level')    
-%     plot([1 size(ROIbetas,1)],[0 0],'--k')
-%     c = c + groupSize;
-end
-legend('Split Mean','Run A', 'Run b', 'Mean')
-
-% combine above and below
-% figure out scale/xacis
-
-
-figure
-c = 1;
-for i = 1:nBins-1
-fun = @(x,xdata) x(4) .* exp(-(((xdata-x(1)).^2)/(2*(x(2)^2)))) + x(5);
-% fun = @(x,xdata) x(4) .* (exp(-(((xdata-x(1)).^2)/(2*(x(2)^2))))).^x(3) + x(5);
-% fun = @(x,xdata) max(x(4) .* 1 + x(3).*log10((exp(-(((xdata-x(1)).^2)/(2*(x(2)^2)))))) + x(5),0);
-xdata = 1:length(ROIbetasSum);
-y = ROIbetasSum(i,:);
-[m index] = max(ROIbetasSum(i,:));
-
-x0 = [index,1,2,1,1];
-fpRF(i,:) = lsqcurvefit(fun,x0,xdata,y);
-rfModel{i} = fun(fpRF(i,:),xdata);
-
-subplot(subIndexSum(1),subIndexSum(2),i)
-plot(xdata,y)
-hold on
-plot(xdata,rfModel{i})
-c = c+1;
-end
-
-figure
-xpRFplot = -32:32;
-for i = 1:nBins-1     
-plot(xpRFplot,fun([0 fpRF(i,2:end)],xpRFplot));
-axis tight
-hold on
-end
+% subplot(2,2,3)
+% scatter(VoxelSprdA,VoxelSprdB)
+% title('Spread: not split')
+% hold on
+% xlim([1 4]);
+% ylim([1 4]);
+% fit = polyfit(VoxelSprdA,VoxelSprdB,1);
+% plot(polyval(fit,f));
+% correlation = corrcoef([VoxelSprdA' VoxelSprdB']);
+% text(max(xlim),max(ylim),sprintf('correlation = %.2f \n fit = %.2f %.2f',correlation(2), fit(1), fit(2)))
+% 
+% subplot(2,2,4)
+% scatter(VoxelCntrd,VoxelSprd)
+% title('Centriod vs Spread')
+% hold on
+% xlim([1 8]);
+% ylim([1 4]);
+% fit = polyfit(VoxelCntrd,VoxelSprd,1);
+% plot(polyval(fit,f));
 
 
