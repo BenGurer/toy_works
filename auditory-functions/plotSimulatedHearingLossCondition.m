@@ -100,7 +100,18 @@ for ii = 1:length(allFrequencies)
 end
 xlim([min(frq) max(frq)])
 
+%%%%% PLOT Both Cons %%%%%
+figure('Color',[1 1 1]);
 
+semilogx(frq,CriticalRatioFFT,'r', 'LineWidth', 2)
+hold on
+semilogx(frq,max(thresholdHearingLossFFT,thresholdBaselineFFT), 'g', 'LineWidth', 3)
+semilogx(frq,thresholdBaselineFFT,'b', 'LineWidth', 2)
+for ii = 1:length(allFrequencies)
+    semilogx(allFrequencies(ii),75,'ro','MarkerFaceColor','r')
+    hold on
+end
+xlim([0.1 max(frq)])
 
 %%%%%
 figure('Color',[1 1 1]);

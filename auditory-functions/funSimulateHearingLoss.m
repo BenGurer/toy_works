@@ -24,14 +24,14 @@
     y = [Threshold_dBHL RETSPL_int Threshold_dBSPL_FFT];    
     names = [repmat({'tHL (dB HL)'},length(frq),1); repmat({'tH (dB SPL)'},length(frq),1); repmat({'tsHL (dB SPL)'},length(frq),1)];
     
-    figure
-    g = gramm('x',x,'y',y,'color',names);
-    g.geom_line()
-    % Set appropriate names for legends
-    g.set_names('x','Frequency (kHz)','y','Level (dB)','color','Threshold of:')
-    %Set figure title
-    g.set_title('Hearing loss simulation')
-    g.draw()
+%     figure
+%     g = gramm('x',x,'y',y,'color',names);
+%     g.geom_line()
+%     % Set appropriate names for legends
+%     g.set_names('x','Frequency (kHz)','y','Level (dB)','color','Threshold of:')
+%     %Set figure title
+%     g.set_title('Hearing loss simulation')
+%     g.draw()
     end
 
     function RETSPL_int = getdBHLinSPL_inserts(f)
@@ -45,7 +45,7 @@
     % interpolates the dB HL values for input arguements of frequency from value specified by ISO 389.
 
     % BS EN ISO 389-2:1997
-    % Acoustics - Reference zero for the calibration of audiometric equipment — Part 2: Reference equivalent threshold sound
+    % Acoustics - Reference zero for the calibration of audiometric equipment ï¿½ Part 2: Reference equivalent threshold sound
     % pressure levels for pure tones and insert earphones.
     % Transducer: Etymotic Research ER-3A
     % Ear simulator: Occluded-ear simulator (IEC 711)
