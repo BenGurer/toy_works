@@ -3,7 +3,7 @@
 
 %% RUN FREESURFER FIRST
 
-iSubj = 5;
+iSubj = 1;
 
 epiDims = [128 128 24 361]; % dims of contin
 
@@ -131,9 +131,8 @@ contScans{8} =  {'06','14'};
 
 cd([dataDir '/scanner/' subjects{iSubj}])
 
-
-
-    cd(fullfile(dataDir,studyDir,subjects{iSubj}));
+%%
+cd(fullfile(dataDir,studyDir,subjects{iSubj}));
     
     
     %% check for filenames below 10 and add a zero before the number - make sure linking of stim files works later
@@ -390,6 +389,8 @@ thisView = getMLRView;
 % Loop between groups - NH and sHL
 % GLM analysis
     concatenationGroup = {'ConcatenationSparse', 'ConcatenationCont'};
+    
+    concatenationGroup = {'Concatenation Sparse', 'Concatenation Cont'};
     hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
     for i = 1:length(concatenationGroup)        
         for ii = 1:length(hrfModel)
@@ -399,8 +400,8 @@ thisView = getMLRView;
             glmParams.hrfModel = hrfModel{ii};
             [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
             glmParams.saveName = analysisName;
-            glmParams.hrfParams.description = hrfModel;
-            switch hrfmodel
+            glmParams.hrfParams.description = hrfModel{ii};
+            switch hrfModel{ii}
                 case 'hrfBoxcar'
             glmParams.hrfParams.delayS =  2.5;
             glmParams.hrfParams.durationS = 2.5;
@@ -485,7 +486,11 @@ thisView = getMLRView;
 %% GLM Reverse Correlation - Continuous data concatenated %%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% This needs to be error checked
+
 thisView = viewSet(thisView,'curGroup','ConcatenationCont');
+
+thisView = viewSet(thisView,'curGroup','Concatenation Cont');
 refreshMLRDisplay(thisView);
 
 [thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
@@ -645,8 +650,7 @@ end
 end
 end
 
-%% Split run analysis
-% concatenationGroup = {'ConcatenationHLsim', 'ConcatenationNH'};
+%% Split run analysis;
 functionalAnalysis = {'GLM_BoxCar'};
 ROInames = {'LeftPAC','RightPAC','PAC'};
 stimBins = 8;
