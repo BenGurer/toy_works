@@ -13,15 +13,15 @@ function data = analysisScript_tonotopic(view,concatenationGroupNames,nScans)
 %% GLM analysis
 hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
 for i = 1:length(concatenationGroupNames)
-    for iStim = 1:length(hrfModel)
-        analysisName = ['glm_' hrfModel{iStim}];
+    for iHRF = 1:length(hrfModel)
+        analysisName = ['glm_' hrfModel{iHRF}];
         thisView = viewSet(thisView,'curGroup',concatenationGroupNames{i});
         [thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
-        glmParams.hrfModel = hrfModel{iStim};
+        glmParams.hrfModel = hrfModel{iHRF};
         [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
         glmParams.saveName = analysisName;
-        glmParams.hrfParams.description = hrfModel{iStim};
-        switch hrfModel{iStim}
+        glmParams.hrfParams.description = hrfModel{iHRF};
+        switch hrfModel{iHRF}
             case 'hrfBoxcar'
                 glmParams.hrfParams.delayS =  2.5;
                 glmParams.hrfParams.durationS = 2.5;
@@ -128,12 +128,13 @@ for iScan = 1:nScans
                 glmParams.hrfParams.y = 11;
                 glmParams.hrfParams.z =  4;
         end
+        
         if nStim(iStim) == 8
             glmParams.scanParams{1, iScan}.preprocess  = 'binStimFreq';
-            glmParams.numberContrasts = nStim(iStim);
-            glmParams.numberEVs = nStim(iStim);
             glmParams.EVnames = {'1','2','3','4','5','6','7','8'};
         end
+        glmParams.numberContrasts = nStim(iStim);
+        glmParams.numberEVs = nStim(iStim);
         [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
         glmParams.scanParams{iScan}.stimDurationMode = 'From File';
         glmParams.scanParams{iScan}.supersamplingMode =  'Set value';
@@ -147,7 +148,7 @@ for iScan = 1:nScans
         
         %Tonotopy analysis
         % Index max
-        [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:nStim+1])],['scanList=' mat2str(iScan)]);
+        [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:nStim(iStim)+1])],['scanList=' mat2str(iScan)]);
         params.combineFunction='indexMax';
         params.nOutputOverlays=2;
         [thisView,params] = combineTransformOverlays(thisView,params);
@@ -176,15 +177,103 @@ end
 
 % Put back in main function? or above in sub function
 % get data from view
-data = getGroupROIEstimates(ROI,GroupName,nScan);
+% get ROI
+ROIName = 'PAC';
+pacROI = viewGet(thisView,'roi',ROIName);
+% get data from Split runs
+% unbinned analysis
+for iScan = 1:nScans
+ROIEstimatesData_SplitRuns_32Cons{iScan} = getGroupROIEstimates(thisView,pacROI,'MotionComp',['glm_' hrfModel{splitHRFmodel} ' - nStim=32 - Scan-' mat2str(iScan)],iScan);
+end
+% binned analysis
+for iScan = 1:nScans
+ROIEstimatesData_SplitRuns_8bins{iScan} = getGroupROIEstimates(thisView,pacROI,'MotionComp',['glm_' hrfModel{splitHRFmodel} ' - nStim=8 - Scan-' mat2str(iScan)],iScan);
+end
+% get datga from concatenated groups
+for iGroup = 1:length(concatenationGroupNames)
+ROIEstimatesData_Concat{iGroup} = getGroupROIEstimates(thisView,pacROI,concatenationGroupNames{iGroup},['glm_' hrfModel{2}],0);
+end
 
 % calculate split mean
 conditionScans = {[1,3];[2,4]};
-for i = 1:length(concatenationGroupNames)
-data = cal_splitRun(data(conditionScans{i}(1)),data(conditionScans{i}(2)));
+for iGroup = 1:length(concatenationGroupNames)
+runA_32cons{iGroup} = ROIEstimatesData_SplitRuns_32Cons{conditionScans{iGroup}(1)}.betas;
+runB_32cons{iGroup} = ROIEstimatesData_SplitRuns_32Cons{conditionScans{iGroup}(2)}.betas;
+
+runA_8bins{iGroup} = ROIEstimatesData_SplitRuns_8bins{conditionScans{iGroup}(1)}.betas;
+runB_8bins{iGroup} = ROIEstimatesData_SplitRuns_8bins{conditionScans{iGroup}(2)}.betas;
+
+restrictIndex = true(1,length(runA_32cons{iGroup}));
+
+% replace voxels outside of restriction with nans
+runA_32cons{iGroup}(~restrictIndex) = nan;
+runB_32cons{iGroup}(~restrictIndex) = nan;
+runA_8bins{iGroup}(~restrictIndex) = nan;
+runB_8bins{iGroup}(~restrictIndex) = nan;
+
+runA_mv{iGroup} = cal_movingAverage(runA_32cons{iGroup});
+runB_mv{iGroup} = cal_movingAverage(runB_32cons{iGroup});
+
+runA_Peak_mv{iGroup} = cal_voxel_properties(runA_mv{iGroup});
+runB_Peak_mv{iGroup} = cal_voxel_properties(runB_mv{iGroup});
+
+roi_av{iGroup} = cal_ROI_pTW_av(runA_32cons{iGroup},runB_32cons{iGroup});
+roi_av_mv{iGroup} = cal_ROI_pTW_av(runA_mv{iGroup},runB_mv{iGroup});
+roi_av_bin{iGroup} = cal_ROI_pTW_av(runA_8bins{iGroup},runB_8bins{iGroup});
+
+[condition_splitMean_mv{iGroup}, voxel_Mean_Peak_mv{iGroup}, Voxel_Cntrd_mv{iGroup}, Voxel_Sprd_mv{iGroup}] = cal_splitMean(runA_mv{iGroup},runB_mv{iGroup});
+[condition_splitMean_bin{iGroup}, voxel_Mean_Peak_bin{iGroup}, Voxel_Cntrd_bin{iGroup}, Voxel_Sprd_bin{iGroup}] = cal_splitMean(runA_8bins{iGroup},runB_8bins{iGroup});
 end
+
+% %% Plot results using:
+% plot_compareConditions_pCF
+% plot_compareConditions_pTW
+% plot_compareConditions_ROIav
+
+%% Compare average ROI beta weights
+% ADD ste to av ROI plots
+% recentre AvROI plot
+plot_compareConditions_ROIav(roi_av_bin{1},roi_av_bin{2})
+plot_compareConditions_ROIav(roi_av_mv{1},roi_av_mv{2})
+plot_compareConditions_ROIav(roi_av{1},roi_av{2})
+
+% % Condition A TRUE compare conditions
+% ConB_runA = ROIEstimatesData_SplitRuns_8bins{conditionScans{1}(1)}.betas;
+% ConB_runB = ROIEstimatesData_SplitRuns_8bins{conditionScans{1}(2)}.betas;
+
+% plot_compareCondtions_byROIAverage_pTW_ConditionATRUE(condition_splitMean_bin{1},condition_splitMean_peak_bin{1},runA_8bins,runB_8bins)
+% [conA, conB] = cal_compareConditions_byVoxel_pTW(voxel_Mean_bin{1},voxel_Mean_bin{2});
+
+%% Compare ROI pCF
+% Compare conditions to runs
+% compare runs
+plot_compareConditions_pCF(runA_Peak_mv{1}, runB_Peak_mv{1},24);
+plot_compareConditions_pCF(runA_Peak_mv{2}, runB_Peak_mv{2},24);
+
+% compare conditions
+plot_compareConditions_pCF(voxel_Mean_Peak_bin{1},voxel_Mean_Peak_bin{2},8);
+plot_compareConditions_pCF(Voxel_Cntrd_bin{1},Voxel_Cntrd_bin{2},8);
+
+plot_compareConditions_pCF(voxel_Mean_Peak_mv{1},voxel_Mean_Peak_mv{2},24);
+plot_compareConditions_pCF(Voxel_Cntrd_mv{1},Voxel_Cntrd_mv{2},24);
+
+%% Compare ROI pTW
+plot_compareConditions_pTW(condition_splitMean_bin{1},condition_splitMean_bin{2},2);
+plot_compareConditions_pTW(condition_splitMean_mv{1},condition_splitMean_mv{2},4);
+
+%% Compare ROI pTW assuming condition A is TRUE
+ConBROIpTW_bin = cal_ConBROIpTW_ConAVoxelIndex(voxel_Mean_Peak_bin{1},runA_8bins{2},runB_8bins{2});
+plot_compareConditions_pTW(condition_splitMean_bin{1}, ConBROIpTW_bin,2);
+
+ConBROIpTW_mv = cal_ConBROIpTW_ConAVoxelIndex(voxel_Mean_Peak_mv{1},runA_mv{2},runB_mv{2});
+plot_compareConditions_pTW(condition_splitMean_mv{1}, ConBROIpTW_mv,4);
+
+% plot_compareConditions_byROIAverage(conA, conB,2);
+
 % Send to functions to perform analysis
-data = plot_ROI_AvB_SplitRuns(run1,run2,run3,run4,Aruns,Bruns,RestrictIndex);
+% data = plot_ROI_AvB_SplitRuns(run1,run2,run3,run4,Aruns,Bruns,RestrictIndex);
     % contain function to calcuate split mean or make a split mean function and send data onward - prob better
+    
+    % reshape and plot as overlay? see most effected areas on the cortex
 
 end

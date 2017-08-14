@@ -902,7 +902,6 @@ thisView = getMLRView;
 roiAC = viewGet(thisView,'roi','AC');
 % roiAC = viewGet(thisView,'roi','RIGHT');
 roiAC.scanCoords = getROICoordinates(thisView,roiAC);
-concatenationGroup = {'ConcatenationHLsim', 'ConcatenationNH'};
 analysisSaveName{1} = {'pRF_auditory_2','pRF_auditory_w_2'};
 analysisSaveName{2} = {'pRF_auditory_fitHDR_2'};
 % functionalAnalysis = {'GLM_BoxCar'};
