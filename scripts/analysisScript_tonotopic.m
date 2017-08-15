@@ -196,6 +196,8 @@ end
 
 % calculate split mean
 conditionScans = {[1,3];[2,4]};
+
+conditionScans = {[2,4];[1,3]};
 for iGroup = 1:length(concatenationGroupNames)
 runA_32cons{iGroup} = ROIEstimatesData_SplitRuns_32Cons{conditionScans{iGroup}(1)}.betas;
 runB_32cons{iGroup} = ROIEstimatesData_SplitRuns_32Cons{conditionScans{iGroup}(2)}.betas;
@@ -221,8 +223,12 @@ roi_av{iGroup} = cal_ROI_pTW_av(runA_32cons{iGroup},runB_32cons{iGroup});
 roi_av_mv{iGroup} = cal_ROI_pTW_av(runA_mv{iGroup},runB_mv{iGroup});
 roi_av_bin{iGroup} = cal_ROI_pTW_av(runA_8bins{iGroup},runB_8bins{iGroup});
 
-[condition_splitMean_mv{iGroup}, voxel_Mean_Peak_mv{iGroup}, Voxel_Cntrd_mv{iGroup}, Voxel_Sprd_mv{iGroup}] = cal_splitMean(runA_mv{iGroup},runB_mv{iGroup});
-[condition_splitMean_bin{iGroup}, voxel_Mean_Peak_bin{iGroup}, Voxel_Cntrd_bin{iGroup}, Voxel_Sprd_bin{iGroup}] = cal_splitMean(runA_8bins{iGroup},runB_8bins{iGroup});
+% [condition_splitMean, condition_splitMean_peak, condition_Cntrd, condition_Sprd, condition_pRF, voxel_Mean_Peak, Voxel_Cntrd, Voxel_Sprd, Voxel_pRF] = cal_splitMean(betas_A,betas_B) 
+% [condition_splitMean_mv{iGroup}, condition_splitMean_peak_mv{iGroup}, condition_Cntrd_mv{iGroup}, condition_Sprd_mv{iGroup}, condition_pRF_mv{iGroup}, voxel_Mean_Peak_mv{iGroup}, Voxel_Cntrd_mv{iGroup}, Voxel_Sprd_mv{iGroup}, Voxel_pRF_mv{iGroup}] = cal_splitMean(runA_mv{iGroup},runB_mv{iGroup});
+% [condition_splitMean_bin{iGroup}, condition_splitMean_peak_bin{iGroup}, condition_Cntrd_bin{iGroup}, condition_Sprd_bin{iGroup}, condition_pRF_bin{iGroup}, voxel_Mean_Peak_bin{iGroup}, Voxel_Cntrd_bin{iGroup}, Voxel_Sprd_bin{iGroup}, Voxel_pRF_bin{iGroup}] = cal_splitMean(runA_8bins{iGroup},runB_8bins{iGroup});
+[condition_splitMean_mv{iGroup}, ROI_data_mv{iGroup}, Voxel_data_mv{iGroup}] = cal_splitMean(runA_mv{iGroup},runB_mv{iGroup});
+ [condition_splitMean_bin{iGroup}, ROI_data_bin{iGroup}, Voxel_data_bin{iGroup}] = cal_splitMean(runA_8bins{iGroup},runB_8bins{iGroup});
+
 end
 
 % %% Plot results using:
@@ -250,12 +256,19 @@ plot_compareConditions_ROIav(roi_av{1},roi_av{2})
 plot_compareConditions_pCF(runA_Peak_mv{1}, runB_Peak_mv{1},24);
 plot_compareConditions_pCF(runA_Peak_mv{2}, runB_Peak_mv{2},24);
 
+%% need to update below to work on structures%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % compare conditions
 plot_compareConditions_pCF(voxel_Mean_Peak_bin{1},voxel_Mean_Peak_bin{2},8);
 plot_compareConditions_pCF(Voxel_Cntrd_bin{1},Voxel_Cntrd_bin{2},8);
 
-plot_compareConditions_pCF(voxel_Mean_Peak_mv{1},voxel_Mean_Peak_mv{2},24);
-plot_compareConditions_pCF(Voxel_Cntrd_mv{1},Voxel_Cntrd_mv{2},24);
+plot_compareConditions_pCF(voxel_Mean_Peak_mv{1},voxel_Mean_Peak_mv{2},28);
+plot_compareConditions_pCF(Voxel_Cntrd_mv{1},Voxel_Cntrd_mv{2},28);
+
+% plot pRFs and calculate centriod
+plot_compareConditions_pCF(condition_pRF_mv{1},condition_pRF_mv{2},28);
+plot_compareConditions_pCF(Voxel_pRF_mv{1},Voxel_pRF_mv{2},28);
+plot_compareConditions_pCF(condition_pRF_bin{1},condition_pRF_bin{2},8);
+plot_compareConditions_pCF(Voxel_pRF_bin{1},Voxel_pRF_bin{2},8);
 
 %% Compare ROI pTW
 plot_compareConditions_pTW(condition_splitMean_bin{1},condition_splitMean_bin{2},2);
