@@ -1,4 +1,4 @@
-function [condition_splitMean, ROI_data, Voxel_data] = cal_splitMean(betas_A,betas_B)
+function [splitMean, ROI_data, Voxel_data] = cal_splitMean(betas_A,betas_B)
 
 % function [condition_splitMean, voxel_MeanPeak, voxel_Mean, condition_splitMean_max, condition_splitMean_peak, VoxelIndex_A, VoxelIndex_B, VoxelMax_A, VoxelMax_B] = cal_splitMean(betas_A,betas_B)
 
@@ -17,16 +17,16 @@ for i = 1:size(betas_A,1)
     splitA(i,:) = sum(betas_A(:,VoxelIndex_B==i),2)/sum(VoxelIndex_B==i);
     splitB(i,:) = sum(betas_B(:,VoxelIndex_A==i),2)/sum(VoxelIndex_A==i);
 end
-condition_splitMean = (double(splitA) + double(splitB)) / 2;
+splitMean = (double(splitA) + double(splitB)) / 2;
 
 %% ROI properties
 ROI_data = struct;
-[ROI_data.condition_splitMean_max, ROI_data.condition_splitMean_peak] = max(condition_splitMean);
+[ROI_data.splitMean_max, ROI_data.splitMean_peak] = max(splitMean);
 
 % calculate weighted mean and spread
-[ROI_data.condition_Cntrd, ROI_data.condition_Sprd] = cal_WeightedMean(condition_splitMean);
+[ROI_data.Cntrd, ROI_data.Sprd] = cal_WeightedMean(splitMean);
 % pRF
-[ROI_data.condition_pRF_params, ROI_data.condition_rfModel, ROI_data.condition_pRF_cntrd, ROI_data.condition_pRF_spread, condition_pRF_peak] = cal_pRF(condition_splitMean, condition_splitMean_peak, condition_splitMean_max);
+[ROI_data.pRF_params, ROI_data.rfModel, ROI_data.pRF_cntrd, ROI_data.pRF_spread, ROI_data.pRF_peak] = cal_pRF(splitMean, ROI_data.splitMean_peak, ROI_data.splitMean_max);
 
 %% Voxel properties
 Voxel_data = struct;
@@ -37,7 +37,7 @@ voxel_Mean = (double(betas_A) + double(betas_B)) / 2;
 % calculate weighted mean and spread
 [Voxel_data.Cntrd, Voxel_data.Sprd] = cal_WeightedMean(voxel_Mean);
 % pRF
-[Voxel_data.pRF_params, Voxel_data.rfModel, Voxel_data.pRF_cntrd, Voxel_data.pRF_spread, Voxel_data.pRF_peak] = cal_pRF(voxel_Mean, voxel_Mean_Peak, voxel_Mean_Max);
+[Voxel_data.pRF_params, Voxel_data.rfModel, Voxel_data.pRF_cntrd, Voxel_data.pRF_spread, Voxel_data.pRF_peak] = cal_pRF(voxel_Mean, Voxel_data.Mean_Peak, Voxel_data.Mean_Max);
 
 %%
 % roi_av = mean([mean(betas_A,2),mean(betas_A,2)],2);

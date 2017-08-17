@@ -223,12 +223,8 @@ roi_av{iGroup} = cal_ROI_pTW_av(runA_32cons{iGroup},runB_32cons{iGroup});
 roi_av_mv{iGroup} = cal_ROI_pTW_av(runA_mv{iGroup},runB_mv{iGroup});
 roi_av_bin{iGroup} = cal_ROI_pTW_av(runA_8bins{iGroup},runB_8bins{iGroup});
 
-% [condition_splitMean, condition_splitMean_peak, condition_Cntrd, condition_Sprd, condition_pRF, voxel_Mean_Peak, Voxel_Cntrd, Voxel_Sprd, Voxel_pRF] = cal_splitMean(betas_A,betas_B) 
-% [condition_splitMean_mv{iGroup}, condition_splitMean_peak_mv{iGroup}, condition_Cntrd_mv{iGroup}, condition_Sprd_mv{iGroup}, condition_pRF_mv{iGroup}, voxel_Mean_Peak_mv{iGroup}, Voxel_Cntrd_mv{iGroup}, Voxel_Sprd_mv{iGroup}, Voxel_pRF_mv{iGroup}] = cal_splitMean(runA_mv{iGroup},runB_mv{iGroup});
-% [condition_splitMean_bin{iGroup}, condition_splitMean_peak_bin{iGroup}, condition_Cntrd_bin{iGroup}, condition_Sprd_bin{iGroup}, condition_pRF_bin{iGroup}, voxel_Mean_Peak_bin{iGroup}, Voxel_Cntrd_bin{iGroup}, Voxel_Sprd_bin{iGroup}, Voxel_pRF_bin{iGroup}] = cal_splitMean(runA_8bins{iGroup},runB_8bins{iGroup});
 [condition_splitMean_mv{iGroup}, ROI_data_mv{iGroup}, Voxel_data_mv{iGroup}] = cal_splitMean(runA_mv{iGroup},runB_mv{iGroup});
- [condition_splitMean_bin{iGroup}, ROI_data_bin{iGroup}, Voxel_data_bin{iGroup}] = cal_splitMean(runA_8bins{iGroup},runB_8bins{iGroup});
-
+[condition_splitMean_bin{iGroup}, ROI_data_bin{iGroup}, Voxel_data_bin{iGroup}] = cal_splitMean(runA_8bins{iGroup},runB_8bins{iGroup});
 end
 
 % %% Plot results using:
@@ -243,50 +239,36 @@ plot_compareConditions_ROIav(roi_av_bin{1},roi_av_bin{2})
 plot_compareConditions_ROIav(roi_av_mv{1},roi_av_mv{2})
 plot_compareConditions_ROIav(roi_av{1},roi_av{2})
 
-% % Condition A TRUE compare conditions
-% ConB_runA = ROIEstimatesData_SplitRuns_8bins{conditionScans{1}(1)}.betas;
-% ConB_runB = ROIEstimatesData_SplitRuns_8bins{conditionScans{1}(2)}.betas;
-
-% plot_compareCondtions_byROIAverage_pTW_ConditionATRUE(condition_splitMean_bin{1},condition_splitMean_peak_bin{1},runA_8bins,runB_8bins)
-% [conA, conB] = cal_compareConditions_byVoxel_pTW(voxel_Mean_bin{1},voxel_Mean_bin{2});
-
 %% Compare ROI pCF
 % Compare conditions to runs
 % compare runs
 plot_compareConditions_pCF(runA_Peak_mv{1}, runB_Peak_mv{1},24);
 plot_compareConditions_pCF(runA_Peak_mv{2}, runB_Peak_mv{2},24);
 
-%% need to update below to work on structures%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % compare conditions
-plot_compareConditions_pCF(voxel_Mean_Peak_bin{1},voxel_Mean_Peak_bin{2},8);
-plot_compareConditions_pCF(Voxel_Cntrd_bin{1},Voxel_Cntrd_bin{2},8);
-
-plot_compareConditions_pCF(voxel_Mean_Peak_mv{1},voxel_Mean_Peak_mv{2},28);
-plot_compareConditions_pCF(Voxel_Cntrd_mv{1},Voxel_Cntrd_mv{2},28);
+plot_compareConditions_pCF(Voxel_data_bin{1}.Cntrd,Voxel_data_bin{2}.Cntrd,8);
+plot_compareConditions_pCF(Voxel_data_mv{1}.Cntrd,Voxel_data_mv{2}.Cntrd,28);
 
 % plot pRFs and calculate centriod
-plot_compareConditions_pCF(condition_pRF_mv{1},condition_pRF_mv{2},28);
-plot_compareConditions_pCF(Voxel_pRF_mv{1},Voxel_pRF_mv{2},28);
-plot_compareConditions_pCF(condition_pRF_bin{1},condition_pRF_bin{2},8);
-plot_compareConditions_pCF(Voxel_pRF_bin{1},Voxel_pRF_bin{2},8);
+plot_compareConditions_pCF(Voxel_data_bin{1}.pRF_params(:,1)',Voxel_data_bin{2}.pRF_params(:,1)',8);
+plot_compareConditions_pCF(Voxel_data_mv{1}.pRF_params(:,1)',Voxel_data_mv{2}.pRF_params(:,1)',28);
+
+plot_compareConditions_pCF(Voxel_data_bin{1}.pRF_cntrd,Voxel_data_bin{2}.pRF_cntrd,8);
+plot_compareConditions_pCF(Voxel_data_mv{1}.pRF_cntrd,Voxel_data_mv{2}.pRF_cntrd,28);
 
 %% Compare ROI pTW
 plot_compareConditions_pTW(condition_splitMean_bin{1},condition_splitMean_bin{2},2);
 plot_compareConditions_pTW(condition_splitMean_mv{1},condition_splitMean_mv{2},4);
 
 %% Compare ROI pTW assuming condition A is TRUE
-ConBROIpTW_bin = cal_ConBROIpTW_ConAVoxelIndex(voxel_Mean_Peak_bin{1},runA_8bins{2},runB_8bins{2});
+ConBROIpTW_bin = cal_ConBROIpTW_ConAVoxelIndex(Voxel_data_bin{1}.Mean_Peak,runA_8bins{2},runB_8bins{2});
 plot_compareConditions_pTW(condition_splitMean_bin{1}, ConBROIpTW_bin,2);
 
-ConBROIpTW_mv = cal_ConBROIpTW_ConAVoxelIndex(voxel_Mean_Peak_mv{1},runA_mv{2},runB_mv{2});
+ConBROIpTW_mv = cal_ConBROIpTW_ConAVoxelIndex(Voxel_data_mv{1}.Mean_Peak,runA_mv{2},runB_mv{2});
 plot_compareConditions_pTW(condition_splitMean_mv{1}, ConBROIpTW_mv,4);
 
-% plot_compareConditions_byROIAverage(conA, conB,2);
 
-% Send to functions to perform analysis
-% data = plot_ROI_AvB_SplitRuns(run1,run2,run3,run4,Aruns,Bruns,RestrictIndex);
-    % contain function to calcuate split mean or make a split mean function and send data onward - prob better
-    
-    % reshape and plot as overlay? see most effected areas on the cortex
+% reshape and plot as overlay? see most effected areas on the cortex
+% threshold based on statisitcal test
 
 end
