@@ -467,25 +467,21 @@ mrLoadRet
 thisView = getMLRView;
 
 concatenationGroup = {'ConcatenationHLsim', 'ConcatenationNH'};
-functionalAnalysis = ['glm_' hrfModel{iHRF}]
+functionalAnalysis = {'GLM_BoxCar'};
 mainOverlays(1) = 39;
 ROInames = {'LeftPAC','RightPAC'};
 
 % analysisType = viewGet(thisView,'analysisType');
 roiNum = 2;
 roi{roiNum} = viewGet(thisView,'roi',ROInames{roiNum});
-
-
-        analysisName = ['glm_' hrfModel{iHRF}]
 % need to export to new group because over rights / need one for each
 % flatmap/hemisphere
 for iGroup = 1:length(concatenationGroup)
 for iAnalysis = 1:length(functionalAnalysis)
-    functionalAnalysis = ['glm_' hrfModel{iAnalysis}];
 for iSide=1:2
-      % gradient reversals
+  % gradient reversals
   thisView = viewSet(thisView,'curgroup',concatenationGroup{iGroup});
-  thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',functionalAnalysis));
+  thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',functionalAnalysis{iAnalysis}));
   thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['x' freeSurferName{iSubj} '_' sides{iSide} '_WM_Flat_' flatmapName{iSubj}{iSide}]));
   [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(mainOverlays(iSubj,1))]);
   params.combineFunction='gradientReversal';

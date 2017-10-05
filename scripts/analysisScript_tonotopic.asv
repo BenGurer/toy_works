@@ -233,18 +233,11 @@ for iScan = 1:nScans
     %% do both bined and all in one loop
     % change analysis name to variable
     % loop over length of base names - nCons
-    % if statement to save to 32 or 8
 analysisData = getGroupAnalysisData(thisView,['glm_' hrfModel{splitHRFmodel} '_nCons_32_Scan_' mat2str(iScan)],iScan);
 ROIEstimatesData_SplitRuns_32Cons{iScan} = getROIdata(thisView,analysisData,pacROI,iScan);
 end
 
-% now get concat group data
 thisView = viewSet(thisView,'curGroup',groupName);
-
-% decide which plots I need
-% science and explaining
-% explaining - mean vs split mean
-
 
 
 % calculate split mean
