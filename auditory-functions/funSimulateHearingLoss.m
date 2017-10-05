@@ -85,22 +85,25 @@
     end
 
     function Threshold_dBHL = createSteeplySlopingHearingLoss_dBHL(f)
-        
-        Slope = 36.5; % dB/oct
-        F_HearingLoss_lower = 3;
-        F_HearingLoss_upper = 8;
-        
-        Threshold_HL = max(Slope*log2(f/F_HearingLoss_lower),0);
-        Threshold_HL_upper = Threshold_HL(find(f>=F_HearingLoss_upper,1,'first'));
-        
+    
+    Slope = 36.5; % dB/oct
+    F_HearingLoss_lower = 3;
+    F_HearingLoss_upper = 8;
+    
+    Threshold_HL = max(Slope*log2(f/F_HearingLoss_lower),0);
+    Threshold_HL_upper = Threshold_HL(find(f>=F_HearingLoss_upper,1,'first'));
+    
+    if ~isempty(Threshold_HL_upper)
         Threshold_dBHL = min(Threshold_HL,Threshold_HL_upper);
-        
-%         figure
-%         plot(f,Threshold_dBHL,'r--')
-%         set(gca,'XLim',[min(f) max(f)])
-%         title('Steeply sloping hearig loss according to screening crtiterion')
-%         xlabel('Frequency (kHz)')
-%         ylabel('dB (HL)')
+    else
+        Threshold_dBHL = Threshold_HL;
+    end
+    %         figure
+    %         plot(f,Threshold_dBHL,'r--')
+    %         set(gca,'XLim',[min(f) max(f)])
+    %         title('Steeply sloping hearig loss according to screening crtiterion')
+    %         xlabel('Frequency (kHz)')
+    %         ylabel('dB (HL)')
     end
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% RP2-related functions
