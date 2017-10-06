@@ -13,22 +13,20 @@ sHL_getSubjectInfo(iSub)
 sHL_organiseData(studyDirectory,subject)
 % per subject
 
-preprocessData = sHL_preprocess;
+sHL_preprocess
 % distortion correct
 % linear alignment
 % non-linear alignment
 
-studyParamsData = sHL_setupStudyParams;
+sHL_setupStudyParams
 % stimulus info
 % condition names
 
 glmData = script_glmAnalysis(thisView);
 
-thisView = script_importAnatomy(thisView);
-
 pRFdata = script_pRFAnalysis(thisView);
 
-thisView = script_flatMapAnalysis(thisView,flatmapNames);
+script_flatMapAnalysis(thisView,flatmapNames);
 
 roiData = script_ROIAnalysis(thisView);
 % save data to disk

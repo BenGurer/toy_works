@@ -1,9 +1,9 @@
 function data = getROIdata_GLM(thisView,analysisData,ROI,iScan)
     %
-    %   usage: getROIdata(thisView,analysisData,ROI,iScan)
+    %   usage: getROIdata_GLM(thisView,analysisData,ROI,iScan)
     %      by: Ben Gurer
     %    date: 05/10/2017
-    % purpose: Get GLM data from ROI
+    % purpose: Get GLM data within ROI
     %   input: mrTools view, analysis data, ROI, scan number (if defined)
     %
 if iScan ~= 0

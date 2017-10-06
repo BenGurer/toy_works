@@ -10,10 +10,10 @@ function data = analysisScript_tonotopic(thisView,concatenationGroupNames,ROINam
 %       hrfModel
 
 %% Concatenated Group  Analysis
-% 
+%
 % thisView = getMLRView;
 % nScans = 4;
-% 
+%
 % ROIName = 'AC';
 % concatenationGroupNames = {'ConcatenationSparse', 'ConcatenationCont'};
 % concatenationGroupNames = {'ConcatenationHLsim', 'ConcatenationNH'};
@@ -33,9 +33,9 @@ for i = 1:length(concatenationGroupNames)
             case 'hrfBoxcar'
                 glmParams.hrfParams.delayS =  2.5;
                 glmParams.hrfParams.durationS = 2.5;
-            case 'hrfDoubleGamma'                
+            case 'hrfDoubleGamma'
                 glmParams.hrfParams.x =  4;
-                glmParams.hrfParams.y = 11;                  
+                glmParams.hrfParams.y = 11;
                 glmParams.hrfParams.z =  4;
         end
         glmParams.scanParams{1}.stimDurationMode = 'From file';
@@ -125,7 +125,7 @@ for iScan = 1:nScans
         [thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
         glmParams.hrfModel = hrfModel{splitHRFmodel};
         [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
-%         glmParams.saveName = analysisName;
+        %         glmParams.saveName = analysisName;
         glmParams.hrfParams.description = hrfModel{splitHRFmodel};
         switch hrfModel{splitHRFmodel}
             case 'hrfBoxcar'
@@ -174,12 +174,12 @@ for iScan = 1:nScans
             thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)*1.25],curOverlay-1);
             thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)*1.25],curOverlay);
         end
-    end 
+    end
 end
 % save analysis
 for iScan = 1:nScans
     for iStim = 1:length(nStim)
-    saveAnalysis(thisView,analysisName_split{iScan});
+        saveAnalysis(thisView,analysisName_split{iScan});
     end
 end
 
@@ -209,36 +209,114 @@ pacROI = viewGet(thisView,'roi',ROIName);
 % 2. Get scan data - loop here
 % 3. Restrict by ROI coords
 
-for iScan = 1:nScans
-ROIEstimatesData_SplitRuns_32Cons{iScan} = getGroupROIEstimates(thisView,pacROI,'MotionComp',['glm_' hrfModel{splitHRFmodel} '_nCons_32_Scan_' mat2str(iScan)],iScan);
-end
-% binned analysis
-for iScan = 1:nScans
-ROIEstimatesData_SplitRuns_8bins{iScan} = getGroupROIEstimates(thisView,pacROI,'MotionComp',['glm_' hrfModel{splitHRFmodel} '_nCons_8_Scan_' mat2str(iScan)],iScan);
-end
-% get datga from concatenated groups
-for iGroup = 1:length(concatenationGroupNames)
-ROIEstimatesData_Concat{iGroup} = getGroupROIEstimates(thisView,pacROI,concatenationGroupNames{iGroup},['glm_' hrfModel{2}],0);
-end
+% for iScan = 1:nScans
+%     ROIEstimatesData_SplitRuns_32Cons{iScan} = getGroupROIEstimates(thisView,pacROI,'MotionComp',['glm_' hrfModel{splitHRFmodel} '_nCons_32_Scan_' mat2str(iScan)],iScan);
+% end
+% % binned analysis
+% for iScan = 1:nScans
+%     ROIEstimatesData_SplitRuns_8bins{iScan} = getGroupROIEstimates(thisView,pacROI,'MotionComp',['glm_' hrfModel{splitHRFmodel} '_nCons_8_Scan_' mat2str(iScan)],iScan);
+% end
+% % get datga from concatenated groups
+% for iGroup = 1:length(concatenationGroupNames)
+%     ROIEstimatesData_Concat{iGroup} = getGroupROIEstimates(thisView,pacROI,concatenationGroupNames{iGroup},['glm_' hrfModel{2}],0);
+% end
 
 
-% set group
-%  loop
-% get analysis data
-% restict by rois
-% cell for each roi
 
+
+%% Save data in structures labelled by roi
+%% ROI names
+% Create ROIs with these names:
+% RightAC
+% RightPosAC
+% RightAntAc
+% LeftAC
+% LeftPosAC
+% LeftAntAC
+% AC
+ROInames = {'RightAC','RightPosAC','RightAntAC','LeftAC','LeftPosAC','LeftAntAC','AC'};
+
+ROInames = {'RightAC','RightPosAC'};
+
+q = char(39);
+for iROI = 1:length(ROInames)
+eval([ROInames{iROI} ' = struct;']);
+eval([ROInames{iROI} '.roi = viewGet(thisView,' q 'roi' q ',ROInames{iROI});']);
+end
+% function to create figure based on paper size - poster or paper
+% send figure handle to plotting functions - can be used with subplot and plot
+% create strucutre for rois or containing rois
+
+% following analysis - save roi results underone structure of subject ID
+% plots I want
+% ROI average beta weight
+% ROI TW conA v B
+
+%% SHOULD SET ANALYSIS NAME ONCE AND PASS IT ON
+% loop - create analysis names
+% loop length of analysis names
+% needs to name based on group - one structure
+
+%% Get data from individual scans
 thisView = viewSet(thisView,'curGroup','MotionComp');
-for iScan = 1:nScans
-    %% do both bined and all in one loop
-    % change analysis name to variable
-    % loop over length of base names - nCons
-analysisData = getGroupAnalysisData(thisView,['glm_' hrfModel{splitHRFmodel} '_nCons_32_Scan_' mat2str(iScan)],iScan);
-ROIEstimatesData_SplitRuns_32Cons{iScan} = getROIdata(thisView,analysisData,pacROI,iScan);
+for iStim = 1:length(nStim)
+    for iScan = 1:nScans
+        analysisName = ['glm_' hrfModel{splitHRFmodel} '_nCons_' mat2str(nStim(iStim)) '_Scan_' mat2str(iScan)];
+        eval(['GLManalysisData_nCons_' mat2str(nStim(iStim)) '{iScan} = getGroupAnalysisData(thisView,analysisName);'])
+    end
+end
+% get data from ROIs
+for iROI = 1:length(ROInames)
+    for iScan = 1:nScans
+        for iStim = 1:length(nStim)
+            eval([ROInames{iROI} '.glm_' hrfModel{splitHRFmodel} '_nCons_' mat2str(nStim(iStim)) '{iScan} = getROIdata(thisView,GLManalysisData_nCons_' mat2str(nStim(iStim)) '{iScan},' ROInames{iROI} '.roi,iScan);']);
+        end
+    end
 end
 
+% now get concat group data
 thisView = viewSet(thisView,'curGroup',groupName);
 
+% get datga from concatenated groups
+for iGroup = 1:length(concatenationGroupNames)
+    
+thisView = viewSet(thisView,'curGroup',concatenationGroupNames{iGroup});
+
+    ROIEstimatesData_Concat{iGroup} = getGroupROIEstimates(thisView,pacROI,concatenationGroupNames{iGroup},['glm_' hrfModel{2}],0);
+end
+%%
+% get experimental data
+
+%% now pass data to function to plot
+data = roiDataAnalysis(ROIdata);
+% loop over ROIs
+
+% 
+% ROIEstimatesData_SplitRuns_32Cons{iScan} = getROIdata(thisView,GLManalysisData_32cons{iScan},pacROI,iScan);
+%     ROIEstimatesData_SplitRuns_8bins{iScan} = getROIdata(thisView,GLManalysisData_8bins{iScan},pacROI,iScan);
+
+% change to plot equally spaced by stim condition but lablled by kHz - ie ERB Scaling
+
+% decide which plots I need
+% science and explaining
+% explaining - mean vs split mean
+
+% get GLM analysis data - 32 conditions
+%     analysisName = ['glm_' hrfModel{splitHRFmodel} '_nCons_32_Scan_' mat2str(iScan)];
+%     GLManalysisData_32cons{iScan} = getGroupAnalysisData(thisView,analysisName,iScan);
+%     % get GLM analysis data - 8 bins
+%     analysisName = ['glm_' hrfModel{splitHRFmodel} '_nCons_8_Scan_' mat2str(iScan)];
+%     GLManalysisData_8bins{iScan} = getGroupAnalysisData(thisView,analysisName,iScan);
+%
+
+% ROI names
+% RightAC
+% RightPosAC
+% RightAntAc
+% LeftAC
+% LeftPosAC
+% LeftAntAC
+% AC
 
 % calculate split mean
 % 7 T
@@ -270,33 +348,33 @@ runB_8bins_restricted = [];
 runA_mv = [];
 runB_mv = [];
 for iGroup = 1:length(concatenationGroupNames)
-runA_32cons{iGroup} = ROIEstimatesData_SplitRuns_32Cons{conditionScans{iGroup}(1)}.betas;
-runB_32cons{iGroup} = ROIEstimatesData_SplitRuns_32Cons{conditionScans{iGroup}(2)}.betas;
-
-runA_32cons{iGroup}(isnan(runA_32cons{iGroup})) = [];
-runB_32cons{iGroup}(isnan(runB_32cons{iGroup})) = [];
-
-runA_8bins{iGroup} = ROIEstimatesData_SplitRuns_8bins{conditionScans{iGroup}(1)}.betas;
-runB_8bins{iGroup} = ROIEstimatesData_SplitRuns_8bins{conditionScans{iGroup}(2)}.betas;
-
-runA_32cons_restricted{iGroup} = runA_32cons{iGroup}(:,restrictIndex);
-runB_32cons_restricted{iGroup} = runB_32cons{iGroup}(:,restrictIndex);
-runA_8bins_restricted{iGroup} = runA_8bins{iGroup}(:,restrictIndex);
-runB_8bins_restricted{iGroup} = runB_8bins{iGroup}(:,restrictIndex);
-
-runA_mv{iGroup} = cal_movingAverage(runA_32cons_restricted{iGroup});
-runB_mv{iGroup} = cal_movingAverage(runB_32cons_restricted{iGroup});
-
-runA_Peak_mv{iGroup} = cal_voxel_properties(runA_mv{iGroup});
-runB_Peak_mv{iGroup} = cal_voxel_properties(runB_mv{iGroup});
-
-roi_av{iGroup} = cal_ROI_pTW_av(runA_32cons_restricted{iGroup},runB_32cons_restricted{iGroup});
-roi_av_mv{iGroup} = cal_ROI_pTW_av(runA_mv{iGroup},runB_mv{iGroup});
-roi_av_bin{iGroup} = cal_ROI_pTW_av(runA_8bins_restricted{iGroup},runB_8bins_restricted{iGroup});
-
-% [condition_splitMean{iGroup}, ROI_data{iGroup}, Voxel_data{iGroup}, totalROIpCF{iGroup}] = cal_splitMean(runA_32cons_restricted{iGroup},runB_32cons_restricted{iGroup});
-[condition_splitMean_mv{iGroup}, ROI_data_mv{iGroup}, Voxel_data_mv{iGroup}, totalROIpCF_mv{iGroup}] = cal_splitMean(runA_mv{iGroup},runB_mv{iGroup});
-[condition_splitMean_bin{iGroup}, ROI_data_bin{iGroup}, Voxel_data_bin{iGroup}, totalROIpCF_bin{iGroup}] = cal_splitMean(runA_8bins_restricted{iGroup},runB_8bins_restricted{iGroup});
+    runA_32cons{iGroup} = ROIEstimatesData_SplitRuns_32Cons{conditionScans{iGroup}(1)}.betas;
+    runB_32cons{iGroup} = ROIEstimatesData_SplitRuns_32Cons{conditionScans{iGroup}(2)}.betas;
+    
+    runA_32cons{iGroup}(isnan(runA_32cons{iGroup})) = [];
+    runB_32cons{iGroup}(isnan(runB_32cons{iGroup})) = [];
+    
+    runA_8bins{iGroup} = ROIEstimatesData_SplitRuns_8bins{conditionScans{iGroup}(1)}.betas;
+    runB_8bins{iGroup} = ROIEstimatesData_SplitRuns_8bins{conditionScans{iGroup}(2)}.betas;
+    
+    runA_32cons_restricted{iGroup} = runA_32cons{iGroup}(:,restrictIndex);
+    runB_32cons_restricted{iGroup} = runB_32cons{iGroup}(:,restrictIndex);
+    runA_8bins_restricted{iGroup} = runA_8bins{iGroup}(:,restrictIndex);
+    runB_8bins_restricted{iGroup} = runB_8bins{iGroup}(:,restrictIndex);
+    
+    runA_mv{iGroup} = cal_movingAverage(runA_32cons_restricted{iGroup});
+    runB_mv{iGroup} = cal_movingAverage(runB_32cons_restricted{iGroup});
+    
+    runA_Peak_mv{iGroup} = cal_voxel_properties(runA_mv{iGroup});
+    runB_Peak_mv{iGroup} = cal_voxel_properties(runB_mv{iGroup});
+    
+    roi_av{iGroup} = cal_ROI_pTW_av(runA_32cons_restricted{iGroup},runB_32cons_restricted{iGroup});
+    roi_av_mv{iGroup} = cal_ROI_pTW_av(runA_mv{iGroup},runB_mv{iGroup});
+    roi_av_bin{iGroup} = cal_ROI_pTW_av(runA_8bins_restricted{iGroup},runB_8bins_restricted{iGroup});
+    
+    % [condition_splitMean{iGroup}, ROI_data{iGroup}, Voxel_data{iGroup}, totalROIpCF{iGroup}] = cal_splitMean(runA_32cons_restricted{iGroup},runB_32cons_restricted{iGroup});
+    [condition_splitMean_mv{iGroup}, ROI_data_mv{iGroup}, Voxel_data_mv{iGroup}, totalROIpCF_mv{iGroup}] = cal_splitMean(runA_mv{iGroup},runB_mv{iGroup});
+    [condition_splitMean_bin{iGroup}, ROI_data_bin{iGroup}, Voxel_data_bin{iGroup}, totalROIpCF_bin{iGroup}] = cal_splitMean(runA_8bins_restricted{iGroup},runB_8bins_restricted{iGroup});
 end
 
 %% get stimulus properties
@@ -313,8 +391,8 @@ stimLevel_SL_bin = [];
 binSize = 4;
 c = 1;
 for i = 1:length(stimLevel_SL)/binSize
-stimLevel_SL_bin(i) = mean(stimLevel_SL(c:c + (binSize-1)));
-c = c + binSize;
+    stimLevel_SL_bin(i) = mean(stimLevel_SL(c:c + (binSize-1)));
+    c = c + binSize;
 end
 
 % moving average
@@ -324,13 +402,13 @@ windowAvSize = length(stimLevel_SL)/nBins;
 
 if isreal(windowAvSize) && rem(windowAvSize,1)==0
     
-loopLength = length(stimLevel_SL) - windowAvSize;
-stimLevel_SL_mv = zeros(1,loopLength);
-
-for i = 1:loopLength
-stimLevel_SL_mv(i) = mean(stimLevel_SL(i:i+windowAvSize-1));
-end
-
+    loopLength = length(stimLevel_SL) - windowAvSize;
+    stimLevel_SL_mv = zeros(1,loopLength);
+    
+    for i = 1:loopLength
+        stimLevel_SL_mv(i) = mean(stimLevel_SL(i:i+windowAvSize-1));
+    end
+    
 else
     error('Moving average window not an integer')
 end
@@ -429,8 +507,8 @@ figure; scatter(stimLevel_SL_mv,peakWeightRatio_mv)
 
 figure; scatter(stimLevel_SL_bin,peakWeightDiff_bin)
 figure; scatter(stimLevel_SL_mv,peakWeightDiff_mv)
-% 
-% MaskingLevelatStimuli = getMaskingLevelatFrequency(); 
+%
+% MaskingLevelatStimuli = getMaskingLevelatFrequency();
 % plot_diffPeakWeightVsNoiseLevel(peakWeightDiff,MaskingLevelatStimuli);
 
 %% TO DO
