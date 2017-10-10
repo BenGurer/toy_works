@@ -5,6 +5,11 @@ sHL_mainScript
 % setup study direction (once)
 sHL_createStudyDirectory
 
+studyParamsData = sHL_setupStudyParams;
+% stimulus info
+% condition names
+% nummber of subjects
+
 % define and get subject info
 sHL_getSubjectInfo(iSub)
 % Subject ID
@@ -13,20 +18,38 @@ sHL_getSubjectInfo(iSub)
 sHL_organiseData(studyDirectory,subject)
 % per subject
 
-sHL_preprocess
+preprocessData = sHL_preprocess;
 % distortion correct
 % linear alignment
 % non-linear alignment
 
-sHL_setupStudyParams
-% stimulus info
-% condition names
+[thisView, concatedate] = script_setupmrLoadRet(thisView,concatinationNames);
+% initiate mrLoadRet
+% motion corerection
+% group data
 
-glmData = script_glmAnalysis(thisView);
+[thisView, glmData] = script_glmAnalysis(thisView);
 
-pRFdata = script_pRFAnalysis(thisView);
+thisView = script_importAnatomy(thisView);
 
-script_flatMapAnalysis(thisView,flatmapNames);
+[thisView, pRFdata] = script_pRFAnalysis(thisView);
+
+thisView = script_flatMapAnalysis(thisView,flatmapNames);
+
+%% Create subject data storage structure
+
+%% get data from scans and groups
+% save so don't need to load again
+
+%% get data from ROIs
+% save so don't need to load again
+
+%% perform ROI analysis
+% save so don't need to load again
+
+%% save data
+
+%% new section or script for group analysis
 
 roiData = script_ROIAnalysis(thisView);
 % save data to disk

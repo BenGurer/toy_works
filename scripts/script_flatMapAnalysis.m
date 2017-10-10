@@ -17,6 +17,7 @@ refreshMLRDisplay(thisView);
   params.baseSpaceInterp = 'linear';
   params.nOutputOverlays=7;
   params.baseSpace = 1;
+  params.outputName = sides{iSide};
 %   params.exportToNewGroup=1;
   [thisView,params] = combineTransformOverlays(thisView,params);
   curOverlay=viewGet(thisView,'curOverlay');
