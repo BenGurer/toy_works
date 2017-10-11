@@ -5,7 +5,7 @@ sHL_mainScript
 % setup study direction (once)
 sHL_createStudyDirectory
 
-studyParamsData = sHL_setupStudyParams;
+[stimInfo, glmInfo] = sHL_setupStudyParams;
 % stimulus info
 % condition names
 % nummber of subjects
@@ -23,7 +23,7 @@ preprocessData = sHL_preprocess;
 % linear alignment
 % non-linear alignment
 
-[thisView, concatedate] = script_setupmrLoadRet(thisView,concatinationNames);
+[thisView, concatedate] = script_setupmrLoadRet(thisView,groupNames);
 % initiate mrLoadRet
 % motion corerection
 % group data
@@ -56,7 +56,10 @@ thisView = script_flatMapAnalysis(thisView,flatmapNames);
 
 %% save data
 
-%% new section or script for group analysis
+
+%% Get analysis data from scans
+% pass on to ROI analysis to restrict
+scanData = getScanData_GLM(thisView,analysisNames_Scans,analysisNames_Groups);
 
 roiData = script_ROIAnalysis(thisView);
 % save data to disk

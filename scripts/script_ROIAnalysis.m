@@ -34,39 +34,14 @@ for iROI = 1:length(ROInames)
     eval([ROInames{iROI} '.roi = viewGet(thisView,' q 'roi' q ',ROInames{iROI});']);
 end
 
-%% NEW FUNCTION %%
-%% Get data from individual scans
-thisView = viewSet(thisView,'curGroup','MotionComp');
-for iStim = 1:length(nStim)
-    for iScan = 1:nScans
-        analysisName = ['glm_' hrfModel{splitHRFmodel} '_nCons_' mat2str(nStim(iStim)) '_Scan_' mat2str(iScan)];
-        eval(['GLManalysisData_nCons_' mat2str(nStim(iStim)) '{iScan} = getGroupAnalysisData(thisView,analysisName);'])
-    end
-end
 % get data from ROIs
 for iROI = 1:length(ROInames)
     for iScan = 1:nScans
         for iStim = 1:length(nStim)
-            eval([ROInames{iROI} '.glm_' hrfModel{splitHRFmodel} '_nCons_' mat2str(nStim(iStim)) '{iScan} = getROIdata(thisView,GLManalysisData_nCons_' mat2str(nStim(iStim)) '{iScan},' ROInames{iROI} '.roi,iScan);']);
+            eval([ROInames{iROI} '.glm_' hrfModel{splitHRFmodel} '_nCons_' mat2str(nStim(iStim)) '{iScan} = getROIdata_GLM(thisView,GLManalysisData_nCons_' mat2str(nStim(iStim)) '{iScan},' ROInames{iROI} '.roi,iScan);']);
         end
     end
 end
-
-% now get concat group data
-thisView = viewSet(thisView,'curGroup',groupName);
-
-% get data from concatenated groups
-for iGroup = 1:length(concatenationGroupNames)
-    for iAnal = 1:length(analysisNames_group)
-        thisView = viewSet(thisView,'curGroup',concatenationGroupNames{iGroup});
-        analysisNames_group = ['glm_' hrfModel{2}];
-        eval(['GLManalysisData_nCons_' mat2str(nStim(iStim)) '{iGroup} = getGroupAnalysisData(thisView,analysisName);'])
-    end
-    %
-    %     ROIEstimatesData_Concat{iGroup} = getGroupROIEstimates(thisView,pacROI,concatenationGroupNames{iGroup},['glm_' hrfModel{2}],0);
-end
-%%
-% get experimental data
 
 %% now pass data to function to plot
 % loop over ROIs
