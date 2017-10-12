@@ -13,7 +13,7 @@ end
 for iGroup = 1:length(groupNames)
     thisView = viewSet(thisView,'curGroup',groupNames{iGroup});
     for iAnal = 1:length(analysisNames_Groups)
-        eval(['data.' groupNames{iGroup} '_GLMdata{iAnal} = getGroupAnalysisData(thisView,analysisNames_Groups{iAnal});'])
+        eval(['data.' groupNames{iGroup} '.group_GLMdata{iAnal} = getGroupAnalysisData(thisView,analysisNames_Groups{iAnal});'])
     end
     %
     %     ROIEstimatesData_Concat{iGroup} = getGroupROIEstimates(thisView,pacROI,concatenationGroupNames{iGroup},['glm_' hrfModel{2}],0);

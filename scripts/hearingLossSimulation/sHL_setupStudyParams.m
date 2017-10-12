@@ -51,8 +51,11 @@ stimInfo.stimLevel_SL_mv = stimLevel_SL_mv;
 
 %% Setup GLM analysis
 % save in glmInfo structure
-glmInfo.hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
-glmInfo.groupNames = {'ConcatenationHLsim', 'ConcatenationNH'};
+% glmInfo.hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
+% glmInfo.groupNames = {'ConcatenationHLsim', 'ConcatenationNH'};
+
+glmInfo.hrfModel = {'hrfDoubleGamma'};
+glmInfo.groupNames = {'ConcatenationNH_unwarped', 'ConcatenationNH'};
 glmInfo.nScans = 4;
 glmInfo.nStim = [32, 8];
 glmInfo.analysisNames_Scans = cell(1,(glmInfo.nScans.*length(glmInfo.nStim)).*length(glmInfo.hrfModel));
@@ -66,10 +69,10 @@ for iScan = 1:glmInfo.nScans
             glmInfo.analysisNames_Scans{c+d+f} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];
         end
         c = 0;
-    d = d + 2;
+    d = d + length(glmInfo.hrfModel);
     end
     d = 0;
-f = f + 4;
+f = f + length(glmInfo.nStim);
 end
 
 glmInfo.analysisNames_Groups = cell(1,length(glmInfo.groupNames));
@@ -81,5 +84,5 @@ for iGroup = 1:length(glmInfo.groupNames)
         glmInfo.analysisNames_Groups{c+d} = ['glm_' glmInfo.hrfModel{iHRF}];
     end
     c = 0;
-    d = d + 2;
+    d = d + length(glmInfo.hrfModel);
 end

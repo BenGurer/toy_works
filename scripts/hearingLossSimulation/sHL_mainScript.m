@@ -59,8 +59,9 @@ thisView = script_flatMapAnalysis(thisView,flatmapNames);
 thisView = getMLRView;
 %% Get analysis data from scans
 % pass on to ROI analysis to restrict
-scanData = getScanData_GLM(thisView,glmInfo.analysisNames_Scans,glmInfo.analysisNames_Groups);
+scanData = getScanData_GLM(thisView,glmInfo.analysisNames_Scans,glmInfo.analysisNames_Groups,glmInfo.groupNames);
 
+% 
 roiData = script_ROIAnalysis(thisView);
 % save data to disk
 % load later for group analysis
