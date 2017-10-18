@@ -1,10 +1,10 @@
-function data = roiSplitGLMDataAnalysis(roiData,analName,conIndex,restrictIndex)
+function data = cal_splitAverage_roi_GLM(roiData,analName,conditionRunIndex,restrictIndex,conATrue)
 % ,stimFreqs,plotROIav,plotROIpTW)
 
-for iGroup = 1:length(conIndex)
+for iGroup = 1:length(conditionRunIndex)
     % get data from roi struct
-    eval(['runA{iGroup} = roiData.' analName '{' num2str(conIndex{iGroup}(1)) '}.betas;'])
-    eval(['runB{iGroup} = roiData.' analName '{' num2str(conIndex{iGroup}(2)) '}.betas;'])
+    eval(['runA{iGroup} = roiData.' analName '{' num2str(conditionRunIndex{iGroup}(1)) '}.betas;'])
+    eval(['runB{iGroup} = roiData.' analName '{' num2str(conditionRunIndex{iGroup}(2)) '}.betas;'])
     
     % Remove nans
     runA{iGroup}(isnan(runA{iGroup}(:))) = [];
@@ -17,13 +17,13 @@ for iGroup = 1:length(conIndex)
     
 end
 
-if size(runA{1},1) <= 8
-    nCols = 2;
-else
-    nCols = 4;
-end
+% if size(runA{1},1) <= 8
+%     nCols = 2;
+% else
+%     nCols = 4;
+% end
 
-for iGroup = 1:length(conIndex)
+for iGroup = 1:length(conditionRunIndex)
     
     if size(runA{1},1) > 8
         runA{iGroup} = cal_movingAverage(runA{iGroup});
@@ -41,24 +41,14 @@ end
 %% if condition A is true, find how pTW changes in condition B
 ConB_ROIpTW = cal_ConBROIpTW_ConAVoxelIndex(Voxel_data{1}.Mean_Peak,runA{2},runB{2});
 
-% if plotROIav == 1
-% %% compare ROI average Beta weights
-% plot_compareConditions_ROIav(roi_av{1},roi_av{2},stimFreqs)
-% 
-% end
-% 
-% if plotROIpTW == 1
-% %% Compare average voxel tuning
-% % Compare ROI pTW
-% % plot_compareConditions_pTW(condition_splitMean{1},condition_splitMean{2},nCols,stimFreqs);
-% 
-% % Compare ROI pTW assuming condition A is TRUE
-% plot_compareConditions_pTW(condition_splitMean{1}, ConB_ROIpTW,nCols,stimFreqs);
-% 
-% end
-
 %% save data
 data.roi_av = roi_av;
 data.roi_pTW{1} = condition_splitMean{1};
+data.roi_pCFtally{1} = totalROIpCF{1};
+if conATrue == 1
 data.roi_pTW{2} = ConB_ROIpTW;
+data.roi_pCFtally{2} = {nan};
+else
+data.roi_pTW{2} = condition_splitMean{2};
+data.roi_pCFtally{2} = totalROIpCF{2};
 end

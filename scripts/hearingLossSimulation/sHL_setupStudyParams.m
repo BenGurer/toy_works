@@ -1,4 +1,4 @@
-function [stimInfo, glmInfo] = sHL_setupStudyParams
+function [stimInfo, glmInfo, Info, plotInfo] = sHL_setupStudyParams
     %
     %   usage: sHL_setupStudyParams
     %      by: Ben Gurer
@@ -14,10 +14,10 @@ lowFreqkHz = 0.1;
 highFreqkHz = 8;
 nStim = 32;
 
-[stimInfo.stimFreqs, stimInfo.stimFreqs_bin, stimInfo.stimFreqs_mv] = convertStimIDtoFrequency(lowFreqkHz,highFreqkHz,nStim);
+[stimInfo.stimNames.all, stimInfo.stimNames.bin, stimInfo.stimNames.mv] = convertStimIDtoFrequency(lowFreqkHz,highFreqkHz,nStim);
 
 %% get stimulus senssation level
-[stimLevel_SL, maskingLevel] = calStimulusSensationLevel(stimInfo.stimFreqs);
+[stimLevel_SL, maskingLevel] = calStimulusSensationLevel(stimInfo.stimNames.all);
 
 % bin sensation level
 binSize = 4;
@@ -67,6 +67,8 @@ for iScan = 1:glmInfo.nScans
         for iHRF = 1:length(glmInfo.hrfModel)
              c = c + 1;
             glmInfo.analysisNames_Scans{c+d+f} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];
+            glmInfo.analysisBaseNames_Scans{c+d+f} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim))];
+            glmInfo.analysisScanNum {c+d+f} = iScan;
         end
         c = 0;
     d = d + length(glmInfo.hrfModel);
@@ -86,3 +88,33 @@ for iGroup = 1:length(glmInfo.groupNames)
     c = 0;
     d = d + length(glmInfo.hrfModel);
 end
+
+%% Order of condition runs {[ConA Run1,ConA Run2],[ConB Run1,ConB Run2]}
+
+Info.conditionRunIndex = {[2,4],[1,3]};
+
+Info.ConATrue = 1;
+
+%% Define ROI names to create
+
+% Info.ROInames = {'RightAC','RightPosAC','RightAntAC','LeftAC','LeftPosAC','LeftAntAC','AC'};
+
+Info.ROInames = {'RightAC','RightPosAC'}
+
+%% Define what to plot
+% cell array of analysis to plot
+% what plots to present
+% use structure to group correct stim names with it
+plotInfo = struct();
+% list of analysis to plot from
+plotInfo.ROIplotList = {['roiAnalysis_' glmInfo.analysisBaseNames_Scans{1}], ['roiAnalysis_' glmInfo.analysisBaseNames_Scans{2}]};
+
+% plotLogic = [roiAv, roiTWav]
+plotInfo.plotLOGIC.ROI_bin = [0, 1];
+plotInfo.plotLOGIC.ROI_mv = [1, 0];
+plotInfo.plotLOGIC.ROI_all = [1, 0];
+% use logicals to tell function what to plot - note down what each one is..
+%% NEW FUNCTION %%
+% plotLOGICAL_bin = [1, 0, 1];    % save all data
+% plotLOGICAL_mv = [1, 0, 1];
+% plotLOGICAL_all = [1, 0, 1];

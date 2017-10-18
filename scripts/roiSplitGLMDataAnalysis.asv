@@ -1,4 +1,4 @@
-function data = roiSplitGLMDataAnalysis(roiData,analName,conIndex,restrictIndex)
+function data = cal_roi_SplitGLMaverage(roiData,analName,conIndex,restrictIndex)
 % ,stimFreqs,plotROIav,plotROIpTW)
 
 for iGroup = 1:length(conIndex)

@@ -5,7 +5,10 @@ thisView = viewSet(thisView,'curGroup','MotionComp');
 %     for iScan = 1:nScans
 for iScan = 1:length(analysisNames_Scans)
     %                eval(['GLManalysisData_nCons_' mat2str(nStim(iStim)) '{iScan} = getGroupAnalysisData(thisView,analysisName);'])
+    
+%     thisView = viewSet(thisView,'curGroup','MotionComp',['curScan=' mat2str(iScan)]);
     eval(['data.scan_GLMdata{iScan} = getGroupAnalysisData(thisView,analysisNames_Scans{iScan});'])
+
 end
 % end
 

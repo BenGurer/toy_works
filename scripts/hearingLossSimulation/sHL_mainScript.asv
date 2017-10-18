@@ -7,7 +7,7 @@ sHL_mainScript
 % setup study direction (once)
 sHL_createStudyDirectory
 
-[stimInfo, glmInfo, Info, plotInfo] = sHL_setupStudyParams;
+[stimInfo, glmInfo, Info] = sHL_setupStudyParams;
 % stimulus info
 % condition names
 % nummber of subjects
@@ -63,12 +63,9 @@ thisView = getMLRView;
 % pass on to ROI analysis to restrict
 scanData = getScanData_GLM(thisView,glmInfo.analysisNames_Scans,glmInfo.analysisNames_Groups,glmInfo.groupNames);
 
-% change name to get_analysisData_GLM and save to analysisData.glm
-
 % Set group outside of script
-roiData = script_getROIdata(thisView,scanData.scan_GLMdata,glmInfo.analysisBaseNames_Scans,Info.ROInames,glmInfo.analysisScanNum);
-
-roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum);
+roiData = script_getROIdata(thisView,scanData,glmInfo.analysisBaseNames_Scans,Info.ROInames);
+roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex);
 % save data to disk
 % load later for group analysis
 
