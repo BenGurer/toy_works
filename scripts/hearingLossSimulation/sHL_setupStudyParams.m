@@ -110,11 +110,7 @@ plotInfo = struct();
 plotInfo.ROIplotList = {['roiAnalysis_' glmInfo.analysisBaseNames_Scans{1}], ['roiAnalysis_' glmInfo.analysisBaseNames_Scans{2}]};
 
 % plotLogic = [roiAv, roiTWav]
+% use logicals to tell function what to plot
 plotInfo.plotLOGIC.ROI_bin = [0, 1];
 plotInfo.plotLOGIC.ROI_mv = [1, 0];
 plotInfo.plotLOGIC.ROI_all = [1, 0];
-% use logicals to tell function what to plot - note down what each one is..
-%% NEW FUNCTION %%
-% plotLOGICAL_bin = [1, 0, 1];    % save all data
-% plotLOGICAL_mv = [1, 0, 1];
-% plotLOGICAL_all = [1, 0, 1];

@@ -17,12 +17,6 @@ for iGroup = 1:length(conditionRunIndex)
     
 end
 
-% if size(runA{1},1) <= 8
-%     nCols = 2;
-% else
-%     nCols = 4;
-% end
-
 for iGroup = 1:length(conditionRunIndex)
     
     if size(runA{1},1) > 8
