@@ -1,0 +1,59 @@
+script_ROIAnalysis
+
+%% To do
+% define analysis names when performing them and save them - input to this function only one you want to analyise _ then only loop over length and index it - use eval to use
+% function to create figure based on paper size - poster or paper
+% send figure handle to plotting functions - can be used with subplot and plot
+% create strucutre for rois or containing rois
+
+% following analysis - save roi results underone structure of subject ID
+% plots I want
+% ROI average beta weight
+% ROI TW conA v B
+
+%% SHOULD SET ANALYSIS NAME ONCE AND PASS IT ON
+% loop - create analysis names
+% loop length of analysis names
+% needs to name based on group - one structure
+
+%% Save data in structures labelled by roi
+%% ROI names
+% Create ROIs with these names:
+% RightAC
+% RightPosAC
+% RightAntAc
+% LeftAC
+% LeftPosAC
+% LeftAntAC
+% AC
+% ROInames = {'RightAC','RightPosAC','RightAntAC','LeftAC','LeftPosAC','LeftAntAC'};
+
+
+%% now pass data to function to plot
+% loop over ROIs
+% data = roiDataAnalysis(roiData,analName,conditionSplitIndex,restrictIndex,stimFreqs);
+%%%% SPLIT UP FUNCTIONS
+% new function
+% 1 get data from scans
+% new function
+% get roi data - save in subject strucutre
+% new function
+% roi analysis
+
+
+
+% move this outside of function
+conditionSplitIndex = {[2,4],[1,3]};
+% set what to plot as a function
+
+%% PLOTTING TO DO
+
+% label figures by ROI and what they are
+% save figures
+
+TO DO
+
+Save data
+
+script distortion correction for 3T
+try fnirt with 3T data

@@ -7,6 +7,11 @@ function [stimInfo, glmInfo, Info, plotInfo] = sHL_setupStudyParams
     %   input: n/a
     %  output: stimInfo, stimulus information; glmInfo, glm analysis information
     %
+%% Define output structures
+stimInfo = struct();
+glmInfo = struct();
+Info = struct();
+plotInfo = struct();
     
 %% Get stimulus properties
 % get stimulus frequencies
@@ -52,10 +57,10 @@ stimInfo.stimLevel_SL_mv = stimLevel_SL_mv;
 %% Setup GLM analysis
 % save in glmInfo structure
 % glmInfo.hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
-% glmInfo.groupNames = {'ConcatenationHLsim', 'ConcatenationNH'};
+glmInfo.groupNames = {'ConcatenationHLsim', 'ConcatenationNH'};
 
 glmInfo.hrfModel = {'hrfDoubleGamma'};
-glmInfo.groupNames = {'ConcatenationNH_unwarped', 'ConcatenationNH'};
+% glmInfo.groupNames = {'ConcatenationNH_unwarped', 'ConcatenationNH'};
 glmInfo.nScans = 4;
 glmInfo.nStim = [32, 8];
 glmInfo.analysisNames_Scans = cell(1,(glmInfo.nScans.*length(glmInfo.nStim)).*length(glmInfo.hrfModel));
@@ -99,22 +104,27 @@ Info.ConATrue = 1;
 
 % Info.ROInames = {'RightAC','RightPosAC','RightAntAC','LeftAC','LeftPosAC','LeftAntAC','AC'};
 
-Info.ROInames = {'RightAC','RightPosAC'}
+Info.ROInames = {'RightAC','LeftAC'};
+
+Info.epiDims = [128 128 24 73]; % dims of functional scans
+
+Info.sides = {'left','right'};
+Info.Sides = {'Left','Right'};
+
+Info.gradReversalInfo.analysisBase = glmInfo.analysisNames_Groups{1};
+Info.gradReversalInfo.groupBase = glmInfo.groupNames{2};
+Info.gradReversalInfo.overlayBase = 39;
 
 %% Define what to plot
 % cell array of analysis to plot
 % what plots to present
 % use structure to group correct stim names with it
-plotInfo = struct();
+% plotInfo = struct();
 % list of analysis to plot from
-plotInfo.ROIplotList = {['roiAnalysis_' glmInfo.analysisBaseNames_Scans{1}]};
+plotInfo.ROIplotList = {['roiAnalysis_' glmInfo.analysisBaseNames_Scans{1}], ['roiAnalysis_' glmInfo.analysisBaseNames_Scans{2}]};
 
 % plotLogic = [roiAv, roiTWav]
+% use logicals to tell function what to plot
 plotInfo.plotLOGIC.ROI_bin = [0, 1];
 plotInfo.plotLOGIC.ROI_mv = [1, 0];
 plotInfo.plotLOGIC.ROI_all = [1, 0];
-% use logicals to tell function what to plot - note down what each one is..
-%% NEW FUNCTION %%
-% plotLOGICAL_bin = [1, 0, 1];    % save all data
-% plotLOGICAL_mv = [1, 0, 1];
-% plotLOGICAL_all = [1, 0, 1];

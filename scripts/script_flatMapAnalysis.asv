@@ -11,7 +11,7 @@ for iSide=1:length(Info.sides)
     thisView = viewSet(thisView,'curgroup',Info.gradReversalInfo.groupBase);
     thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',Info.gradReversalInfo.analysisBase));
 %     thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['x' subjectInfo.freeSurferName '_' Info.sides{iSide} '_WM_Flat_' subjectInfo.flatmapNames{iSide}]));
-thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',subjectInfo.flatmapNames{iSide}));
+thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['x' subjectInfo.freeSurferName '_' Info.sides{iSide} '_WM_Flat_' subjectInfo.flatmapNames{iSide}]));
     
     refreshMLRDisplay(thisView);
     [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(Info.gradReversalInfo.overlayBase)]);
