@@ -1,4 +1,4 @@
-function plot_splitAverage_roi_GLM(data,analName,stimInfo,plotInfo)
+function plot_splitAverage_roi_GLM(data,analName,stimInfo,plotInfo,figureName)
 % plotLOGIC = what to plot based on number of stim
 
 eval(['roi_av = data.' analName '.roi_av;']);
@@ -26,7 +26,7 @@ end
 
 if plotLOGIC(2) == 1
 %% Compare average voxel tuning
-plot_compareConditions_pTW(roi_pTW{1}, roi_pTW{2},nCols,xlabel);
+plot_compareConditions_pTW(roi_pTW{1}, roi_pTW{2},nCols,xlabel,figureName);
 
 end
 

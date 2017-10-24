@@ -3,12 +3,6 @@ iSubj = 1;
 
 epiDims = [128 128 24 73]; % dims of functional scans
 
-if ispc
-    dataDir = 'N:/data';
-elseif isunix
-    dataDir = '/home/beng/data';
-end
-studyDir = 'hearingLossSimulation';
 
 sides = {'left','right'};
 Sides = {'Left','Right'};

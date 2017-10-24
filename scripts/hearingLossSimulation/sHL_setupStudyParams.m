@@ -57,11 +57,12 @@ stimInfo.stimLevel_SL_mv = stimLevel_SL_mv;
 %% Setup GLM analysis
 % save in glmInfo structure
 % glmInfo.hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
-glmInfo.groupNames = {'ConcatenationHLsim', 'ConcatenationNH'};
+% glmInfo.groupNames = {'ConcatenationHLsim', 'ConcatenationNH'};
 
 glmInfo.hrfModel = {'hrfDoubleGamma'};
-% glmInfo.groupNames = {'ConcatenationNH_unwarped', 'ConcatenationNH'};
-glmInfo.nScans = 4;
+glmInfo.groupNames = {'ConcatenationNH_unwarped', 'ConcatenationNH'};
+glmInfo.nScans = 8;
+% glmInfo.nScans = 4;
 glmInfo.nStim = [32, 8];
 glmInfo.analysisNames_Scans = cell(1,(glmInfo.nScans.*length(glmInfo.nStim)).*length(glmInfo.hrfModel));
 c = 0;
@@ -94,9 +95,19 @@ for iGroup = 1:length(glmInfo.groupNames)
     d = d + length(glmInfo.hrfModel);
 end
 
+
+%% Info - save general info needed to struct
+
+if ispc
+    Info.dataDir = 'N:/data';
+elseif isunix
+    Info.dataDir = '/home/beng/data';
+end
+Info.studyDir = 'hearingLossSimulation';
 %% Order of condition runs {[ConA Run1,ConA Run2],[ConB Run1,ConB Run2]}
 
 Info.conditionRunIndex = {[2,4],[1,3]};
+% Info.conditionRunIndex = {[2,4],[6,8]};
 
 Info.ConATrue = 1;
 

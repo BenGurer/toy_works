@@ -2,9 +2,11 @@
 % simulate hearing loss
 
 %% run this function when returning for analysis?
+iSub = 2;
 
-% setup study direction (once)
-sHL_createStudyDirectory
+thisView = getMLRView;
+
+
 
 [stimInfo, glmInfo, Info, plotInfo] = sHL_setupStudyParams;
 % stimulus info
@@ -12,9 +14,13 @@ sHL_createStudyDirectory
 % nummber of subjects
 
 % define and get subject info
-sHL_getSubjectInfo(iSub)
+% either cell for each subject or return single subject info - prob the later
+subjectInfo = get_SubjectInfo_sHL(iSub);
 % Subject ID
 % flatmap names
+
+% setup study direction (once)
+sHL_createStudyDirectory
 
 sHL_organiseData(studyDirectory,subject)
 % per subject
@@ -42,11 +48,10 @@ thisView = script_importAnatomy(thisView);
 
 [thisView, pRFdata] = script_pRFAnalysis(thisView);
 
-thisView = script_flatMapAnalysis(thisView,flatmapNames);
+thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
 
 %% Create subject data storage structure
 
-thisView = getMLRView;
 %% Get analysis data from scans
 % pass on to ROI analysis to restrict
 
@@ -66,7 +71,9 @@ roiData = script_getROIdata(thisView,scanData.scan_GLMdata,glmInfo.analysisBaseN
 roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum);
 
 %% save data
-saveName = [subjectID, 
+saveName = [Info.dataDir, studyDir, subjectID, 'ROIanalysis'];
+cd(fullfile(dataDir,studyDir,subjects{iSubj}));
+% navigate to correct dirtory
 save(saveName,roiAnalysis)
 % save data to disk
 % load later for group analysis

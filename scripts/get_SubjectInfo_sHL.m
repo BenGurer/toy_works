@@ -9,6 +9,7 @@ function subjectInfo = getSubjectInfo_sHL(iSub)
     
 
 % define subject info
+subject{1} = '02344_034';
 niftiBaseName{1} = 'HL_02344_034_';
 wholeheadMPRAGE{1} = '13';
 freeSurferName{1} = '02344_034';
@@ -19,7 +20,7 @@ apScan{1} = 5;
 paScan{1} = 6;
 epiScans{1} = {'07', '09', '10', '11'};
 
-subjects{2} = '12013_002';
+subject{2} = '12013_002';
 niftiBaseName{2} = 'HL_12013_002_';
 wholeheadMPRAGE{2} = '11';
 freeSurferName{2} = '12013_002';
@@ -31,7 +32,7 @@ paScan{2} = 6;
 epiScans{2} = [03, 04, 08, 09];
 flatmapName{2} = {'x12013_002_left_WM_Flat_84_99_86_Rad75','x12013_002_right_WM_Flat_175_101_79_Rad75'};
 
-subjects{3} = '12023_002';
+subject{3} = '12023_002';
 niftiBaseName{3} = 'HL_12023_002_';
 wholeheadMPRAGE{3} = '10';
 freeSurferName{3} = '12023_002';
@@ -40,7 +41,7 @@ refScan{3} = '04'; % scan before t2 structural
 distCorrectionRef{3} = {'5','6'};
 flatmapName{3} = {' ', ' '};
 
-subjects{4} = '11108_007';
+subject{4} = '11108_007';
 niftiBaseName{4} = 'HL_11108_007_';
 wholeheadMPRAGE{4} = '10';
 freeSurferName{4} = '11108_007';
@@ -50,5 +51,6 @@ flatmapName{4} = {' ', ' '};
 
 %% output selected subjects daya
 subjectInfo = struct();
+subjectInfo.subjectID = subject{iSub};
 subjectInfo.freeSurferName = freeSurferName{iSub};
 subjectInfo.flatmapNames = flatmapName{iSub};

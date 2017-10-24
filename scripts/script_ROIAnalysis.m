@@ -10,6 +10,6 @@ end
 % Plot ROI analysis
 for iROI = 1:length(Info.ROInames)
     for iPlot = 1:length(plotInfo.ROIplotList)
-        plot_splitAverage_roi_GLM(eval(['roiData.' Info.ROInames{iROI}]),plotInfo.ROIplotList{iPlot},stimInfo,plotInfo);
+        plot_splitAverage_roi_GLM(eval(['roiData.' Info.ROInames{iROI}]),plotInfo.ROIplotList{iPlot},stimInfo,plotInfo,Info.ROInames{iROI});
     end
 end
