@@ -15,7 +15,9 @@ wholeheadMPRAGE{1} = '13';
 freeSurferName{1} = '02344_034';
 T2star{1} = '12';
 refScan{1} = '11'; % scan before t2 structural
-flatmapName{1} = {'80_131_81_Rad60', '181_127_85_Rad60'};
+% flatmapName{1} = {'80_131_81_Rad60', '181_127_85_Rad60'};
+
+flatmapName{1} = {'x02344_034_left_WM_Flat_80_131_81_Rad60', 'x02344_034_right_WM_Flat_181_127_85_Rad60'};
 apScan{1} = 5;
 paScan{1} = 6;
 epiScans{1} = {'07', '09', '10', '11'};

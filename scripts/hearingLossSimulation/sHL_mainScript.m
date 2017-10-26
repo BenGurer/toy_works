@@ -36,6 +36,7 @@ preprocessData = sHL_preprocess;
 [thisView, glmData] = script_glmAnalysis(thisView);
 % HRF = double gamma and box car
 % All stims and 8 bins
+% don't need to perform weighted mean on individual runs
 
 thisView = script_importAnatomy(thisView);
 % load in:

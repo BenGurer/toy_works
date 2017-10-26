@@ -1,10 +1,15 @@
-function data = script_covertData2FlatmapSpace(groupName,analysisName,overlays,flatmapNames)
+function data = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapNames)
+
+  thisView = viewSet(thisView,'curgroup',groupName,['curScan=' mat2str(iScan)]);
+  thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+  if isempty(overlays)
+  analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',analysisName));
+  overlays = 1:length(analysisData.overlays);
+  end
 
 for iSide=1:2
   %first copy overlays to flat volume
-  thisView = viewSet(thisView,'curgroup',groupName);
-  thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
-  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',flatmapName{iSide}));
+  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',flatmapNames{iSide}));
   [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlays)]);
   params.combineFunction='User Defined';
   params.customCombineFunction = 'plus'; %add 0

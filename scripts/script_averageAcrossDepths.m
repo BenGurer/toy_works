@@ -1,4 +1,6 @@
 function data = script_averageAcrossDepths
+
+% use name to get overlay
 a = viewGet(thisView,'Overlay','Scan1(Tone 100Hz,0)');
 
 
