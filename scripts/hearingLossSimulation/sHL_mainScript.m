@@ -44,6 +44,8 @@ thisView = script_importAnatomy(thisView);
 % High resolution in-plane T2*
 % surfaces
 % create flatmaps
+% MAKE ORIGINAL FLAT MAPS (LEFT AND RIGHT) USING MAKEFLAT AND NAME THEM
+% [freeSurferName{iSubj} '_left_Flat.off'] AND [freeSurferName{iSubj} '_right_Flat.off']
 
 [thisView, pRFdata] = script_pRFAnalysis(thisView);
 

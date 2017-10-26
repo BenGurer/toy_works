@@ -116,6 +116,7 @@ Info.ConATrue = 1;
 % Info.ROInames = {'RightAC','RightPosAC','RightAntAC','LeftAC','LeftPosAC','LeftAntAC','AC'};
 
 Info.ROInames = {'RightAC','LeftAC'};
+% Info.ROInames_flat = {'RightAC_flat','LeftAC_flat'};
 
 Info.epiDims = [128 128 24 73]; % dims of functional scans
 
