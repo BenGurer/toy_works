@@ -1,5 +1,12 @@
 function overlayData = get_overlayData(thisView,overlayNames)
-% assumes thisView is the correct group and analysis
+    %
+    %   usage: get_overlayData(thisView,overlayNames)
+    %      by: Ben Gurer
+    %    date: 26/10/2017
+    % purpose: Get overlay data from group
+    %   input: mrTools view, names of overlays, 
+    %          assumes thisView is the correct group and analysis
+    %
 if iscell(overlayNames)
     overlayStruct = cell(1,length(overlayNames));
     overlayData = struct;

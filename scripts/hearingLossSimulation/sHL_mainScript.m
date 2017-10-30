@@ -51,6 +51,13 @@ thisView = script_importAnatomy(thisView);
 
 thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
 
+% get condition names
+conditionNames = cell(1,length(glmInfo.nStim));
+for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
+    analysisName = glmInfo.analysisNames_Scans{iAnal};
+    conditionNames{iAnal} = get_analysisConditionNames(thisView,analysisName,'MotionComp',1);
+end
+
 %% Create subject data storage structure
 
 %% Get analysis data from scans
@@ -66,22 +73,52 @@ scanData = getScanData_GLM(thisView,glmInfo.analysisNames_Scans,glmInfo.analysis
 % Set group outside of script
 roiData = script_getROIdata(thisView,scanData.scan_GLMdata,glmInfo.analysisBaseNames_Scans,Info.ROInames,glmInfo.analysisScanNum);
 
-%% Create MotionComp Flatmap
+%% Convert data to flatmap space
 
-%% export data
+% export scan data
+for iScan = 1:glmInfo.nScans
+    for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
+            analysisName = [glmInfo.analysisBaseNames_Scans{iAnal}, '_Scan_' mat2str(iScan)];
+        for iSide = 1:length(subjectInfo.flatmapNames)
+            thisView = script_covertData2FlatmapSpace(thisView,'MotionComp',analysisName,iScan,[],subjectInfo.flatmapNames{iSide});
+        end
+    end
+end
 
-%% average overdepth
+% average overdepth
+for iSide = 1:length(subjectInfo.flatmapNames)
+    thisView = script_averageAcrossDepths(thisView,[],[subjectInfo.flatmapNames{iSide}, 'Volume']);
+end
 
-%% perform gradient reversal
-
-%% create ROI
+%% export data for concat groups
+for iGroup = 1:length(glmInfo.groupNames)
+    for iSide = 1:length(subjectInfo.flatmapNames)
+        for iAnal = 1:length(glmInfo.analysisNames_Groups)
+            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},glmInfo.analysisNames_Groups{iAnal},[],[39, 40],subjectInfo.flatmapNames{iSide});
+        end
+    end
+end
 
 %% get data from Overlays
-
+% create names to get data for and save in side.Group.anal.data{betaNum}
+q = char(39);
+for iScan = 1:glmInfo.nScans
+    for iSide = 1:length(subjectInfo.flatmapNames)
+        for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
+            eval([Info.Sides{iSide}, '.scans.', glmInfo.analysisBaseNames_Scans{iAnal}, '.overlayData{iScan} = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',conditionNames{iAnal},iScan);'])
+        end
+    end
+end
 %% restrict by roi
+% script 
+% get data from left flatmap (set: left roi, left group, left base) save this data to left struct
+% loop - save (side), selet:roi (side) and base (side), get data from: side.scans.anal.overlayData.data
+% use eval
+data_flatROI = get_ROIdata(analysisData,ROI);
 
 %% perform ROI analysis
 % save so don't need to load again
+% compare binning for glm to averaging betas
 roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum);
 
 %% save data

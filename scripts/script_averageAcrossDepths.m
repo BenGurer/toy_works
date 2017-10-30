@@ -1,15 +1,21 @@
-function data = script_averageAcrossDepths
-
-
+function thisView = script_averageAcrossDepths(thisView,overlays,groupName)
+    %
+    %   usage: script_averageAcrossDepths(thisView,overlayNames)
+    %      by: Ben Gurer
+    %    date: 26/10/2017
+    % purpose: average overlay across depths
+    %   input: mrTools view, names of overlays, 
+    %          assumes thisView is the correct group and analysis
+    %
 
 % set to flatmap group
 % average all overlays
 
-% use name to get overlay - use to get data
-a = viewGet(thisView,'Overlay','Scan 1 -  (Tone 100Hz,0)');
-a = viewGet(thisView,'Overlay',['Scan 1 -  (Tone ', * 'Hz,0)']);
+% either get all overlays or use current overlay - do i want to set overlay in here?
 
-groupName = [flatmapNames{iSide}, 'Volume'];
+
+% use name to get overlay - use to get data
+% groupName = [flatmapNames{iSide}, 'Volume'];
 
 thisView = viewSet(thisView,'curgroup',groupName);
 thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));

@@ -1,10 +1,10 @@
-function data = get_ROIdata(thisView,analysisData,ROI)
+function data = get_ROIdata(analysisData,ROI)
     %
     %   usage: get_ROIdata(thisView,analysisData,ROI,iScan)
     %      by: Ben Gurer
     %    date: 26/10/2017
     % purpose: Get overlay data within ROI
-    %   input: mrTools view, analysis data (from overlays), ROI
+    %   input: analysis data (from overlays), ROI
     %
 if iscell(analysisData)
 % get roi and then use cords and convert to indices

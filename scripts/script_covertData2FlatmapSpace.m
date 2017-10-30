@@ -1,13 +1,20 @@
-function data = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapNames)
+function [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
 
-if ~isempty(iScan)
-    thisView = viewSet(thisView,'curgroup',groupName,['curScan=' mat2str(iScan)]);
-else
+% compare thisView current group to intended group
+
+
+if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
     thisView = viewSet(thisView,'curgroup',groupName);
 end
+if ~isempty(iScan)
+%     thisView = viewSet(thisView,'curgroup',groupName,['curScan=' mat2str(iScan)]);    
+%     thisView = viewSet(thisView,'curgroup',groupName,['scannum=' mat2str(iScan)]);
+    thisView = viewSet(thisView,'curScan', iScan);
+end
+
 thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',analysisName));
 if isempty(overlays)
-    analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',analysisName));
     overlays = 1:length(analysisData.overlays);
 end
 
@@ -20,11 +27,11 @@ for i = 1:length(analysisData.params.EVnames)
     end
 end
 
-a = viewGet(thisView,'Overlay',data.overlayConditionNames{1})
+% a = viewGet(thisView,'Overlay',data.overlayConditionNames{1})
 
-for iSide=1:2
+% for iSide=1:2
     % copy overlays to flat volume
-    thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',flatmapNames{iSide}));
+    thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',flatmapName));
     [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlays)]);
     params.combineFunction='User Defined';
     params.customCombineFunction = 'plus'; %add 0

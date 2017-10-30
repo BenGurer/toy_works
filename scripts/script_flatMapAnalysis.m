@@ -6,7 +6,7 @@ function thisView = script_flatMapAnalysis(thisView,Info,subjectInfo)
 %
 % for iGroup = 1:length(concatenationGroup)
 % for iAnalysis = 1:length(functionalAnalysis)
-for iSide=1:length(Info.sides)
+for iSide=1:length(subjectInfo.flatmapNames)
     % gradient reversals
     thisView = viewSet(thisView,'curgroup',Info.gradReversalInfo.groupBase);
     thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',Info.gradReversalInfo.analysisBase));
