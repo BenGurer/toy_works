@@ -71,7 +71,7 @@ scanData = getScanData_GLM(thisView,glmInfo.analysisNames_Scans,glmInfo.analysis
 %% get data from ROIs
 % save so don't need to load again
 % Set group outside of script
-roiData = script_getROIdata(thisView,scanData.scan_GLMdata,glmInfo.analysisBaseNames_Scans,Info.ROInames,glmInfo.analysisScanNum);
+roiData = script_getROIdata(thisView,scanData.scan_GLMdata,glmInfo.analysisBaseNames_Scans,Info.ROInames,glmInfo.analysisScanNum,'GLM');
 
 %% Convert data to flatmap space
 
@@ -100,7 +100,7 @@ for iGroup = 1:length(glmInfo.groupNames)
 end
 
 %% get data from Overlays
-% create names to get data for and save in side.Group.anal.data{betaNum}
+% create names to get data from overlays and save using structure side.Group.anal.data{iScan}
 q = char(39);
 for iScan = 1:glmInfo.nScans
     for iSide = 1:length(subjectInfo.flatmapNames)
@@ -114,12 +114,19 @@ end
 % get data from left flatmap (set: left roi, left group, left base) save this data to left struct
 % loop - save (side), selet:roi (side) and base (side), get data from: side.scans.anal.overlayData.data
 % use eval
-data_flatROI = get_ROIdata(analysisData,ROI);
+%% get data from ROIs
+% save so don't need to load again
+% Set group outside of script
+data_rightROI = script_getROIdata(thisView,Right,glmInfo.analysisBaseNames_Scans,{'FlatRightAC'},glmInfo.analysisScanNum,'overlays');
+% change to flat roi names
 
 %% perform ROI analysis
 % save so don't need to load again
 % compare binning for glm to averaging betas
-roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum);
+roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'GLM');
+
+
+roiAnalysis = script_ROIAnalysis(data_rightROI,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays');
 
 %% save data
 saveLocation = cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));

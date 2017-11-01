@@ -1,10 +1,10 @@
-function roiData = script_ROIAnalysis(roiData,analysisNames,Info,stimInfo,plotInfo,conditionRunIndex,analysisScanNum)
+function roiData = script_ROIAnalysis(roiData,analysisNames,Info,stimInfo,plotInfo,conditionRunIndex,analysisScanNum,dataType)
 
 %% Split GLM ROI analysis
 % Perform ROI analysis
 for iROI = 1:length(Info.ROInames)
     for iAnal = 1:length(analysisNames)
-        eval(['roiData.' Info.ROInames{iROI} '.roiAnalysis_' analysisNames{iAnal} '= cal_splitAverage_roi_GLM(roiData.' Info.ROInames{iROI} ',analysisNames{iAnal},conditionRunIndex,[],Info.ConATrue);'])
+        eval(['roiData.' Info.ROInames{iROI} '.roiAnalysis_' analysisNames{iAnal} '= cal_splitAverage_roi_GLM(roiData.' Info.ROInames{iROI} ',analysisNames{iAnal},conditionRunIndex,[],Info.ConATrue,dataType);'])
     end
 end
 % Plot ROI analysis

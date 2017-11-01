@@ -1,10 +1,18 @@
-function data = cal_splitAverage_roi_GLM(roiData,analName,conditionRunIndex,restrictIndex,conATrue)
+function data = cal_splitAverage_roi_GLM(roiData,analName,conditionRunIndex,restrictIndex,conATrue,dataType)
 % ,stimFreqs,plotROIav,plotROIpTW)
-
+q = char(39);
 for iGroup = 1:length(conditionRunIndex)
     % get data from roi struct
+    % convert cell to mat and save in betas before this
+    % use input arguement to set or set before to be run a and b
+    switch dataType
+        case 'GLM'
     eval(['runA{iGroup} = roiData.' analName '{' num2str(conditionRunIndex{iGroup}(1)) '}.betas;'])
     eval(['runB{iGroup} = roiData.' analName '{' num2str(conditionRunIndex{iGroup}(2)) '}.betas;'])
+        case 'overlays'            
+    eval(['runA{iGroup} = cell2mat(roiData.' analName '{' num2str(conditionRunIndex{iGroup}(1)) '}' q ');'])
+    eval(['runB{iGroup} = cell2mat(roiData.' analName '{' num2str(conditionRunIndex{iGroup}(2)) '}' q ');'])            
+    end
     
     % Remove nans
     runA{iGroup}(isnan(runA{iGroup}(:))) = [];

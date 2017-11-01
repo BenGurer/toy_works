@@ -1,4 +1,4 @@
-function ROIdata = script_getROIdata(thisView,analysisData,analysisBaseNames,ROInames,analysisScanNum)
+function ROIdata = script_getROIdata(thisView,analysisData,analysisBaseNames,ROInames,analysisScanNum,dataType)
 % ,stimInfo,plotInfo,conditionRunIndex)
 % load in data
 % get roi
@@ -12,8 +12,24 @@ for iROI = 1:length(ROInames)
 end
 
 % get data from ROIs
-for iROI = 1:length(ROInames)
-    for iAnal = 1:length(analysisBaseNames)
-        eval([['ROIdata.' ROInames{iROI} '.' analysisBaseNames{iAnal}] '{analysisScanNum{iAnal}} = getROIdata_GLM(thisView, analysisData{iAnal}, ROIdata.' ROInames{iROI} '.roi,analysisScanNum{iAnal});'])
-    end
+
+switch dataType
+    case 'GLM'
+        for iROI = 1:length(ROInames)
+            for iAnal = 1:length(analysisBaseNames)
+                eval([['ROIdata.' ROInames{iROI} '.' analysisBaseNames{iAnal}] '{analysisScanNum{iAnal}} = getROIdata_GLM(thisView, analysisData{iAnal}, ROIdata.' ROInames{iROI} '.roi,analysisScanNum{iAnal});'])
+            end
+        end
+        
+    case 'overlays'
+        
+        for iROI = 1:length(ROInames)
+                for iAnal = 1:length(analysisBaseNames)
+%                     data_flatROI = get_ROIdata(analysisData,ROI);
+                    data2get = eval(['analysisData.scans.', analysisBaseNames{iAnal}, '.overlayData{' mat2str(analysisScanNum{iAnal}) '}.data;']);
+                    eval(['ROIdata.' ROInames{iROI} '.' analysisBaseNames{iAnal} '{' mat2str(analysisScanNum{iAnal}) '} = get_ROIdata(data2get,ROIdata.' ROInames{iROI} '.roi);']);
+                end
+        end
+
+        
 end
