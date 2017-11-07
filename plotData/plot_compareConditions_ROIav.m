@@ -1,18 +1,23 @@
-function data = plot_compareConditions_ROIav(conA,conB,conID)
-
-figure('color',[1 1 1])
+function plot_compareConditions_ROIav(conA,conB,conID,figureName)
+x = 1:(length(conA));
 yLimMax = max(max([conA,conB]));
 yLimMin = min(min([conA,conB,conA - conB]));
 
-plot(conID,conA,'color',[0 113 188]/255)
+figure('Name',[figureName, '-pTW'],'color',[1 1 1])
+
+plot(x,conA,'color',[0 113 188]/255)
 hold on
-plot(conID,conB,'color',[216 82 24]/255)
+plot(x,conB,'color',[216 82 24]/255)
+
 ylim([yLimMin yLimMax])
-% xlim tight
+xlim([min(x) max(x)])
+
 xlabel('Condition (kHz)')
 ylabel('Beta weight')
 title('ROI average Beta weights')
-plot(conID,conA - conB,'--r')
-plot(conID,zeros(1,length(conA)),'--k')
+plot(x,conA - conB,'--r')
+plot(x,zeros(1,length(conA)),'--k')
 legend('Condition A','Condition B','A - B')
+ax = gca;
+ax.XTickLabel = round(conID(ax.XTick),2);
 end
