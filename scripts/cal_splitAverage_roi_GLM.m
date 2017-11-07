@@ -47,6 +47,7 @@ ConB_ROIpTW = cal_ConBROIpTW_ConAVoxelIndex(Voxel_data{1}.Mean_Peak,runA{2},runB
 data.roi_av = roi_av;
 data.roi_pTW{1} = condition_splitMean{1};
 data.roi_pCFtally{1} = totalROIpCF{1};
+data.roi_av_ratio = roi_av{2}./roi_av{1};
 if conATrue == 1
 data.roi_pTW{2} = ConB_ROIpTW;
 data.roi_pCFtally{2} = {nan};

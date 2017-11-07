@@ -49,7 +49,7 @@ wholeheadMPRAGE{4} = '10';
 freeSurferName{4} = '11108_007';
 T2star{4} = '7';
 refScan{4} = '04'; % scan before t2 structural
-flatmapName{4} = {' ', ' '};
+flatmapName{4} = {'x11108_007_left_Flat', 'x11108_007_right_Flat'};
 
 %% output selected subjects daya
 subjectInfo = struct();

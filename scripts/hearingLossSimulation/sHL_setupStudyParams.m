@@ -57,11 +57,11 @@ stimInfo.stimLevel_SL_mv = stimLevel_SL_mv;
 %% Setup GLM analysis
 % save in glmInfo structure
 % glmInfo.hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
-% glmInfo.groupNames = {'ConcatenationHLsim', 'ConcatenationNH'};
+glmInfo.groupNames = {'ConcatenationHLsim', 'ConcatenationNH'};
 
 glmInfo.hrfModel = {'hrfDoubleGamma'};
-glmInfo.groupNames = {'ConcatenationNH_unwarped', 'ConcatenationNH'};
-glmInfo.nScans = 8;
+% glmInfo.groupNames = {'ConcatenationNH_unwarped', 'ConcatenationNH'};
+glmInfo.nScans = 4;
 % glmInfo.nScans = 4;
 glmInfo.nStim = [32, 8];
 glmInfo.analysisNames_Scans = cell(1,(glmInfo.nScans.*length(glmInfo.nStim)).*length(glmInfo.hrfModel));
@@ -115,7 +115,11 @@ Info.ConATrue = 1;
 
 % Info.ROInames = {'RightAC','RightPosAC','RightAntAC','LeftAC','LeftPosAC','LeftAntAC','AC'};
 
-Info.ROInames = {'RightAC','LeftAC'};
+% Must match order of sides
+Info.ROInames = {'LeftAC','RightAC'};
+Info.ROIbasenames = {'AC'};
+Info.LeftROInames = {'LeftAC'};
+Info.RightROInames = {'RightAC'};
 % Info.ROInames_flat = {'RightAC_flat','LeftAC_flat'};
 
 Info.epiDims = [128 128 24 73]; % dims of functional scans
@@ -125,7 +129,7 @@ Info.Sides = {'Left','Right'};
 
 Info.gradReversalInfo.analysisBase = glmInfo.analysisNames_Groups{1};
 Info.gradReversalInfo.groupBase = glmInfo.groupNames{2};
-Info.gradReversalInfo.overlayBase = 39;
+Info.gradReversalInfo.overlayBase = 41; % 39
 
 %% Define what to plot
 % cell array of analysis to plot
@@ -137,6 +141,6 @@ plotInfo.ROIplotList = {['roiAnalysis_' glmInfo.analysisBaseNames_Scans{1}], ['r
 
 % plotLogic = [roiAv, roiTWav]
 % use logicals to tell function what to plot
-plotInfo.plotLOGIC.ROI_bin = [0, 1];
-plotInfo.plotLOGIC.ROI_mv = [1, 0];
-plotInfo.plotLOGIC.ROI_all = [1, 0];
+plotInfo.plotLOGIC.ROI_bin = [0, 1, 0];
+plotInfo.plotLOGIC.ROI_mv = [1, 0, 1];
+plotInfo.plotLOGIC.ROI_all = [0, 0, 0];

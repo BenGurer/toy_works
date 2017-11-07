@@ -156,24 +156,24 @@ for iScan = 1:nScans
         
         %Tonotopy analysis
         % Index max
-        [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:nStim(iStim)+1])],['scanList=' mat2str(iScan)]);
-        params.combineFunction='indexMax';
-        params.nOutputOverlays=2;
-        [thisView,params] = combineTransformOverlays(thisView,params);
-        curOverlay=viewGet(thisView,'curOverlay');
-        thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)],curOverlay-1);
+%         [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:nStim(iStim)+1])],['scanList=' mat2str(iScan)]);
+%         params.combineFunction='indexMax';
+%         params.nOutputOverlays=2;
+%         [thisView,params] = combineTransformOverlays(thisView,params);
+%         curOverlay=viewGet(thisView,'curOverlay');
+%         thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)],curOverlay-1);
         
         % Weighted mean - if all stimuli
-        if nStim(iStim) == 32
-            params.combineFunction='weightedMeanStd';
-            params.nOutputOverlays=4;
-            [thisView,params] = combineTransformOverlays(thisView,params);
-            curOverlay=viewGet(thisView,'curOverlay');
-            thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)],curOverlay-3);
-            thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)],curOverlay-2);
-            thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)*1.25],curOverlay-1);
-            thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)*1.25],curOverlay);
-        end
+%         if nStim(iStim) == 32
+%             params.combineFunction='weightedMeanStd';
+%             params.nOutputOverlays=4;
+%             [thisView,params] = combineTransformOverlays(thisView,params);
+%             curOverlay=viewGet(thisView,'curOverlay');
+%             thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)],curOverlay-3);
+%             thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)],curOverlay-2);
+%             thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)*1.25],curOverlay-1);
+%             thisView = viewSet(thisView,'overlaycolorrange',[0 nStim(iStim)*1.25],curOverlay);
+%         end
     end
 end
 % save analysis

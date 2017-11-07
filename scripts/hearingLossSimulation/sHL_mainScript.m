@@ -2,7 +2,7 @@
 % simulate hearing loss
 
 %% run this function when returning for analysis?
-iSub = 1;
+iSub = 4;
 thisView = getMLRView;
 [stimInfo, glmInfo, Info, plotInfo] = sHL_setupStudyParams;
 % stimulus info
@@ -49,7 +49,13 @@ thisView = script_importAnatomy(thisView);
 
 [thisView, pRFdata] = script_pRFAnalysis(thisView);
 
+%% CHANGE FLATMAP NAMES TO LEFT AND RIGHT
+
 thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
+% create ROIs with the names:
+
+% update this view
+thisView = getMLRView;
 
 % get condition names
 conditionNames = cell(1,length(glmInfo.nStim));
@@ -85,18 +91,19 @@ for iScan = 1:glmInfo.nScans
     end
 end
 
-% average overdepth
-for iSide = 1:length(subjectInfo.flatmapNames)
-    thisView = script_averageAcrossDepths(thisView,[],[subjectInfo.flatmapNames{iSide}, 'Volume']);
-end
-
 %% export data for concat groups
+% use getOverlay to get overlaynumber for analysis we want
 for iGroup = 1:length(glmInfo.groupNames)
     for iSide = 1:length(subjectInfo.flatmapNames)
         for iAnal = 1:length(glmInfo.analysisNames_Groups)
-            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},glmInfo.analysisNames_Groups{iAnal},[],[39, 40],subjectInfo.flatmapNames{iSide});
+            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},glmInfo.analysisNames_Groups{iAnal},[],[41, 42],subjectInfo.flatmapNames{iSide});
         end
     end
+end
+
+% average overdepth
+for iSide = 1:length(subjectInfo.flatmapNames)
+    thisView = script_averageAcrossDepths(thisView,[],[subjectInfo.flatmapNames{iSide}, 'Volume']);
 end
 
 %% get data from Overlays
@@ -105,7 +112,7 @@ q = char(39);
 for iScan = 1:glmInfo.nScans
     for iSide = 1:length(subjectInfo.flatmapNames)
         for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
-            eval([Info.Sides{iSide}, '.scans.', glmInfo.analysisBaseNames_Scans{iAnal}, '.overlayData{iScan} = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',conditionNames{iAnal},iScan);'])
+            eval(['data.' Info.Sides{iSide}, '.scans.', glmInfo.analysisBaseNames_Scans{iAnal}, '.overlayData{iScan} = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',conditionNames{iAnal},iScan);'])
         end
     end
 end
@@ -117,24 +124,42 @@ end
 %% get data from ROIs
 % save so don't need to load again
 % Set group outside of script
-data_rightROI = script_getROIdata(thisView,Right,glmInfo.analysisBaseNames_Scans,{'FlatRightAC'},glmInfo.analysisScanNum,'overlays');
+% data_rightROI = script_getROIdata(thisView,Right,glmInfo.analysisBaseNames_Scans,{'FlatRightAC'},glmInfo.analysisScanNum,'overlays');
+for iSide = 1:length(Info.Sides)
+    eval(['dataVar = data.' Info.Sides{iSide} ';']);
+    eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
+    eval(['ROI_data_' Info.Sides{iSide} ' = script_getROIdata(thisView,dataVar,glmInfo.analysisBaseNames_Scans,roiNames,glmInfo.analysisScanNum,' q 'overlays' q ');']);
+end
+for iSide = 1:length(Info.Sides)
+    eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
+    eval(['data.' Info.Sides{iSide} '.roiAnalysis = script_ROIAnalysis(ROI_data_' Info.Sides{iSide} ',glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,' q 'overlays' q ',roiNames);']);
+end
 % change to flat roi names
 
 %% perform ROI analysis
 % save so don't need to load again
 % compare binning for glm to averaging betas
-roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'GLM');
+% roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'GLM');
 
 
-roiAnalysis = script_ROIAnalysis(data_rightROI,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays');
+% roiAnalysis = script_ROIAnalysis(data_rightROI,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays');
 
 %% save data
 saveLocation = cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
-saveName = 'ROIanalysis.mat';
+saveName = [subjectInfo.subjectID '_data.mat'];
 % navigate to correct directory
-save(saveName,'roiAnalysis')
+% save roi analysis and data seperately due to size
+save(saveName,'data','-v7.3','-nocompression')
+left_ROIdata = data.Left.roiAnalysis;
+right_ROIdata = data.Right.roiAnalysis;
+saveName = [subjectInfo.subjectID '_ROIdata.mat'];
+save(saveName,'left_ROIdata','right_ROIdata','-v7.3','-nocompression');
 % save data to disk
 % load later for group analysis
+
+%% quit mrLoadRet
+mrQuit()
+
 
 script_GroupAnalysis(subjects)
 % load subject ROI analysis from disk
