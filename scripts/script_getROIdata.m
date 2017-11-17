@@ -23,13 +23,24 @@ switch dataType
         
     case 'overlays'
         
-        for iROI = 1:length(ROInames)
+        if iscell(analysisScanNum) % see if scan number is defined (i.e. if its individual scans
+            for iROI = 1:length(ROInames)
                 for iAnal = 1:length(analysisBaseNames)
-%                     data_flatROI = get_ROIdata(analysisData,ROI);
+                    %                     data_flatROI = get_ROIdata(analysisData,ROI);
                     data2get = eval(['analysisData.scans.', analysisBaseNames{iAnal}, '.overlayData{' mat2str(analysisScanNum{iAnal}) '}.data;']);
                     eval(['ROIdata.' ROInames{iROI} '.' analysisBaseNames{iAnal} '{' mat2str(analysisScanNum{iAnal}) '} = get_ROIdata(data2get,ROIdata.' ROInames{iROI} '.roi);']);
                 end
+            end
+        else
+            for iROI = 1:length(ROInames)
+                for iAnal = 1:length(analysisBaseNames)
+                    %                     data_flatROI = get_ROIdata(analysisData,ROI);
+%                     analysisData.glm_hrfDoubleGamma.overlayData.data
+                    data2get = eval(['analysisData.', analysisBaseNames{iAnal}, '.overlayData.data;']);
+                    eval(['ROIdata.' ROInames{iROI} '.' analysisBaseNames{iAnal} ' = get_ROIdata(data2get,ROIdata.' ROInames{iROI} '.roi);']);
+                end
+            end
+            
         end
-
         
 end

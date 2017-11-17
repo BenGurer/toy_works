@@ -4,12 +4,7 @@ function overlayData = script_getOverlayData(thisView,groupName,analysisName,con
     %      by: Ben Gurer
     %    date: 26/10/2017
     % purpose: Get overlay data from  group
-    %   input: mrTools view, names of overlays, 
-    %          assumes thisView is the correct group and analysis
-    %
-% analysisName = 'combineTransformOverlays';
-
-% get betas or 
+    %   input: mrTools view, names of overlays
 
 thisView = viewSet(thisView,'curgroup',groupName);
 thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
@@ -21,7 +16,8 @@ if ~isempty(iScan)
     for iCon = 1:length(conditionNames)
         overlayNames{iCon} = ['averageDepthVol(Scan ' mat2str(iScan) ' -  (' conditionNames{iCon} ',0))'];
     end
-end
-
 overlayData = get_overlayData(thisView,overlayNames);
+else
+    overlayData = get_overlayData(thisView,conditionNames);
+end
 end

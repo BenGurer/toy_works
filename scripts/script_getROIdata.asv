@@ -13,7 +13,7 @@ end
 
 % get data from ROIs
 
-switch overlay
+switch dataType
     case 'GLM'
         for iROI = 1:length(ROInames)
             for iAnal = 1:length(analysisBaseNames)
@@ -21,16 +21,26 @@ switch overlay
             end
         end
         
-    case 'overlay'
+    case 'overlays'
         
-        for iScan = 1:glmInfo.nScans
-            for iSide = 1:length(subjectInfo.flatmapNames)
-                for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
-%                     data_flatROI = get_ROIdata(analysisData,ROI);
-                    data2get = eval(['analysisData.scans.', analysisBaseNames{iAnal}, '.overlayData{iScan}.data']);
-                    eval(['ROIdata.' ROInames{iROI} '.' analysisBaseNames{iAnal} '{' mat2str(analysisScanNum{iAnal}) '} = get_ROIdata(data2get,ROIdata.' ROInames{iROI} '.roi)']);
+        if iscell(analysisScanNum) % see if scan number is defined (i.e. if its individual scans
+            for iROI = 1:length(ROInames)
+                for iAnal = 1:length(analysisBaseNames)
+                    %                     data_flatROI = get_ROIdata(analysisData,ROI);
+                    data2get = eval(['analysisData.scans.', analysisBaseNames{iAnal}, '.overlayData{' mat2str(analysisScanNum{iAnal}) '}.data;']);
+                    eval(['ROIdata.' ROInames{iROI} '.' analysisBaseNames{iAnal} '{' mat2str(analysisScanNum{iAnal}) '} = get_ROIdata(data2get,ROIdata.' ROInames{iROI} '.roi);']);
                 end
             end
+        else
+            for iROI = 1:length(ROInames)
+                for iAnal = 1:length(analysisBaseNames)
+                    %                     data_flatROI = get_ROIdata(analysisData,ROI);
+%                     analysisData.glm_hrfDoubleGamma.overlayData.data
+                    data2get = eval(['analysisData.', analysisBaseNames{iAnal}, '.overlayData.data;']);
+                    eval(['ROIdata.' ROInames{iROI} '.' analysisBaseNames{iAnal} ' = get_ROIdata(data2get,ROIdata.' ROInames{iROI} '.roi);']);
+                end
+            end
+            
         end
         
 end

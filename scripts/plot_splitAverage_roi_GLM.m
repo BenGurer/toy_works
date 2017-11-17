@@ -36,6 +36,6 @@ end
 
 if plotLOGIC(3) == 1
     %% plot dB senstation level vs BOLD fMRI activity
-plot_dbSLvsBetaWeight(roi_av_ratio,stimulusLevels,50)
+plot_dbSLvsBetaWeight(roi_av_ratio,stimulusLevels,50);
 end
 end

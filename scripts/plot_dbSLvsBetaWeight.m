@@ -1,4 +1,4 @@
-function plot_dbSLvsBetaWeight(roi_av_ratio,stimulusLevels,baseLevel_dB)
+function [ fit ] =  plot_dbSLvsBetaWeight(roi_av_ratio,stimulusLevels,baseLevel_dB)
 
 ratio2Plot = [roi_av_ratio(stimulusLevels~=baseLevel_dB); mean(roi_av_ratio(stimulusLevels==baseLevel_dB))];
 

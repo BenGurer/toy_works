@@ -41,7 +41,7 @@ freeSurferName{3} = '12023_002';
 T2star{3} = '7';
 refScan{3} = '04'; % scan before t2 structural
 distCorrectionRef{3} = {'5','6'};
-flatmapName{3} = {' ', ' '};
+flatmapName{3} = {'x12023_002_left_WM_Flat', 'x12023_002_right_WM_Flat'};
 
 subject{4} = '11108_007';
 niftiBaseName{4} = 'HL_11108_007_';

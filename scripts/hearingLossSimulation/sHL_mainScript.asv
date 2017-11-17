@@ -1,8 +1,12 @@
 %% sHL_mainScript - scripted analysis for Simulated Hearing Loss (sHL) study 2017
 % simulate hearing loss
 
+%% TO DO
+
+% check if current group is what you want to change to before changing
+
 %% run this function when returning for analysis?
-iSub = 1;
+iSub = 3;
 thisView = getMLRView;
 [stimInfo, glmInfo, Info, plotInfo] = sHL_setupStudyParams;
 % stimulus info
@@ -52,6 +56,10 @@ thisView = script_importAnatomy(thisView);
 %% CHANGE FLATMAP NAMES TO LEFT AND RIGHT
 
 thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
+% create ROIs with the names:
+
+% update this view
+thisView = getMLRView;
 
 % get condition names
 conditionNames = cell(1,length(glmInfo.nStim));
@@ -104,11 +112,30 @@ end
 
 %% get data from Overlays
 % create names to get data from overlays and save using structure side.Group.anal.data{iScan}
+% get beta data from concat overlays to perform ROI anaylsis
 q = char(39);
 for iScan = 1:glmInfo.nScans
     for iSide = 1:length(subjectInfo.flatmapNames)
         for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
             eval(['data.' Info.Sides{iSide}, '.scans.', glmInfo.analysisBaseNames_Scans{iAnal}, '.overlayData{iScan} = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',conditionNames{iAnal},iScan);'])
+        end
+    end
+end
+
+%% get group data
+conNamesString = [];
+for iCon =1:length(conditionNames{1})
+    if iCon == length(conditionNames{1})
+    conNamesString = [conNamesString, conditionNames{1}{iCon}];
+    else
+    conNamesString = [conNamesString, conditionNames{1}{iCon}, ','];
+    end
+end
+for iGroup = 1:length(glmInfo.groupNames)
+        overlayNames= ['averageDepthVol(' glmInfo.groupNames{iGroup} ' (Ouput 3 - weightedMeanStd(' conNamesString '),0))'];
+    for iSide = 1:length(subjectInfo.flatmapNames)
+        for iAnal = 1:length(glmInfo.analysisNames_Groups)
+            eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.overlayData = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',overlayNames,[]);'])
         end
     end
 end
@@ -121,6 +148,12 @@ end
 % save so don't need to load again
 % Set group outside of script
 % data_rightROI = script_getROIdata(thisView,Right,glmInfo.analysisBaseNames_Scans,{'FlatRightAC'},glmInfo.analysisScanNum,'overlays');
+for iGroup = 1:length(glmInfo.groupNames)    
+    eval(['dataVar = data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} ';']);
+    eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
+    eval(['ROI_data_' Info.Sides{iSide} '.' glmInfo.groupNames ' = script_getROIdata(thisView,dataVar,glmInfo.analysisNames_Groups,roiNames,[],' q 'overlays' q ');']);
+end
+
 for iSide = 1:length(Info.Sides)
     eval(['dataVar = data.' Info.Sides{iSide} ';']);
     eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
@@ -146,10 +179,17 @@ saveName = [subjectInfo.subjectID '_data.mat'];
 % navigate to correct directory
 % save roi analysis and data seperately due to size
 save(saveName,'data','-v7.3','-nocompression')
+
+left_ROIdata = data.Left.roiAnalysis;
+right_ROIdata = data.Right.roiAnalysis;
+saveName = [subjectInfo.subjectID '_ROIdata.mat'];
+save(saveName,'left_ROIdata','right_ROIdata','-v7.3','-nocompression');
 % save data to disk
 % load later for group analysis
 
 %% quit mrLoadRet
+mrQuit()
+
 
 script_GroupAnalysis(subjects)
 % load subject ROI analysis from disk

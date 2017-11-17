@@ -1,8 +1,12 @@
 %% sHL_mainScript - scripted analysis for Simulated Hearing Loss (sHL) study 2017
 % simulate hearing loss
 
+%% TO DO
+
+% check if current group is what you want to change to before changing
+
 %% run this function when returning for analysis?
-iSub = 4;
+iSub = 1;
 thisView = getMLRView;
 [stimInfo, glmInfo, Info, plotInfo] = sHL_setupStudyParams;
 % stimulus info
@@ -106,8 +110,11 @@ for iSide = 1:length(subjectInfo.flatmapNames)
     thisView = script_averageAcrossDepths(thisView,[],[subjectInfo.flatmapNames{iSide}, 'Volume']);
 end
 
-%% get data from Overlays
+
+%% GET DATA
+%% SCANS - get data from Overlays
 % create names to get data from overlays and save using structure side.Group.anal.data{iScan}
+% get beta data from concat overlays to perform ROI anaylsis
 q = char(39);
 for iScan = 1:glmInfo.nScans
     for iSide = 1:length(subjectInfo.flatmapNames)
@@ -116,40 +123,73 @@ for iScan = 1:glmInfo.nScans
         end
     end
 end
+
+%% GROUPS - get data from Overlays
+conNamesString = [];
+for iCon =1:length(conditionNames{1})
+    if iCon == length(conditionNames{1})
+    conNamesString = [conNamesString, conditionNames{1}{iCon}];
+    else
+    conNamesString = [conNamesString, conditionNames{1}{iCon}, ','];
+    end
+end
+for iGroup = 1:length(glmInfo.groupNames)
+        overlayNames= ['averageDepthVol(' glmInfo.groupNames{iGroup} ' (Ouput 3 - weightedMeanStd(' conNamesString '),0))'];
+    for iSide = 1:length(subjectInfo.flatmapNames)
+        for iAnal = 1:length(glmInfo.analysisNames_Groups)
+            eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.overlayData = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',overlayNames,[]);'])
+        end
+    end
+end
+
+
+
+
 %% restrict by roi
-% script 
+%% GROUPS - get data from ROIs
 % get data from left flatmap (set: left roi, left group, left base) save this data to left struct
 % loop - save (side), selet:roi (side) and base (side), get data from: side.scans.anal.overlayData.data
 % use eval
-%% get data from ROIs
 % save so don't need to load again
 % Set group outside of script
 % data_rightROI = script_getROIdata(thisView,Right,glmInfo.analysisBaseNames_Scans,{'FlatRightAC'},glmInfo.analysisScanNum,'overlays');
+for iGroup = 1:length(glmInfo.groupNames) 
+ for iSide = 1:length(Info.Sides)   
+    eval(['dataVar = data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} ';']);
+    eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
+    eval(['ROI_data_' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} ' = script_getROIdata(thisView,dataVar,glmInfo.analysisNames_Groups,roiNames,[],' q 'overlays' q ');']);
+ end
+end
+
+%% SCANS - get data from ROIs
 for iSide = 1:length(Info.Sides)
     eval(['dataVar = data.' Info.Sides{iSide} ';']);
     eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
     eval(['ROI_data_' Info.Sides{iSide} ' = script_getROIdata(thisView,dataVar,glmInfo.analysisBaseNames_Scans,roiNames,glmInfo.analysisScanNum,' q 'overlays' q ');']);
 end
-for iSide = 1:length(Info.Sides)
-    eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
-    eval(['data.' Info.Sides{iSide} '.roiAnalysis = script_ROIAnalysis(ROI_data_' Info.Sides{iSide} ',glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,' q 'overlays' q ',roiNames);']);
-end
-% change to flat roi names
 
 %% perform ROI analysis
 % save so don't need to load again
 % compare binning for glm to averaging betas
 % roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'GLM');
+for iSide = 1:length(Info.Sides)
+    eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
+    eval(['data.' Info.Sides{iSide} '.roiAnalysis = script_ROIAnalysis(ROI_data_' Info.Sides{iSide} ',glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,' q 'overlays' q ',roiNames);']);
+end
+
+
 
 
 % roiAnalysis = script_ROIAnalysis(data_rightROI,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays');
 
 %% save data
-saveLocation = cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
+% saveLocation 
+cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
 saveName = [subjectInfo.subjectID '_data.mat'];
 % navigate to correct directory
 % save roi analysis and data seperately due to size
 save(saveName,'data','-v7.3','-nocompression')
+
 left_ROIdata = data.Left.roiAnalysis;
 right_ROIdata = data.Right.roiAnalysis;
 saveName = [subjectInfo.subjectID '_ROIdata.mat'];
@@ -157,6 +197,14 @@ save(saveName,'left_ROIdata','right_ROIdata','-v7.3','-nocompression');
 % save data to disk
 % load later for group analysis
 
+
+script_ROIAnalysis(left_ROIdata,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays',{'LeftAC'});
+
+script_ROIAnalysis(right_ROIdata,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays',{'RightAC'});
+
+
+plot_dbSLvsBetaWeight( left_ROIdata.LeftAC.roiAnalysis_glm_hrfDoubleGamma_nCons_32.roi_av_ratio , stimInfo.stimLevel_SL_mv , 50 )
+plot_dbSLvsBetaWeight( right_ROIdata.RightAC.roiAnalysis_glm_hrfDoubleGamma_nCons_32.roi_av_ratio , stimInfo.stimLevel_SL_mv , 50 )
 %% quit mrLoadRet
 mrQuit()
 
