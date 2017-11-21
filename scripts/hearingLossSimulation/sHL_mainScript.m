@@ -7,7 +7,8 @@
 
 %% run this function when returning for analysis?
 iSub = 1;
-thisView = getMLRView;
+
+
 [stimInfo, glmInfo, Info, plotInfo] = sHL_setupStudyParams;
 % stimulus info
 % condition names
@@ -18,6 +19,10 @@ thisView = getMLRView;
 subjectInfo = get_SubjectInfo_sHL(iSub);
 % Subject ID
 % flatmap names
+
+cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
+mrLoadRet
+thisView = getMLRView;
 
 % setup study direction (once)
 % create folders needed
@@ -37,7 +42,7 @@ preprocessData = sHL_preprocess;
 % motion corerection
 % group data
 
-[thisView, glmData] = script_glmAnalysis(thisView);
+[thisView, glmData] = script_glmAnalysis(thisView,glmInfo);
 % HRF = double gamma and box car
 % All stims and 8 bins
 % don't need to perform weighted mean on individual runs
@@ -98,9 +103,11 @@ end
 %% export data for concat groups
 % use getOverlay to get overlaynumber for analysis we want
 for iGroup = 1:length(glmInfo.groupNames)
-    for iSide = 1:length(subjectInfo.flatmapNames)
+    for iSide = 1:length(subjectInfo.flatmapNames)        
+        baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+        thisView = viewSet(thisView,'currentbase',baseNum);
         for iAnal = 1:length(glmInfo.analysisNames_Groups)
-            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},glmInfo.analysisNames_Groups{iAnal},[],[41, 42],subjectInfo.flatmapNames{iSide});
+            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},glmInfo.analysisNames_Groups{iAnal},[],[1:33, 41, 42],subjectInfo.flatmapNames{iSide});
         end
     end
 end
@@ -133,9 +140,16 @@ for iCon =1:length(conditionNames{1})
     conNamesString = [conNamesString, conditionNames{1}{iCon}, ','];
     end
 end
+
 for iGroup = 1:length(glmInfo.groupNames)
-        overlayNames= ['averageDepthVol(' glmInfo.groupNames{iGroup} ' (Ouput 3 - weightedMeanStd(' conNamesString '),0))'];
+    %         overlayNames= ['averageDepthVol(' glmInfo.groupNames{iGroup} ' (Ouput 3 - weightedMeanStd(' conNamesString '),0))'];
+    overlayNames = [];
+    for iCon =1:length(conditionNames{1})
+        overlayNames{iCon} = ['averageDepthVol(' glmInfo.groupNames{iGroup} ' (' conditionNames{1}{iCon} ',0))'];
+    end
     for iSide = 1:length(subjectInfo.flatmapNames)
+        baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+        thisView = viewSet(thisView,'currentbase',baseNum);
         for iAnal = 1:length(glmInfo.analysisNames_Groups)
             eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.overlayData = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',overlayNames,[]);'])
         end
@@ -183,14 +197,21 @@ end
 % roiAnalysis = script_ROIAnalysis(data_rightROI,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays');
 
 %% save data
-% saveLocation 
+% move to save location 
 cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
+
+% save data to structure with subject ID (unique name when loading for group analysis)
+eval(['data_' subjectInfo.subjectID '.roi.left = data.Left.roiAnalysis;'])
+eval(['data_' subjectInfo.subjectID '.roi.right = data.Right.roiAnalysis;'])
+
+% save data
 saveName = [subjectInfo.subjectID '_data.mat'];
 % navigate to correct directory
 % save roi analysis and data seperately due to size
-save(saveName,'data','-v7.3','-nocompression')
+eval(['save(saveName,data_' subjectInfo.subjectID ',' q '-v7.3' q ',' q '-nocompression' q ')']);
 
-left_ROIdata = data.Left.roiAnalysis;
+eval('roiData.left = data.Left.roiAnalysis;')
+eval([subjectInfo.subjectID 'roiData.right = data.Right.roiAnalysis;'])
 right_ROIdata = data.Right.roiAnalysis;
 saveName = [subjectInfo.subjectID '_ROIdata.mat'];
 save(saveName,'left_ROIdata','right_ROIdata','-v7.3','-nocompression');
@@ -198,6 +219,8 @@ save(saveName,'left_ROIdata','right_ROIdata','-v7.3','-nocompression');
 % load later for group analysis
 
 
+cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
+load([subjectInfo.subjectID '_ROIdata.mat']);
 script_ROIAnalysis(left_ROIdata,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays',{'LeftAC'});
 
 script_ROIAnalysis(right_ROIdata,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays',{'RightAC'});
