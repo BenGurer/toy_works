@@ -1,0 +1,389 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>cheap_get_pRFoverlayData</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-11-21"><meta name="DC.source" content="cheap_get_pRFoverlayData.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">NH vs HL</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> pRFdata = cheap_get_pRFoverlayData()
+</pre><h2 id="2">NH vs HL</h2><pre class="codeinput">thisView = getMLRView;
+
+roiAC = viewGet(thisView,<span class="string">'roi'</span>,<span class="string">'RightACVol'</span>);
+<span class="comment">% roiAC = viewGet(thisView,'roi','RIGHT');</span>
+roiAC.scanCoords = getROICoordinates(thisView,roiAC);
+concatenationGroup = {<span class="string">'ConcatenationNH'</span>,<span class="string">'ConcatenationHLsim'</span>};
+analysisSaveName{1} = {<span class="string">'pRF_auditory'</span>};
+analysisSaveName{2} = {<span class="string">'pRF_auditory_notCorrected'</span>,<span class="string">'pRF_auditory_SLweighting'</span>,<span class="string">'pRF_auditory_BOLDweighting'</span>,<span class="string">'pRF_auditory_fitted'</span>};
+
+<span class="comment">% define overlay numbers</span>
+pCFoverlayNum = 2;
+pTWoverlayNum = 3;
+<span class="comment">%get ROI estimates</span>
+<span class="keyword">for</span> iGroup = 1:length(concatenationGroup)
+<span class="keyword">for</span> i = 1:length(analysisSaveName{iGroup})
+thisView = viewSet(thisView,<span class="string">'curgroup'</span>,concatenationGroup{iGroup});
+analysisData{i} = viewGet(thisView,<span class="string">'analysis'</span>,viewGet(thisView,<span class="string">'analysisNum'</span>,analysisSaveName{iGroup}{i}));
+r2data = analysisData{i}.overlays(1).data{1};
+volumeIndices = sub2ind(size(r2data),roiAC.scanCoords(1,:),roiAC.scanCoords(2,:),roiAC.scanCoords(3,:));
+r2{i} = r2data(volumeIndices);
+pCFdata = analysisData{i}.overlays(pCFoverlayNum).data{1};
+pCFest{i} = pCFdata(volumeIndices);
+pTWdata = analysisData{i}.overlays(pTWoverlayNum).data{1};
+pTWest{i} = pTWdata(volumeIndices);
+d{i} = analysisData{i}.d;
+
+pRFdata(iGroup).d{i} = analysisData{i}.d;
+pRFdata(iGroup).pCFest{i} = pCFdata(volumeIndices);
+pRFdata(iGroup).pTWest{i} = pTWdata(volumeIndices);
+pRFdata(iGroup).r2{i} = r2{i};
+<span class="comment">% plotROIav_pRFEstimates(pCFest{i},pTWest{i},analysisData{i}.d{1}.scale(1,:),r2{i});</span>
+<span class="keyword">end</span>
+<span class="keyword">end</span>
+
+r2Index = pRFdata(1).r2{1} &gt; 0.1;
+totalVoxels = sum(r2Index);
+<span class="comment">% remove nans from condition A</span>
+<span class="comment">% create figure to plot into</span>
+figure(<span class="string">'color'</span>,[1 1 1])
+<span class="comment">% fit = zeros(length(analysisSaveName{2}),3);</span>
+
+fit = [];
+xMax = max(pRFdata(1).pCFest{1});
+xMin = min(pRFdata(1).pCFest{1});
+conA = [];
+conB = [];
+<span class="keyword">for</span> i = 1:length(analysisSaveName{2})
+
+subplot(round(length(analysisSaveName{2})/2),2,i)
+<span class="comment">% remove voxels that are nans in condition A &amp; restrict by r2 values from con A</span>
+conA = pRFdata(1).pCFest{1}(~isnan(pRFdata(1).pCFest{1}(r2Index)));
+conB{i} = pRFdata(2).pCFest{i}(~isnan(pRFdata(1).pCFest{1}(r2Index)));
+<span class="comment">% remove voxels that are nans in condition B</span>
+conA(isnan(conB{i})) = [];
+conB{i}(isnan(conB{i})) = [];
+scatter(conA,conB{i})
+hold <span class="string">on</span>
+fit(i,:) = polyfit(conA,conB{i},1);
+plot(xMin:xMax,polyval(fit(i,:),xMin:xMax));
+xlim([xMin xMax]);
+ylim([xMin xMax]);
+title(analysisSaveName{2}{i})
+
+plot(xMin:xMax,xMin:xMax,<span class="string">'--k'</span>)
+
+<span class="keyword">end</span>
+
+figure(<span class="string">'color'</span>, [1 1 1])
+histogram(conA)
+hold <span class="string">on</span>
+
+<span class="keyword">for</span> i = 1:length(analysisSaveName{2})
+histogram(conB{i})
+<span class="keyword">end</span>
+
+
+unpacked.pCF = [conA conB{1} conB{2} conB{3} conB{4}];
+<span class="comment">% unpacked.con = [repmat(1,1,length(data(1).pCFest{1})) repmat(2,1,length(data(1).pCFest{1})) repmat(3,1,length(data(1).pCFest{1}))];</span>
+unpacked.con = [repmat({<span class="string">'Condition A'</span>},1,length(conA)) repmat({<span class="string">'pRF_auditory_notCorrected'</span>},1,sum(r2Index)) repmat({<span class="string">'pRF_auditory_SLweighting'</span>},1,sum(r2Index) repmat({<span class="string">'pRF_auditory_BOLDweighting'</span>},1,sum(r2Index))];
+<span class="string">'pRF_auditory_notCorrected'</span>,<span class="string">'pRF_auditory_SLweighting'</span>,<span class="string">'pRF_auditory_BOLDweighting'</span>,<span class="string">'pRF_auditory_fitted'</span>};
+
+unpacked.pCF = conA;
+unpacked.con = repmat({<span class="string">'Condition A'</span>},1,length(conA));
+<span class="keyword">for</span> i = 1:length(analysisSaveName{2})
+unpacked.pCF = [unpacked.pCF conB{i}];
+unpacked.con = [unpacked.con repmat({analysisSaveName{2}{i}},1,length(conB{i}))];
+<span class="keyword">end</span>
+
+
+figure
+hist  = gramm(<span class="string">'x'</span>,unpacked.pCF,<span class="string">'color'</span>,unpacked.con);
+hist.stat_bin(<span class="string">'nbins'</span>,8);
+hist.set_names(<span class="string">'x'</span>,<span class="string">'Frequency (ERB)'</span>,<span class="string">'y'</span>,<span class="string">'Number of Voxels'</span>,<span class="string">'color'</span>,<span class="string">'Condition:'</span>)
+<span class="comment">% hist.geom_label()</span>
+hist.draw()
+
+hist = [];
+figure
+hist  = gramm(<span class="string">'x'</span>,unpacked.pCF,<span class="string">'color'</span>,unpacked.con);
+hist.set_names(<span class="string">'x'</span>,<span class="string">'Frequency (ERB)'</span>,<span class="string">'y'</span>,<span class="string">'Frequency'</span>,<span class="string">'color'</span>,<span class="string">'Condition:'</span>)
+hist.stat_density();
+hist.draw()
+
+
+
+<span class="comment">% g(i) = gramm('x',VoxelStruct(i).conA,'y',VoxelStruct(i).conB);</span>
+<span class="comment">% g.geom_point('alpha',0.05)</span>
+
+scatData.conA = repmat(conA,1,length(analysisSaveName{2}));
+scatData.conB = [];
+scatData.pRFmeth = [];
+<span class="keyword">for</span> i = 1:length(analysisSaveName{2})
+scatData.conB = [scatData.conB conB{i}];
+scatData.pRFmeth = [scatData.pRFmeth repmat({analysisSaveName{2}{i}},1,length(conB{i}))];
+<span class="keyword">end</span>
+
+figure
+g  = gramm(<span class="string">'x'</span>,scatData.conA,<span class="string">'y'</span>,scatData.conB,<span class="string">'color'</span>,scatData.pRFmeth);
+g.set_names(<span class="string">'x'</span>,<span class="string">'Condition B - Frequency (ERB)'</span>,<span class="string">'y'</span>,<span class="string">'Condition A - Frequency (ERB)'</span>)
+g.geom_point()
+g.stat_glm();
+g.draw()
+
+figure
+g  = gramm(<span class="string">'x'</span>,conA,<span class="string">'y'</span>,conB{1});
+g.set_names(<span class="string">'x'</span>,<span class="string">'Condition A - Frequency (ERB)'</span>,<span class="string">'y'</span>,<span class="string">'Condition B - Frequency (ERB)'</span>)
+g.geom_point()
+g.stat_glm();
+g.draw()
+
+figure(<span class="string">'color'</span>,[1 1 1])
+scatter(pRFdata(1).pCFest{1},pRFdata(2).pCFest{2})
+
+figure(<span class="string">'color'</span>,[1 1 1])
+scatter(pRFdata(1).pCFest{1},pRFdata(2).pCFest{3})
+
+figure(<span class="string">'color'</span>,[1 1 1])
+scatter(pRFdata(1).pCFest{1},pRFdata(2).pCFest{4})
+
+<span class="keyword">for</span> i = 1:length(analysisSaveName{2})
+figure
+<span class="comment">% VoxelStruct(i).conA = data(1).pCFest{1}(nhIndex &amp; r2Index);</span>
+<span class="comment">% VoxelStruct(i).conB = data(2).pCFest{i}(nhIndex &amp; r2Index);</span>
+
+VoxelStruct(i).conA = pRFdata(1).pCFest{1};
+VoxelStruct(i).conB = pRFdata(2).pCFest{i};
+g(i) = gramm(<span class="string">'x'</span>,VoxelStruct(i).conA,<span class="string">'y'</span>,VoxelStruct(i).conB);
+<span class="comment">% g.geom_point('alpha',0.05)</span>
+g(i).geom_point()
+g(i).stat_glm();
+ g(i).set_names(<span class="string">'x'</span>,<span class="string">'Condition A - Frequency (ERB)'</span>,<span class="string">'y'</span>,<span class="string">'Condition B - Frequency (ERB)'</span>)
+<span class="comment">% g(i).stat_bin();</span>
+g(i).draw()
+<span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><pre class="codeoutput error">Error using dbstatus
+Error: File: N:\matlab\toy_works\scripts\cheap_get_pRFoverlayData.m Line: 81 Column: 160
+Unexpected MATLAB expression.
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function pRFdata = cheap_get_pRFoverlayData()
+%% NH vs HL
+thisView = getMLRView;
+
+roiAC = viewGet(thisView,'roi','RightACVol');
+% roiAC = viewGet(thisView,'roi','RIGHT');
+roiAC.scanCoords = getROICoordinates(thisView,roiAC);
+concatenationGroup = {'ConcatenationNH','ConcatenationHLsim'};
+analysisSaveName{1} = {'pRF_auditory'};
+analysisSaveName{2} = {'pRF_auditory_notCorrected','pRF_auditory_SLweighting','pRF_auditory_BOLDweighting','pRF_auditory_fitted'};
+
+% define overlay numbers
+pCFoverlayNum = 2;
+pTWoverlayNum = 3;
+%get ROI estimates
+for iGroup = 1:length(concatenationGroup)
+for i = 1:length(analysisSaveName{iGroup})  
+thisView = viewSet(thisView,'curgroup',concatenationGroup{iGroup});
+analysisData{i} = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',analysisSaveName{iGroup}{i}));
+r2data = analysisData{i}.overlays(1).data{1};
+volumeIndices = sub2ind(size(r2data),roiAC.scanCoords(1,:),roiAC.scanCoords(2,:),roiAC.scanCoords(3,:));
+r2{i} = r2data(volumeIndices);
+pCFdata = analysisData{i}.overlays(pCFoverlayNum).data{1};
+pCFest{i} = pCFdata(volumeIndices);
+pTWdata = analysisData{i}.overlays(pTWoverlayNum).data{1};
+pTWest{i} = pTWdata(volumeIndices);
+d{i} = analysisData{i}.d;
+
+pRFdata(iGroup).d{i} = analysisData{i}.d;
+pRFdata(iGroup).pCFest{i} = pCFdata(volumeIndices);
+pRFdata(iGroup).pTWest{i} = pTWdata(volumeIndices);
+pRFdata(iGroup).r2{i} = r2{i};
+% plotROIav_pRFEstimates(pCFest{i},pTWest{i},analysisData{i}.d{1}.scale(1,:),r2{i});
+end
+end
+
+r2Index = pRFdata(1).r2{1} > 0.1;
+totalVoxels = sum(r2Index);
+% remove nans from condition A
+% create figure to plot into
+figure('color',[1 1 1])
+% fit = zeros(length(analysisSaveName{2}),3);
+
+fit = [];
+xMax = max(pRFdata(1).pCFest{1});
+xMin = min(pRFdata(1).pCFest{1});
+conA = [];
+conB = [];
+for i = 1:length(analysisSaveName{2})
+
+subplot(round(length(analysisSaveName{2})/2),2,i)
+% remove voxels that are nans in condition A & restrict by r2 values from con A
+conA = pRFdata(1).pCFest{1}(~isnan(pRFdata(1).pCFest{1}(r2Index)));
+conB{i} = pRFdata(2).pCFest{i}(~isnan(pRFdata(1).pCFest{1}(r2Index)));
+% remove voxels that are nans in condition B
+conA(isnan(conB{i})) = [];
+conB{i}(isnan(conB{i})) = [];
+scatter(conA,conB{i})
+hold on
+fit(i,:) = polyfit(conA,conB{i},1);
+plot(xMin:xMax,polyval(fit(i,:),xMin:xMax));
+xlim([xMin xMax]);
+ylim([xMin xMax]);
+title(analysisSaveName{2}{i})
+
+plot(xMin:xMax,xMin:xMax,'REPLACE_WITH_DASH_DASHk')
+
+end
+
+figure('color', [1 1 1])
+histogram(conA)
+hold on
+
+for i = 1:length(analysisSaveName{2})
+histogram(conB{i})
+end
+
+
+unpacked.pCF = [conA conB{1} conB{2} conB{3} conB{4}];
+% unpacked.con = [repmat(1,1,length(data(1).pCFest{1})) repmat(2,1,length(data(1).pCFest{1})) repmat(3,1,length(data(1).pCFest{1}))];
+unpacked.con = [repmat({'Condition A'},1,length(conA)) repmat({'pRF_auditory_notCorrected'},1,sum(r2Index)) repmat({'pRF_auditory_SLweighting'},1,sum(r2Index) repmat({'pRF_auditory_BOLDweighting'},1,sum(r2Index))];
+'pRF_auditory_notCorrected','pRF_auditory_SLweighting','pRF_auditory_BOLDweighting','pRF_auditory_fitted'};
+
+unpacked.pCF = conA;
+unpacked.con = repmat({'Condition A'},1,length(conA));
+for i = 1:length(analysisSaveName{2})
+unpacked.pCF = [unpacked.pCF conB{i}];
+unpacked.con = [unpacked.con repmat({analysisSaveName{2}{i}},1,length(conB{i}))];
+end
+    
+
+figure
+hist  = gramm('x',unpacked.pCF,'color',unpacked.con);
+hist.stat_bin('nbins',8);
+hist.set_names('x','Frequency (ERB)','y','Number of Voxels','color','Condition:')
+% hist.geom_label()
+hist.draw()
+
+hist = [];
+figure
+hist  = gramm('x',unpacked.pCF,'color',unpacked.con);
+hist.set_names('x','Frequency (ERB)','y','Frequency','color','Condition:')
+hist.stat_density();
+hist.draw()
+
+
+
+% g(i) = gramm('x',VoxelStruct(i).conA,'y',VoxelStruct(i).conB);
+% g.geom_point('alpha',0.05)
+
+scatData.conA = repmat(conA,1,length(analysisSaveName{2}));
+scatData.conB = [];
+scatData.pRFmeth = [];
+for i = 1:length(analysisSaveName{2})
+scatData.conB = [scatData.conB conB{i}];
+scatData.pRFmeth = [scatData.pRFmeth repmat({analysisSaveName{2}{i}},1,length(conB{i}))];
+end
+
+figure
+g  = gramm('x',scatData.conA,'y',scatData.conB,'color',scatData.pRFmeth);
+g.set_names('x','Condition B - Frequency (ERB)','y','Condition A - Frequency (ERB)')
+g.geom_point()
+g.stat_glm();
+g.draw()
+
+figure
+g  = gramm('x',conA,'y',conB{1});
+g.set_names('x','Condition A - Frequency (ERB)','y','Condition B - Frequency (ERB)')
+g.geom_point()
+g.stat_glm();
+g.draw()
+
+figure('color',[1 1 1])
+scatter(pRFdata(1).pCFest{1},pRFdata(2).pCFest{2})
+
+figure('color',[1 1 1])
+scatter(pRFdata(1).pCFest{1},pRFdata(2).pCFest{3})
+
+figure('color',[1 1 1])
+scatter(pRFdata(1).pCFest{1},pRFdata(2).pCFest{4})
+
+for i = 1:length(analysisSaveName{2})
+figure
+% VoxelStruct(i).conA = data(1).pCFest{1}(nhIndex & r2Index);
+% VoxelStruct(i).conB = data(2).pCFest{i}(nhIndex & r2Index);
+
+VoxelStruct(i).conA = pRFdata(1).pCFest{1};
+VoxelStruct(i).conB = pRFdata(2).pCFest{i};
+g(i) = gramm('x',VoxelStruct(i).conA,'y',VoxelStruct(i).conB);
+% g.geom_point('alpha',0.05)
+g(i).geom_point()
+g(i).stat_glm();
+ g(i).set_names('x','Condition A - Frequency (ERB)','y','Condition B - Frequency (ERB)')
+% g(i).stat_bin();
+g(i).draw()
+end
+
+end
+##### SOURCE END #####
+--></body></html>

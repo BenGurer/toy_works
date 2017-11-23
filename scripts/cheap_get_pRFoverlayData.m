@@ -2,6 +2,7 @@ function pRFdata = cheap_get_pRFoverlayData()
 %% NH vs HL
 thisView = getMLRView;
 
+roiAC = viewGet(thisView,'roi','RightAC');
 roiAC = viewGet(thisView,'roi','RightACVol');
 % roiAC = viewGet(thisView,'roi','RIGHT');
 roiAC.scanCoords = getROICoordinates(thisView,roiAC);

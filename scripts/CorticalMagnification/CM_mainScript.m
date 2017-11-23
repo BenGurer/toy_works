@@ -1,99 +1,86 @@
-%% sHL_mainScript - scripted analysis for Simulated Hearing Loss (sHL) study 2017
-% simulate hearing loss
+%% CM_mainScript - scripted analysis for Cortical Magnification (CM) study 2017
+% Measuring cortical magnification analysis
+%
+% load, sort and pre-process data
+% GLM analysis
+% pRF analysis
+% Gradient reversals and ROI definition
+% Cortical distance
+% export data from volume to flat map space
+% ROI analysis
 
-%% TO DO
+% what are we interested in?
+% HRF
+% 
 
-% check if current group is what you want to change to before changing
-
-%% run this function when returning for analysis?
+%% define subject
 iSub = 1;
 
-
-[stimInfo, glmInfo, pRFInfo, Info, plotInfo] = sHL_setupStudyParams;
+%% Get study parameters
+[stimInfo, glmInfo, pRFInfo, Info, plotInfo] = CM_setupStudyParams;
 % stimulus info
 % condition names
 % nummber of subjects
 
-% define and get subject info
-% either cell for each subject or return single subject info - prob the later
-subjectInfo = get_SubjectInfo_sHL(iSub);
-% Subject ID
-% flatmap names
+%% Get subject info
+subjectInfo = get_SubjectInfo_CM(iSub);
+% Subject ID, flatmap names
 
+%% if returning - move to folder and open mrLoadRet, and get/update thisView
 cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
 mrLoadRet
 thisView = getMLRView;
 
-% setup study direction (once)
-% create folders needed
-sHL_createStudyDirectory
-
+%% Pre-processing
+CM_organiseData(studyDirectory,subject)
 % import, convert and move data
-sHL_organiseData(studyDirectory,subject)
 % per subject
-
-preprocessData = sHL_preprocess;
+CM_preprocess;
 % distortion correct
 % linear alignment
 % non-linear alignment
-
 [thisView, concatedate] = script_setupmrLoadRet(thisView,groupNames);
 % initiate mrLoadRet
 % motion corerection
 % group data
 
+%% GLM analysis
 [thisView, glmData] = script_glmAnalysis(thisView,glmInfo);
 % HRF = double gamma and box car
 % All stims and 8 bins
 % don't need to perform weighted mean on individual runs
 
+%% Load anatomy 
 thisView = script_importAnatomy(thisView);
 % load in:
 % reference EPI
 % High resolution in-plane T2*
-% surfaces
+% Surfaces
 % create flatmaps
 % MAKE ORIGINAL FLAT MAPS (LEFT AND RIGHT) USING MAKEFLAT AND NAME THEM
 % [freeSurferName{iSubj} '_left_Flat.off'] AND [freeSurferName{iSubj} '_right_Flat.off']
 
+%% pRF analysis
 [thisView, pRFdata] = script_pRFAnalysis(thisView,pRFInfo);
 % get info from glm to inform pRF 
 % BOLD change between conditions
 % average tuning curve sigma
 
-%% CHANGE FLATMAP NAMES TO LEFT AND RIGHT
-
+%% Flatmap analysis
 thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
+% gradient reversals
+% ROI defindition
 % create ROIs with the names:
 
-% update this view
-thisView = getMLRView;
-
-% get condition names
+%% Get condition names
 conditionNames = cell(1,length(glmInfo.nStim));
 for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
     analysisName = glmInfo.analysisNames_Scans{iAnal};
     conditionNames{iAnal} = get_analysisConditionNames(thisView,analysisName,'MotionComp',1);
 end
 
-%% Create subject data storage structure
-
-%% Get analysis data from scans
-% pass on to ROI analysis to restrict
-
-%% get data from scans and groups
-% save so don't need to load again
-% change name to get_analysisData_GLM and save to analysisData.glm
-scanData = getScanData_GLM(thisView,glmInfo.analysisNames_Scans,glmInfo.analysisNames_Groups,glmInfo.groupNames);
-
-%% get data from ROIs
-% save so don't need to load again
-% Set group outside of script
-roiData = script_getROIdata(thisView,scanData.scan_GLMdata,glmInfo.analysisBaseNames_Scans,Info.ROInames,glmInfo.analysisScanNum,'GLM');
-
-%% Convert data to flatmap space
-
-% export scan data
+%% Convert data to flatmap space and average over depth
+% export data from individual scans
 for iScan = 1:glmInfo.nScans
     for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
             analysisName = [glmInfo.analysisBaseNames_Scans{iAnal}, '_Scan_' mat2str(iScan)];
@@ -103,8 +90,8 @@ for iScan = 1:glmInfo.nScans
     end
 end
 
-%% export data for concat groups
-% use getOverlay to get overlaynumber for analysis we want
+% export data from concatenated groups
+% currently hard code overlay numbers - add to getStudyParams
 for iGroup = 1:length(glmInfo.groupNames)
     for iSide = 1:length(subjectInfo.flatmapNames)        
         baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
@@ -159,11 +146,8 @@ for iGroup = 1:length(glmInfo.groupNames)
     end
 end
 
-
-
-
 %% restrict by roi
-%% GROUPS - get data from ROIs
+% GROUPS - get data from ROIs
 % get data from left flatmap (set: left roi, left group, left base) save this data to left struct
 % loop - save (side), selet:roi (side) and base (side), get data from: side.scans.anal.overlayData.data
 % use eval
@@ -193,11 +177,6 @@ for iSide = 1:length(Info.Sides)
     eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
     eval(['data.' Info.Sides{iSide} '.roiAnalysis = script_ROIAnalysis(ROI_data_' Info.Sides{iSide} ',glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,' q 'overlays' q ',roiNames);']);
 end
-
-
-
-
-% roiAnalysis = script_ROIAnalysis(data_rightROI,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays');
 
 %% save data
 % move to save location 

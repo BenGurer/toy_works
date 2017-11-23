@@ -1,4 +1,4 @@
-function [stimInfo, glmInfo, pRFInfo, Info, plotInfo] = sHL_setupStudyParams
+function [stimInfo, glmInfo, pRFInfo, Info, plotInfo] = CM_setupStudyParams
     %
     %   usage: sHL_setupStudyParams
     %      by: Ben Gurer
@@ -22,6 +22,7 @@ nStim = 32;
 [stimInfo.stimNames.all, stimInfo.stimNames.bin, stimInfo.stimNames.mv] = convertStimIDtoFrequency(lowFreqkHz,highFreqkHz,nStim);
 
 %% get stimulus senssation level
+% change this to get scanner noise
 [stimLevel_SL, maskingLevel] = calStimulusSensationLevel(stimInfo.stimNames.all);
 
 % bin sensation level
@@ -56,13 +57,9 @@ stimInfo.stimLevel_SL_mv = stimLevel_SL_mv;
 
 %% Setup GLM analysis
 % save in glmInfo structure
-% glmInfo.hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
-glmInfo.groupNames = {'ConcatenationHLsim', 'ConcatenationNH'};
-
-glmInfo.hrfModel = {'hrfDoubleGamma'};
-% glmInfo.groupNames = {'ConcatenationNH_unwarped', 'ConcatenationNH'};
+glmInfo.hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
+glmInfo.groupNames = {'ConcatenationSparse', 'ConcatenationContinuous'};
 glmInfo.nScans = 4;
-% glmInfo.nScans = 4;
 glmInfo.nStim = [32, 8];
 glmInfo.analysisNames_Scans = cell(1,(glmInfo.nScans.*length(glmInfo.nStim)).*length(glmInfo.hrfModel));
 c = 0;
@@ -98,7 +95,7 @@ end
 %% pRF information
 % what info do I need?
 
-pRFInfo.name = pRF;
+pRFInfo.name = 'pRF';
 
 
 %% Info - save general info needed to struct
@@ -108,16 +105,15 @@ if ispc
 elseif isunix
     Info.dataDir = '/home/beng/data';
 end
-Info.studyDir = 'hearingLossSimulation';
+Info.studyDir = 'CorticalMagnification';
 %% Order of condition runs {[ConA Run1,ConA Run2],[ConB Run1,ConB Run2]}
 
-Info.conditionRunIndex = {[2,4],[1,3]};
+Info.conditionRunIndex = {[1,3],[2,4]};
 % Info.conditionRunIndex = {[2,4],[6,8]};
 
-Info.ConATrue = 1;
+Info.ConATrue = 0;
 
 %% Define ROI names to create
-
 % Info.ROInames = {'RightAC','RightPosAC','RightAntAC','LeftAC','LeftPosAC','LeftAntAC','AC'};
 
 % Must match order of sides
