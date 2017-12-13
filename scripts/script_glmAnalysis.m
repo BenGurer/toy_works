@@ -96,7 +96,7 @@ end
 %% GLM Analysis
 % nStim = [8 32];
 % Set hrf type based on acquisition type
-splitHRFmodel = 2;
+splitHRFmodel = 1;
 thisView = viewSet(thisView,'curGroup','MotionComp');
 for iScan = 1:glmInfo.nScans
     thisView = viewSet(thisView,'curScan', iScan);
@@ -117,12 +117,12 @@ for iScan = 1:glmInfo.nScans
                 glmParams.hrfParams.z =  4;
         end
         
-        if nStim(iStim) == 8
+        if glmInfo.nStim(iStim) == 8
             glmParams.scanParams{1, iScan}.preprocess  = 'binStimFreq';
             glmParams.EVnames = {'1','2','3','4','5','6','7','8'};
         end
-        glmParams.numberContrasts = nStim(iStim);
-        glmParams.numberEVs = nStim(iStim);
+        glmParams.numberContrasts = glmInfo.nStim(iStim);
+        glmParams.numberEVs = glmInfo.nStim(iStim);
         [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
         glmParams.scanParams{iScan}.stimDurationMode = 'From File';
         glmParams.scanParams{iScan}.supersamplingMode =  'Set value';
@@ -136,3 +136,6 @@ for iScan = 1:glmInfo.nScans
               
     end
 end
+
+% save view and quit
+mrSaveView(thisView);

@@ -98,8 +98,15 @@ end
 %% pRF information
 % what info do I need?
 
-pRFInfo.name = pRF;
+% pRFInfo.name = pRF;
+pRFInfo = [];
+% pRFinfo.analysisNames_Groups{iGroup}{iAnal}
+stimulusWeighting = {'None','SL_level','BOLD','fit'};
+for iWeight = 1:length(stimulusWeighting)
+    pRFinfo.analysisNames_Groups{2}{iWeight} = {['pRF_' stimulusWeighting{iWeight}]};
+end
 
+pRFinfo.analysisNames_Groups{1}{1} = {'pRF'};
 
 %% Info - save general info needed to struct
 

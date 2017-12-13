@@ -1,5 +1,5 @@
 %% Setup Subject info
-iSubj = 1;
+iSubj = 2;
 
 epiDims = [128 128 24 73]; % dims of functional scans
 
@@ -53,6 +53,14 @@ freeSurferName{4} = '11108_007';
 T2star{4} = '7';
 refScan{4} = '04'; % scan before t2 structural
 flatmapName{4} = {' ', ' '};
+
+subjects{5} = '13016_001';
+niftiBaseName{5} = 'HL_113016_001_';
+wholeheadMPRAGE{5} = '1';
+freeSurferName{5} = '13016_001';
+T2star{5} = '9';
+refScan{5} = '02'; % scan before t2 structural
+flatmapName{5} = {' ', ' '};
 
 %% Move data from scanner to study/subject folders
 

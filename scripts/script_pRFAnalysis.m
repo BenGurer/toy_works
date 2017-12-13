@@ -1,4 +1,4 @@
-function [thisView, pRFdata] = script_pRFAnalysis(thisView,pRFInfo,iScan)
+function [thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,roiName,weightStim)
 %
 %   usage: script_pRFAnalysis(thisView,pRFInfo)
 %      by: Ben Gurer
@@ -9,31 +9,62 @@ function [thisView, pRFdata] = script_pRFAnalysis(thisView,pRFInfo,iScan)
 %
 % NEED: ROI, save name, fit hdr?, weight stim?
 % this function will be run after glm, gradient reversals and roi creation
-
-analysisSaveName = 'pRF - ALL CONS - Scan ';
-% for iScan = 1:nScans
-% thisView = viewSet(thisView,'curGroup','MotionComp');
-% thisView = viewSet(thisView,'curScan', iScan);
-if ~isempty(iScan)
-    [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
-else
+if ~weightStim
+    for iGroup = 1:length(Info.groupNames)
+        thisView = viewSet(thisView,'curGroup',glmInfo.groupNames);
+        analysisSaveName = 'pRF';
+        [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1','defaultParams=1');
+        pRFParams.saveName = [analysisSaveName];
+        pRFParams.restrict = ['ROI: ' roiName];
+        pRFParams.pRFFit.supersampling = 1;
+        pRFParams.pRFFit.fitHDR = 0;
+        [thisView, pRFParams] = pRF_auditory(thisView,pRFParams);
+    end
+    
+else  
+    
+    thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{2});
+    analysisSaveName = 'pRF';
     [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1','defaultParams=1');
+    pRFParams.saveName = [analysisSaveName];
+    pRFParams.restrict = ['ROI: ' roiName];
+    pRFParams.pRFFit.supersampling = 1;
+    pRFParams.pRFFit.fitHDR = 0;
+    [thisView, pRFParams] = pRF_auditory(thisView,pRFParams);
+    
+    thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{1});    
+    stimulusWeighting = {'None','SL_level','BOLD','fit'};
+    for iWeight = 1:length(stimulusWeighting)
+        analysisSaveName = 'pRF';
+        [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1','defaultParams=1');
+        pRFParams.saveName = [analysisSaveName '_' stimulusWeighting{iWeight}];
+        pRFParams.restrict = ['ROI: ' roiName];
+        pRFParams.pRFFit.supersampling = 1;
+        pRFParams.pRFFit.fitHDR = 0;
+        
+        pRFParams.pRFFit.stimulusWeighting = stimulusWeighting{iWeight}; % {'None','SL_level','BOLD','fit'}
+        if strcmpi(stimulusWeighting{iWeight},'BOLD')
+            pRFParams.pRFFit.SWgradient = glmInfo.m;
+            pRFParams.pRFFit.SWoffset = glmInfo.b;
+        end
+        [thisView, pRFParams] = pRF_auditory(thisView,pRFParams);
+        
+    end
+    
 end
-pRFParams.saveName = [analysisSaveName mat2str(iScan)];
-pRFParams.restrict = ['ROI: ' roi{1, roiNum}.name];
-pRFParams.pRFFit.supersampling = 1;
-pRFParams.pRFFit.fitHDR = 0;
-pRFParams.pRFFit.dispStimScan = iScan;
 
-pRFParams.pRFFit.stimulusWeighting = 'None'; % {'None','SL_level','BOLD','fit'}
-pRFParams.pRFFit.SWgradient = 1;
-pRFParams.pRFFit.SWoffset = 0;
-
-% [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1',['scanList=' mat2str(iScan)]);
-[thisView, pRFParams] = pRF_auditory(thisView,pRFParams,['scanList=' mat2str(iScan)]);
-% save analysis
-saveAnalysis(thisView,[analysisSaveName mat2str(iScan)])
-% analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',[analysisSaveName mat2str(iScan)]));
-% end
+%% individual scans
+pRFParams = [];
+thisView = viewSet(thisView,'curGroup','MotionComp');
+for iScan = 1:glmInfo.nScans
+    thisView = viewSet(thisView,'curScan', iScan);
+    [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
+    pRFParams.saveName = ['pRF_Scan_' mat2str(iScan)];
+    pRFParams.restrict = ['ROI: ' roiName];
+    pRFParams.pRFFit.supersampling = 1;
+    % pRFParams.pRFFit.dispStimScan = iScan;
+    pRFParams.pRFFit.fitHDR = 0;
+    [thisView, pRFParams] = pRF_auditory(thisView,pRFParams,['scanList=' mat2str(iScan)]);
+end
 
 end

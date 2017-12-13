@@ -1,12 +1,15 @@
 function subjectInfo = getSubjectInfo_sHL(iSub)
-    %
-    %   usage: getSubjectInfo_sHL(iSub)
-    %      by: Ben Gurer
-    %    date: 18/10/2017
-    % purpose: get subject information for simulated hearing loss
-    %   input: subject number (iSub)
-    %
-    
+%
+%   usage: getSubjectInfo_sHL(iSub)
+%      by: Ben Gurer
+%    date: 18/10/2017
+% purpose: get subject information for simulated hearing loss
+%   input: subject number (iSub)
+%
+
+% pre-allocate
+totalSubjects = 5;
+wholeheadMPRAGE = cell(1,totalSubjects);
 
 % define subject info
 subject{1} = '02344_034';
@@ -51,8 +54,26 @@ T2star{4} = '7';
 refScan{4} = '04'; % scan before t2 structural
 flatmapName{4} = {'x11108_007_left_Flat', 'x11108_007_right_Flat'};
 
+subject{5} = '13016_001';
+niftiBaseName{5} = 'HL_13016_001_';
+wholeheadMPRAGE{5} = 'MPRAGE_2';
+freeSurferName{5} = '13016_001';
+T2star{5} = 'High_res_t2__9';
+fMRIScans{5} = {'4', '5', '10', '11'};
+refScan{5} = '5'; % scan before t2 structural
+nScans(5) = 4;
+conditionOrder{5} = {[1,3],[2,4]};
+flatmapName{5} = {'x13016_001_left_WM_Flat_72_101_82_Rad55', 'x13016_001_right_WM_Flat_172_112_96_Rad55'};
+
 %% output selected subjects daya
 subjectInfo = struct();
 subjectInfo.subjectID = subject{iSub};
+subjectInfo.niftiBaseName = niftiBaseName{iSub};
+subjectInfo.wholeheadMPRAGE = wholeheadMPRAGE{iSub};
+subjectInfo.fMRIScans = fMRIScans{iSub};
+subjectInfo.nScans = nScans(iSub);
+subjectInfo.refScan = refScan{iSub};
+subjectInfo.T2star = T2star{iSub};
+subjectInfo.conditionOrder = conditionOrder{iSub};
 subjectInfo.freeSurferName = freeSurferName{iSub};
 subjectInfo.flatmapNames = flatmapName{iSub};

@@ -27,7 +27,7 @@ switch dataType
             for iROI = 1:length(ROInames)
                 for iAnal = 1:length(analysisBaseNames)
                     %                     data_flatROI = get_ROIdata(analysisData,ROI);
-                    data2get = eval(['analysisData.scans.', analysisBaseNames{iAnal}, '.overlayData{' mat2str(analysisScanNum{iAnal}) '}.data;']);
+                    data2get = eval(['analysisData.scanData.', analysisBaseNames{iAnal}, '.overlayData{' mat2str(analysisScanNum{iAnal}) '}.data;']);
                     eval(['ROIdata.' ROInames{iROI} '.' analysisBaseNames{iAnal} '{' mat2str(analysisScanNum{iAnal}) '} = get_ROIdata(data2get,ROIdata.' ROInames{iROI} '.roi);']);
                 end
             end
