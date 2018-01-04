@@ -30,6 +30,9 @@ for iSide=1:2
   thisView = viewSet(thisView,'corticalDepth',[0.2 0.8]);
 end
 
+refreshMLRDisplay(thisView.viewNum);
+
+
 % save view and quit
 mrSaveView(thisView);
 end

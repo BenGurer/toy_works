@@ -8,7 +8,7 @@ function subjectInfo = getSubjectInfo_sHL(iSub)
 %
 
 % pre-allocate
-totalSubjects = 5;
+totalSubjects = 7;
 wholeheadMPRAGE = cell(1,totalSubjects);
 
 % define subject info
@@ -64,6 +64,28 @@ refScan{5} = '5'; % scan before t2 structural
 nScans(5) = 4;
 conditionOrder{5} = {[1,3],[2,4]};
 flatmapName{5} = {'x13016_001_left_WM_Flat_72_101_82_Rad55', 'x13016_001_right_WM_Flat_172_112_96_Rad55'};
+
+subject{6} = '11024_017';
+niftiBaseName{6} = '11024_017_';
+wholeheadMPRAGE{6} = 'MPRAGE_2';
+freeSurferName{6} = '11024_017';
+T2star{6} = 'High_res_t2__9';
+fMRIScans{6} = {'4', '5', '10', '11'};
+refScan{6} = '5'; % scan before t2 structural
+nScans(6) = 4;
+conditionOrder{6} = {[1,3],[2,4]};
+flatmapName{6} = {'x11024_017_left_WM_Flat_72_106_82_Rad55', 'x11024_017_right_WM_Flat_169_100_82_Rad55'};
+
+subject{7} = '12709_001';
+niftiBaseName{7} = 'HL_12709_001_';
+wholeheadMPRAGE{7} = 'MPRAGE_2';
+freeSurferName{7} = '12709_001';
+T2star{7} = 'High_res_t2__9';
+fMRIScans{7} = {'4', '5', '10', '11'};
+refScan{7} = '5'; % scan before t2 structural
+nScans(7) = 4;
+conditionOrder{7} = {[1,3],[2,4]};
+flatmapName{7} = {'x12709_001_left_WM_Flat_85_91_84_Rad55', 'x12709_001_right_WM_Flat_155_91_89_Rad55'};
 
 %% output selected subjects daya
 subjectInfo = struct();

@@ -1,4 +1,4 @@
-function sHL_preprocess(Info, subjectInfo)
+function sHL_preprocess(Info, subjectInfo,distortionCorrection)
 %
 %   usage: sHL_preprocess(Info,subjectInfo)
 %      by: Ben Gurer
@@ -19,35 +19,39 @@ cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
 % move to Distorted folder
 cd Distorted
 
-% select fsltopup distortion information file
-if subjectNumber >= 5
-    distInfo = fullfile(Info.dataDir,Info.studyDir,'base_fat_echo_shifted_params.txt');
-    % distInfo = 'base_fat_echo_shifted_params.txt'
+if distortionCorrection
+    
+    % select fsltopup distortion information file
+    if subjectNumber >= 5
+        distInfo = fullfile(Info.dataDir,Info.studyDir,'base_fat_echo_shifted_params.txt');
+        % distInfo = 'base_fat_echo_shifted_params.txt'
+    else
+        distInfo = fullfile(Info.dataDir,Info.studyDir,'base_fat_shifted_AP_params.txt');
+    end
+    
+    % stick distortion correction scans together and use as input to fsltop
+    system(['fslmerge -t topup_input.nii ', ' ', [subjectInfo.niftiBaseName 'WIP_5DYN_AP_*_1_modulus.nii']])
+    system(['topup --imain=topup_input.nii --datain=' distInfo ' --subsamp=1 --fwhm=0  --out=topup_usable_output --iout=topup_check_output']);
+    
+    % apply fsltop up to fMRI EPI scans
+    for iScan = 1:subjectInfo.nScans
+        %     fileName = [subjectInfo.niftiBaseName 'WIP_73DYN_fMRI_0' num2str(iScan) '_' num2str(subjectInfo.fMRIScans{iScan}) '_1_modulus'];
+        fileName = [subjectInfo.niftiBaseName 'WIP_73DYN_fMRI_0' num2str(iScan)];
+        system(['applytopup --imain=' fileName '_' num2str(subjectInfo.fMRIScans{iScan}) '_1_modulus.nii --datain=' distInfo ' --inindex=1 --topup=topup_usable_output --out=' fileName '_unwarped.nii --method=jac']);
+    end
+    
+    % copy to Raw group time series folder for mrLoadRet
+    system('cp *unwarped.nii ../Raw/TSeries/');
+    
 else
-    distInfo = fullfile(Info.dataDir,Info.studyDir,'base_fat_shifted_AP_params.txt');
+    system('cp *73DYN*modulus.nii ../Raw/TSeries/');
 end
-
-% stick distortion correction scans together and use as input to fsltop
-system(['fslmerge -t topup_input.nii ', ' ', [subjectInfo.niftiBaseName 'WIP_5DYN_AP_*_1_modulus.nii']])
-system(['topup --imain=topup_input.nii --datain=' distInfo ' --subsamp=1 --fwhm=0  --out=topup_usable_output --iout=topup_check_output']);
-
-% apply fsltop up to fMRI EPI scans
-for iScan = 1:subjectInfo.nScans
-    %     fileName = [subjectInfo.niftiBaseName 'WIP_73DYN_fMRI_0' num2str(iScan) '_' num2str(subjectInfo.fMRIScans{iScan}) '_1_modulus'];
-    fileName = [subjectInfo.niftiBaseName 'WIP_73DYN_fMRI_0' num2str(iScan)];
-    system(['applytopup --imain=' fileName '_' num2str(subjectInfo.fMRIScans{iScan}) '_1_modulus'.nii --datain=' distInfo ' --inindex=1 --topup=topup_usable_output --out=' fileName '_unwarped.nii --method=jac']);
-end
-
-% copy to Raw group time series folder for mrLoadRet
-system('cp *unwarped.nii ../Raw/TSeries/');
 
 
 %% Align scans
 cd ../Raw/TSeries/
 
 % crop last frame of reference EPI
-system(['fslroi *' subjectInfo.refScan '*_unwarped.nii lastFrameEPI ' num2str(Info.epiDims(4)-1) ' 1']);
-
 system(['fslroi *' subjectInfo.refScan '*.nii lastFrameEPI ' num2str(Info.epiDims(4)-1) ' 1']);
 
 
@@ -77,8 +81,6 @@ keyboard
 % align EPI to T2* in-plane
 % crop T2* in-plane to use with FNIRT and FLIRT
 T2starFile = [subjectInfo.niftiBaseName subjectInfo.T2star '_1_modulus'];
-
-T2starFile = [subjectInfo.niftiBaseName subjectInfo.T2star '_1_phase'];
 T2StarDims_Index = [400 400 29];
 EPIDims_Index = [128 128 24];
 

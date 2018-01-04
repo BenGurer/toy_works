@@ -15,14 +15,16 @@ cd([Info.dataDir '/scanner/' subjectInfo.subjectID])
 % convert from Par/Rec to niffti format
 !ptoa -f -q -nii *.PAR
 
-if ~isempty(wholeheadMPRAGE{iSubj})
+if ~isempty(subjectInfo.wholeheadMPRAGE)
     % Move whole head PSIR
     mkdir(fullfile(Info.dataDir, 'Anatomy','originals', subjectInfo.freeSurferName));
     movefile(fullfile(Info.dataDir, 'scanner', subjectInfo.subjectID, [subjectInfo.niftiBaseName subjectInfo.wholeheadMPRAGE '*.nii']), fullfile(Info.dataDir,'Anatomy','originals',subjectInfo.freeSurferName));
     cd(fullfile(Info.dataDir, 'Anatomy/originals/', subjectInfo.freeSurferName));        
     %RUN recon-all DIRECTLY IN TERMINAL 
-    fprintf(['recon-all -subjid ' subjectInfo.freeSurferName ' -i ' fullfile(Info.dataDir, 'Anatomy','originals', subjectInfo.freeSurferName) '/' [subjectInfo.niftiBaseName subjectInfo.wholeheadMPRAGE '_1.nii'] ' -all']);
-
+    % if not in folder
+    fprintf(['recon-all -subjid ' subjectInfo.freeSurferName ' -i ' fullfile(Info.dataDir, 'Anatomy','originals', subjectInfo.freeSurferName) '/' [subjectInfo.niftiBaseName subjectInfo.wholeheadMPRAGE '_1.nii'] ' -all\n']);
+    % if in folder
+    fprintf(['recon-all -subjid ' subjectInfo.freeSurferName ' -i ' [subjectInfo.niftiBaseName subjectInfo.wholeheadMPRAGE '_1.nii'] ' -all']);
 end
 
 % make subject directory
@@ -64,3 +66,5 @@ movefile(fullfile(Info.dataDir,'scanner',subjectInfo.subjectID,[subjectInfo.nift
 
 %% move Distortion Correction Scans
 movefile(fullfile(Info.dataDir,'scanner',subjectInfo.subjectID,[subjectInfo.niftiBaseName 'WIP_5DYN_AP_*.nii']), fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID,'Distorted'))
+
+cd ../..

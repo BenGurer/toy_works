@@ -11,7 +11,7 @@
 % change gradient reversals to work with pRF analysis
 
 
-iSub = 1;
+iSub = 7;
 q = char(39);
 
 %% get study parameters
@@ -28,26 +28,29 @@ subjectInfo = get_SubjectInfo_sHL(iSub);
 
 %% move to subject folder, delete any current views, open mrLoadRet and get its view
 cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
-deleteView(thisView);
+% deleteView(thisView);
 mrLoadRet
 thisView = getMLRView;
 refreshMLRDisplay(thisView.viewNum);
 
 %% organise subject data
-sHL_organiseData(studyDirectory,subject);
+sHL_organiseData(Info, subjectInfo);
 % import, convert and move subject data
 
 %% pre-process
-sHL_preprocess;
+sHL_preprocess(Info, subjectInfo, 0);
 % distortion correct
 % linear alignment
 % non-linear alignment
 
 %% Setup mrLoadRet
-[thisView, concatedate] = script_setupmrLoadRet(thisView,groupNames);
+[thisView, concatedate] = script_setupmrLoadRet(Info,subjectInfo,glmInfo);
 % initiate mrLoadRet
 % motion corerection
 % group data
+
+%% open View
+mrLoadRet
 
 %% Import anatomy
 thisView = script_importAnatomy(thisView);
@@ -58,6 +61,7 @@ thisView = script_importAnatomy(thisView);
 % create flatmaps
 % MAKE ORIGINAL FLAT MAPS (LEFT AND RIGHT) USING MAKEFLAT AND NAME THEM
 % [freeSurferName{iSubj} '_left_Flat.off'] AND [freeSurferName{iSubj} '_right_Flat.off']
+% rotate flatmaps for easy viewing (do before exporting to flatmap space)
 
 %% GLM analysis
 thisView = script_glmAnalysis(thisView,glmInfo);
@@ -67,7 +71,14 @@ thisView = script_glmAnalysis(thisView,glmInfo);
 
 %% GLM grandient reversals
 thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
-% create ROIs with the names: GLMLeft, GLMright
+
+%% ROI CREATION
+% create ROIs with the names: 
+% LeftAC, RightAC using gradient reversals - output 4 with alpha overlay output 6
+% LeftRestrict, RightRestrict 
+%   go to each flat base vol, define large ROI around HG, project through 
+%   depths (ROIs>transform>expandROI([1 1 6])(replace)),
+
 
 %% Convert data to flatmap space and average over cortical depth
 % export scan data
@@ -147,19 +158,11 @@ for iSide = 1:length(Info.Sides)
         eval(['groupDataVar = data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} ';']);
         eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
         eval(['ROI_data_' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} ' = script_getROIdata(thisView,groupDataVar,glmInfo.analysisNames_Groups,roiNames,[],' q 'overlays' q ');']);
-%     eval(['ROI_data_' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} ' = script_getROIdata(thisView,dataVar,glmInfo.analysisNames_Groups,roiNames,[],' q 'overlays' q ');']);
-%   eval(['data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} ' = script_getROIdata(thisView,dataVar,glmInfo.analysisNames_Groups,roiNames,[],' q 'overlays' q ');']);
-
     end
-% end
-
-    eval(['scanDataVar = data.' Info.Sides{iSide} ';']);    
-    eval(['ROI_data_' Info.Sides{iSide} '.scanData = script_getROIdata(thisView,scanDataVar,glmInfo.analysisBaseNames_Scans,roiNames,glmInfo.analysisScanNum,' q 'overlays' q ');']);
 
 % SCANS - get data from ROIs
-% for iSide = 1:length(Info.Sides)
-%     eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
-%  eval(['data.' Info.Sides{iSide} '.scanData = script_getROIdata(thisView,dataVar,glmInfo.analysisNames_Groups,roiNames,[],' q 'overlays' q ');']);
+    eval(['scanDataVar = data.' Info.Sides{iSide} ';']);    
+    eval(['ROI_data_' Info.Sides{iSide} '.scanData = script_getROIdata(thisView,scanDataVar,glmInfo.analysisBaseNames_Scans,roiNames,glmInfo.analysisScanNum,' q 'overlays' q ');']);
 
 end
 
@@ -171,8 +174,8 @@ end
 % roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'GLM');
 for iSide = 1:length(Info.Sides)
     eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
-    eval(['data.' Info.Sides{iSide} '.roiNames.roiAnalysis = script_ROIAnalysis(ROI_data_' Info.Sides{iSide} ',glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,' q 'overlays' q ',roiNames);']);
- end
+    eval(['data.' Info.Sides{iSide} '.roiNames.roiAnalysis = script_ROIAnalysis(ROI_data_' Info.Sides{iSide} ',Info,glmInfo,stimInfo,plotInfo,subjectInfo,glmInfo.analysisScanNum,' q 'overlays' q ',roiNames);']);
+end
 
 
 %% now create pRF restrict ROI in flat space and project through depths,

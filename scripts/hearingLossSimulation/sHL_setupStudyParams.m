@@ -57,9 +57,11 @@ stimInfo.stimLevel_SL_mv = stimLevel_SL_mv;
 %% Setup GLM analysis
 % save in glmInfo structure
 % glmInfo.hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
-glmInfo.groupNames = {'ConcatenationHLsim', 'ConcatenationNH'};
 
-glmInfo.hrfModel = {'hrfDoubleGamma'};
+glmInfo.hrfModel = {'hrfBoxcar'};
+glmInfo.groupNames = {'ConcatenationNH','ConcatenationHLsim'};
+
+% glmInfo.hrfModel = {'hrfDoubleGamma'};
 % glmInfo.groupNames = {'ConcatenationNH_unwarped', 'ConcatenationNH'};
 glmInfo.nScans = 4;
 % glmInfo.nScans = 4;
