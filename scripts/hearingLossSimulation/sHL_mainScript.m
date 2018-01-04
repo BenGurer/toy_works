@@ -284,31 +284,3 @@ plot_dbSLvsBetaWeight( right_ROIdata.RightAC.roiAnalysis_glm_hrfDoubleGamma_nCon
 mrQuit()
 
 
-script_GroupAnalysis(subjects)
-% load subject ROI analysis from disk
-
-
-%% scrap code here:$$
-%% get data from scans and groups
-% save so don't need to load again
-% change name to get_analysisData_GLM and save to analysisData.glm
-scanData = getScanData_GLM(thisView,glmInfo.analysisNames_Scans,glmInfo.analysisNames_Groups,glmInfo.groupNames);
-
-%% get data from ROIs
-% save so don't need to load again
-% Set group outside of script
-roiData = script_getROIdata(thisView,scanData.scan_GLMdata,glmInfo.analysisBaseNames_Scans,Info.ROInames,glmInfo.analysisScanNum,'GLM');
-
-% conNamesString = [];
-% for iCon =1:length(conditionNames{1})
-%     if iCon == length(conditionNames{1})
-%     conNamesString = [conNamesString, conditionNames{1}{iCon}];
-%     else
-%     conNamesString = [conNamesString, conditionNames{1}{iCon}, ','];
-%     end
-% end
-
-
-
-
-
