@@ -23,7 +23,7 @@ if ~weightStim
     
 else  
     
-    thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{2});
+    thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{1});
     analysisSaveName = 'pRF';
     [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1','defaultParams=1');
     pRFParams.saveName = [analysisSaveName];
@@ -32,7 +32,7 @@ else
     pRFParams.pRFFit.fitHDR = 0;
     [thisView, pRFParams] = pRF_auditory(thisView,pRFParams);
     
-    thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{1});    
+    thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{2});    
     stimulusWeighting = {'None','SL_level','BOLD','fit'};
     for iWeight = 1:length(stimulusWeighting)
         analysisSaveName = 'pRF';

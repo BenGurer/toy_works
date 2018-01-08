@@ -1,4 +1,4 @@
-function data = cal_average_roi_GLM(roiData, roiName, groupNames, analName,restrictIndex,conATrue,dataType)
+function data = cal_average_roi_GLM(roiData, groupNames, analName,restrictIndex,conATrue,dataType,stimInfo)
 % ,stimFreqs,plotROIav,plotROIpTW)
 q = char(39);
 for iGroup = 1:length(groupNames)
@@ -10,10 +10,11 @@ for iGroup = 1:length(groupNames)
     %     eval(['runA{iGroup} = roiData.' analName '{' num2str(groupNames{iGroup}) '}.betas;'])
     %     eval(['runB{iGroup} = roiData.' analName '{' num2str(groupNames{iGroup}) '}.betas;'])
     %         case 'overlays'
-    eval(['raw{iGroup} = cell2mat(roiData.' groupNames{iGroup} '.' roiName '.' analName q ');'])
+%     eval(['raw{iGroup} = cell2mat(roiData.' groupNames{iGroup} '.' roiName '.' analName q ');'])
     %     eval(['conB = cell2mat(roiData.' groupNames{iGroup} '.' roiName '.' analName ');'])
     %     end
-    
+   
+    eval(['raw{iGroup} = cell2mat(roiData.' groupNames{iGroup} '.' analName q ');']) 
     
     % Remove nans
     raw{iGroup}(isnan(raw{iGroup}(:))) = [];
@@ -45,3 +46,13 @@ data.roi_av_ratio = roi_av{2}./roi_av{1};
 %     data.roi_pTW{2} = condition_splitMean{2};
 %     data.roi_pCFtally{2} = totalROIpCF{2};
 % end
+
+if length(roi_av{1}) == 8
+    stimulusLevels = stimInfo.stimLevel_SL_bin;
+elseif length(roi_av{1}) == 28
+    stimulusLevels = stimInfo.stimLevel_SL_mv;
+else 
+    stimulusLevels = stimInfo.stimLevel_SL;
+end
+baseLevel_dB = 50;
+[ data.ratio2Plot, data.level2Plot, data.fit , data.error2plot ] =  cal_dbSLvsBetaWeight(data.roi_av_ratio,stimulusLevels,baseLevel_dB);

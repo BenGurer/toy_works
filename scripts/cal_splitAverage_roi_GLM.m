@@ -1,4 +1,4 @@
-function data = cal_splitAverage_roi_GLM(roiData,analName,conditionRunIndex,restrictIndex,conATrue,dataType)
+function data = cal_splitAverage_roi_GLM(roiData,analName,conditionRunIndex,restrictIndex,conATrue,dataType,stimInfo)
 % ,stimFreqs,plotROIav,plotROIpTW)
 q = char(39);
 for iGroup = 1:length(conditionRunIndex)
@@ -55,3 +55,14 @@ else
 data.roi_pTW{2} = condition_splitMean{2};
 data.roi_pCFtally{2} = totalROIpCF{2};
 end
+
+
+if length(roi_av{1}) == 8
+    stimulusLevels = stimInfo.stimLevel_SL_bin;
+elseif length(roi_av{1}) == 28
+    stimulusLevels = stimInfo.stimLevel_SL_mv;
+else 
+    stimulusLevels = stimInfo.stimLevel_SL;
+end
+baseLevel_dB = 50;
+[ data.ratio2Plot, data.level2Plot, data.fit , data.error2plot ] =  cal_dbSLvsBetaWeight(data.roi_av_ratio,stimulusLevels,baseLevel_dB);

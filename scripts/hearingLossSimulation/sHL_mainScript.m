@@ -147,23 +147,38 @@ end
 %% Restrict data by ROIs
 % Now we need to restrict the data by the ROIs
 
+% first get view so we have the ROIS
+thisView = getMLRView;
+
 % loop - save (side), selet:roi (side) and base (side), get data from: side.scans.anal.overlayData.data
 % i.e. get data from left flatmap (set: left roi, left group, left base) save this data to left struct
 
 % GROUPS
 for iSide = 1:length(Info.Sides)
+    
+    eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
     baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
     thisView = viewSet(thisView,'currentbase',baseNum);
-    for iGroup = 1:length(glmInfo.groupNames)
-        eval(['groupDataVar = data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} ';']);
-        eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
-        eval(['ROI_data_' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} ' = script_getROIdata(thisView,groupDataVar,glmInfo.analysisNames_Groups,roiNames,[],' q 'overlays' q ');']);
+    
+    ROIdata = struct;
+    q = char(39);
+    for iROI = 1:length(ROInames)
+        eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} ' = struct;']);
+        eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi = viewGet(thisView,' q 'roi' q ',ROInames{iROI});']);
+        
+        
+        for iGroup = 1:length(glmInfo.groupNames)
+            eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} ';']);
+            %         eval(['ROI_data_' Info.Sides{iSide} '.' 'glmInfo.groupNames{iGroup} ' = script_getROIdata(thisView,groupDataVar,glmInfo.analysisNames_Groups,roiNames,[],' q 'overlays' q ');']);
+            eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} ' = script_getROIdata(thisView,groupDataVar,glmInfo.analysisNames_Groups,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi,[],' q 'overlays' q ');']);
+            
+        end
+        
+        % SCANS - get data from ROIs
+        eval(['scanDataVar = data.' Info.Sides{iSide} '.scanData;']);
+        %     eval(['ROI_data_' Info.Sides{iSide} '.scanData = script_getROIdata(thisView,scanDataVar,glmInfo.analysisBaseNames_Scans,roiNames,glmInfo.analysisScanNum,' q 'overlays' q ');']);
+        eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData = script_getROIdata(thisView,scanDataVar,glmInfo.analysisBaseNames_Scans,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi,glmInfo.analysisScanNum,' q 'overlays' q ');']);
     end
-
-% SCANS - get data from ROIs
-    eval(['scanDataVar = data.' Info.Sides{iSide} ';']);    
-    eval(['ROI_data_' Info.Sides{iSide} '.scanData = script_getROIdata(thisView,scanDataVar,glmInfo.analysisBaseNames_Scans,roiNames,glmInfo.analysisScanNum,' q 'overlays' q ');']);
-
 end
 
 %% GLM ROI analysis
@@ -173,30 +188,51 @@ end
 % compare binning for glm to averaging betas
 % roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'GLM');
 for iSide = 1:length(Info.Sides)
-    eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
-    eval(['data.' Info.Sides{iSide} '.roiNames.roiAnalysis = script_ROIAnalysis(ROI_data_' Info.Sides{iSide} ',Info,glmInfo,stimInfo,plotInfo,subjectInfo,glmInfo.analysisScanNum,' q 'overlays' q ',roiNames);']);
+    eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
+    for iROI = 1:length(ROInames)
+        eval(['roidata = data.' Info.Sides{iSide} '.' ROInames{iROI} ';']);
+        eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} ' = script_ROIAnalysis(roidata,Info,glmInfo,stimInfo,plotInfo,subjectInfo,glmInfo.analysisScanNum,' q 'overlays' q ',ROInames{iROI});']);
+    end
 end
 
 
 %% now create pRF restrict ROI in flat space and project through depths,
-% can I script this?
-% go to each flat base vol, define large ROI around HG, project through depths (ROIs>transform>expandROI([1 1 6])(replace)),
-roi = viewGet(thisView,'roi','leftpRFrestrict');
-roi = viewGet(thisView,'roi','pRFrestrict');
-roi = viewGet(thisView,'roi','rightpRFrestrictexpand');
+
+
+% first get view so we have the ROIS
+thisView = getMLRView;
+
+% go to each flat base vol, define large ROI around HG on slice 6, project through depths (ROIs>transform>expandROI([1 1 6])(replace)),
+
+pRFrois = {'LeftpRFrestrict','RightpRFrestrict'}; % this should be defined in setup
+for ipRFroi = 1:length(pRFrois)
+% roi = viewGet(thisView,'roi','leftpRFrestrict');
+% roi = viewGet(thisView,'roi','pRFrestrict');
+roi = viewGet(thisView,'roi',pRFrois{ipRFroi});
 outputRoi = convertFromFlatVolumeToBase(roi);
 thisView = viewSet(thisView,'newROI',outputRoi);
+% post fix VOL to name
+end
 % then convert back to vol space, THEN:  ROIs>combine>(choose both ROIS),action:Union, newName:pRFrestrict
 % name = pRFrestrict
 
 %% pRF analysis
+% for ipRFroi = 1:length(pRFrois)
+for iSide = 1:length(Info.Sides)
+    
+    eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
+    eval(['fit = data.' Info.Sides{iSide} '.' ROInames{iSide} '.concatData.' glmInfo.analysisNames_Groups{1} '.roiAnalysis.fit;']);
 % get info from glm analysis: BOLD ratio, roi av TW
-glmInfo.m = 0.0174;
-glmInfo.b = -0.1176;
-[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,'rightpRFrestrictexpandVOL',1);
+% glmInfo.m = 0.0174;
+% glmInfo.b = -0.1176;
+
+glmInfo.m = fit(1);
+glmInfo.b = fit(2);
+[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[pRFrois{iSide} 'VOL'],1);
 % get info from glm to inform pRF
 % BOLD change between conditions
 % average tuning curve sigma
+end
 
 %% pRF grandient reversals
 % doesn't work?

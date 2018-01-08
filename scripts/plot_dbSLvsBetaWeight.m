@@ -1,9 +1,9 @@
-function [ fit ] =  plot_dbSLvsBetaWeight(roi_av_ratio,stimulusLevels,baseLevel_dB)
+function [ fit ] =  plot_dbSLvsBetaWeight(ratio2Plot, level2Plot, fit , error2plot)
 
-ratio2Plot = [roi_av_ratio(stimulusLevels~=baseLevel_dB); mean(roi_av_ratio(stimulusLevels==baseLevel_dB))];
-
-level2Plot = [stimulusLevels(stimulusLevels~=baseLevel_dB) baseLevel_dB];
+% ratio2Plot = [roi_av_ratio(stimulusLevels~=baseLevel_dB); mean(roi_av_ratio(stimulusLevels==baseLevel_dB))];
 % 
+% level2Plot = [stimulusLevels(stimulusLevels~=baseLevel_dB) baseLevel_dB];
+% % 
 % figure; scatter(level2Plot,ratio2Plot)
 % figure; scatter(level2Plot_bin,ratio2Plot_bin)
 
@@ -11,12 +11,12 @@ level2Plot = [stimulusLevels(stimulusLevels~=baseLevel_dB) baseLevel_dB];
 figure('color',[1 1 1]); 
 scatter( level2Plot ,ratio2Plot )
 hold on
-fit = polyfit(level2Plot',ratio2Plot,1);
+% fit = polyfit(level2Plot',ratio2Plot,1);
 plot(level2Plot,polyval(fit,level2Plot));
 % correlation = corrcoef([level2Plot_mv' ratio2Plot_mv]);
 % text(25,0.8,sprintf('Correlation = %.2f \n y = %.2fx + %.2f',correlation(2), fit(1), fit(2)))
 % plot(f,f,'k--')
-errorbar(mean(stimulusLevels(stimulusLevels==50)),mean(roi_av_ratio(stimulusLevels==50)),std(roi_av_ratio(stimulusLevels==50)))
+errorbar(error2plot(1),error2plot(2),error2plot(3))
 xlabel('Stimulus Sensation Level (dB SL)'); ylabel('Average Beta Weight Ratio (ConB / ConA)');
 
 % 

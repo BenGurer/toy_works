@@ -1,16 +1,16 @@
 function plot_splitAverage_roi_GLM(data,analName,stimInfo,plotInfo,figureName)
 % plotLOGIC = what to plot based on number of stim
+% 
+% eval(['roi_av = data.' analName '.roi_av;']);
+% eval(['roi_pTW = data.' analName '.roi_pTW;']);
+% eval(['roi_av_ratio = data.' analName '.roi_av_ratio;']);
 
-eval(['roi_av = data.' analName '.roi_av;']);
-eval(['roi_pTW = data.' analName '.roi_pTW;']);
-eval(['roi_av_ratio = data.' analName '.roi_av_ratio;']);
-
-if length(roi_av{1}) == 8
+if length(data.roi_av{1}) == 8
     xlabel = stimInfo.stimNames.bin;
     stimulusLevels = stimInfo.stimLevel_SL_bin;
     plotLOGIC = plotInfo.plotLOGIC.ROI_bin;
     nCols = 2;
-elseif length(roi_av{1}) == 28
+elseif length(data.roi_av{1}) == 28
     xlabel = stimInfo.stimNames.mv;
     stimulusLevels = stimInfo.stimLevel_SL_mv;
     plotLOGIC = plotInfo.plotLOGIC.ROI_mv;
@@ -24,18 +24,37 @@ end
 
 if plotLOGIC(1) == 1
 %% compare ROI average Beta weights
-plot_compareConditions_ROIav(roi_av{1},roi_av{2},xlabel,figureName)
+plot_compareConditions_ROIav(data.roi_av{1},data.roi_av{2},xlabel,figureName)
 
 end
 
 if plotLOGIC(2) == 1
 %% Compare average voxel tuning
-plot_compareConditions_pTW(roi_pTW{1}, roi_pTW{2},nCols,xlabel,figureName);
+plot_compareConditions_pTW(data.roi_pTW{1}, data.roi_pTW{2},nCols,xlabel,figureName);
 
 end
 
 if plotLOGIC(3) == 1
-    %% plot dB senstation level vs BOLD fMRI activity
-plot_dbSLvsBetaWeight(roi_av_ratio,stimulusLevels,50);
+    %% plot dB senstation level vs BOLD fMRI activity 
+% [ fit ] =  plot_dbSLvsBetaWeight(ratio2Plot, level2Plot, fit , error2plot)
+plot_dbSLvsBetaWeight(data.ratio2Plot,data.level2Plot,data.fit,data.error2plot);
 end
+% 
+% if plotLOGIC(1) == 1
+% %% compare ROI average Beta weights
+% plot_compareConditions_ROIav(roi_av{1},roi_av{2},xlabel,figureName)
+% 
+% end
+% 
+% if plotLOGIC(2) == 1
+% %% Compare average voxel tuning
+% plot_compareConditions_pTW(roi_pTW{1}, roi_pTW{2},nCols,xlabel,figureName);
+% 
+% end
+% 
+% if plotLOGIC(3) == 1
+%     %% plot dB senstation level vs BOLD fMRI activity
+% %     [ fit ] =  plot_dbSLvsBetaWeight(ratio2Plot, level2Plot, fit , error2plot)
+% plot_dbSLvsBetaWeight(roi_av_ratio,stimulusLevels,50);
+% end
 end
