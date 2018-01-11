@@ -4,7 +4,7 @@ windowAvSize = size(betas,1)/nBins;
 
 if isreal(windowAvSize) && rem(windowAvSize,1)==0
     
-loopLength = size(betas,1) - windowAvSize;
+loopLength = size(betas,1) - windowAvSize + 1;
 betas_mv = zeros(loopLength,size(betas,2));
 
 for i = 1:loopLength

@@ -47,9 +47,9 @@ data.roi_av_ratio = roi_av{2}./roi_av{1};
 %     data.roi_pCFtally{2} = totalROIpCF{2};
 % end
 
-if length(roi_av{1}) == 8
+if length(roi_av{1}) == stimInfo.sizes(1)
     stimulusLevels = stimInfo.stimLevel_SL_bin;
-elseif length(roi_av{1}) == 28
+elseif length(roi_av{1}) == stimInfo.sizes(2)
     stimulusLevels = stimInfo.stimLevel_SL_mv;
 else 
     stimulusLevels = stimInfo.stimLevel_SL;

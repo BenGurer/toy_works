@@ -5,12 +5,12 @@ function plot_splitAverage_roi_GLM(data,analName,stimInfo,plotInfo,figureName)
 % eval(['roi_pTW = data.' analName '.roi_pTW;']);
 % eval(['roi_av_ratio = data.' analName '.roi_av_ratio;']);
 
-if length(data.roi_av{1}) == 8
+if length(data.roi_av{1}) == stimInfo.sizes(1)
     xlabel = stimInfo.stimNames.bin;
     stimulusLevels = stimInfo.stimLevel_SL_bin;
     plotLOGIC = plotInfo.plotLOGIC.ROI_bin;
     nCols = 2;
-elseif length(data.roi_av{1}) == 28
+elseif length(data.roi_av{1}) == stimInfo.sizes(2)
     xlabel = stimInfo.stimNames.mv;
     stimulusLevels = stimInfo.stimLevel_SL_mv;
     plotLOGIC = plotInfo.plotLOGIC.ROI_mv;

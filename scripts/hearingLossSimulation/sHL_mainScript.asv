@@ -218,17 +218,24 @@ end
 
 %% pRF analysis
 % for ipRFroi = 1:length(pRFrois)
+fit = cell(1,length(Info.Sides));
 for iSide = 1:length(Info.Sides)
+    
     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
+    for iROI = 1:length(ROInames)    
+    eval(['fit{iSide} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.concatData.' glmInfo.analysisNames_Groups{1} '.roiAnalysis.fit;']);
+    end
 % get info from glm analysis: BOLD ratio, roi av TW
-data.Right.RightAC.concatData.glm_hrfBoxcar.roiAnalysis.fit
-glmInfo.m = 0.0174;
-glmInfo.b = -0.1176;
-[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[pRFrois{ipRFroi} 'VOL'],1);
+% glmInfo.m = 0.0174;
+% glmInfo.b = -0.1176;
+end
+glmInfo.m = (fit{1}(1)+fit{2}(1)); % could compare to taking average of dBSL vs BOLD values rather than the fit
+glmInfo.b = mean(fit{1}(2),fit{2}(2));
+[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,pRFrestrict,1);
 % get info from glm to inform pRF
 % BOLD change between conditions
 % average tuning curve sigma
-end
+
 
 %% pRF grandient reversals
 % doesn't work?

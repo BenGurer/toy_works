@@ -10,6 +10,12 @@
 % % add info to start of functions
 % change gradient reversals to work with pRF analysis
 
+%% change plotting - create figures outside plotting functions - set paper size etc and use subplotting
+%% make data gramm friendly
+
+%% thoughts/notes
+% how to remove outliers
+
 
 iSub = 7;
 q = char(39);
@@ -26,9 +32,15 @@ subjectInfo = get_SubjectInfo_sHL(iSub);
 % Subject ID
 % flatmap names
 
+saveName = [subjectInfo.subjectID '_data.mat'];
+
+%% either load data or mrView
+
 %% move to subject folder, delete any current views, open mrLoadRet and get its view
 cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
 % deleteView(thisView);
+load(saveName)
+
 mrLoadRet
 thisView = getMLRView;
 refreshMLRDisplay(thisView.viewNum);
@@ -196,6 +208,10 @@ for iSide = 1:length(Info.Sides)
 end
 
 
+%% save data
+
+save(saveName,'data','-v7.3');
+
 %% now create pRF restrict ROI in flat space and project through depths,
 
 
@@ -218,21 +234,27 @@ end
 
 %% pRF analysis
 % for ipRFroi = 1:length(pRFrois)
+fit = cell(1,length(Info.Sides));
 for iSide = 1:length(Info.Sides)
     
     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
-    eval(['fit = data.' Info.Sides{iSide} '.' ROInames{iSide} '.concatData.' glmInfo.analysisNames_Groups{1} '.roiAnalysis.fit;']);
+    for iROI = 1:length(ROInames)    
+    eval(['fit{iSide} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.concatData.' glmInfo.analysisNames_Groups{1} '.roiAnalysis.fit;']);
+    end
 % get info from glm analysis: BOLD ratio, roi av TW
 % glmInfo.m = 0.0174;
 % glmInfo.b = -0.1176;
-
-glmInfo.m = fit(1);
-glmInfo.b = fit(2);
-[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[pRFrois{iSide} 'VOL'],1);
+% 
+% glmInfo.m = (fit{1}(1)+fit{2}(1))./2; % could compare to taking average of dBSL vs BOLD values rather than the fit
+% glmInfo.b = (fit{1}(2)+fit{2}(2))./2;
+glmInfo.m = fit{iSide}(1);
+glmInfo.b = fit{iSide}(2);
+[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[Info.Sides{iSide} 'pRFrestrictVOL'],1);
 % get info from glm to inform pRF
 % BOLD change between conditions
 % average tuning curve sigma
 end
+
 
 %% pRF grandient reversals
 % doesn't work?

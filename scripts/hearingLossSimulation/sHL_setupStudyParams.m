@@ -23,6 +23,8 @@ nStim = 32;
 
 %% get stimulus senssation level
 [stimLevel_SL, maskingLevel] = calStimulusSensationLevel(stimInfo.stimNames.all);
+stimInfo.sizes = [8 29 32];
+
 
 % bin sensation level
 binSize = 4;
@@ -38,7 +40,7 @@ nBins = 8;
 windowAvSize = length(stimLevel_SL)/nBins;
 
 if isreal(windowAvSize) && rem(windowAvSize,1)==0
-    loopLength = length(stimLevel_SL) - windowAvSize;
+    loopLength = (length(stimLevel_SL) - windowAvSize) +1;
     stimLevel_SL_mv = zeros(1,loopLength);
     for i = 1:loopLength
         stimLevel_SL_mv(i) = mean(stimLevel_SL(i:i+windowAvSize-1));
