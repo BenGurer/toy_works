@@ -33,7 +33,8 @@ else
     [thisView, pRFParams] = pRF_auditory(thisView,pRFParams);
     
     thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{2});    
-    stimulusWeighting = {'None','SL_level','BOLD','fit'};
+%     stimulusWeighting = {'None','SL_level','BOLD','fit'};
+    stimulusWeighting = {'None','SL_level'};
     for iWeight = 1:length(stimulusWeighting)
         analysisSaveName = 'pRF';
         [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1','defaultParams=1');
