@@ -89,6 +89,7 @@ for i = 1:length(glmInfo.groupNames)
         
         %% save analysis
         saveAnalysis(thisView,analysisName)
+                
     end
 end
 

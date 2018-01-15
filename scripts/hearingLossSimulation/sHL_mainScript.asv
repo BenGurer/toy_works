@@ -10,8 +10,14 @@
 % % add info to start of functions
 % change gradient reversals to work with pRF analysis
 
+%% change plotting - create figures outside plotting functions - set paper size etc and use subplotting
+%% make data gramm friendly
 
-iSub = 7;
+%% thoughts/notes
+% how to remove outliers
+
+
+iSub = 6;
 q = char(39);
 
 %% get study parameters
@@ -26,9 +32,15 @@ subjectInfo = get_SubjectInfo_sHL(iSub);
 % Subject ID
 % flatmap names
 
+saveName = [subjectInfo.subjectID '_data.mat'];
+
+%% either load data or mrView
+
 %% move to subject folder, delete any current views, open mrLoadRet and get its view
 cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
 % deleteView(thisView);
+load(saveName)
+
 mrLoadRet
 thisView = getMLRView;
 refreshMLRDisplay(thisView.viewNum);
@@ -48,6 +60,18 @@ sHL_preprocess(Info, subjectInfo, 0);
 % initiate mrLoadRet
 % motion corerection
 % group data
+% concatenate runs
+
+%% smooth and create new group
+% cd to motioncomp group
+% get file names
+% loop
+% run: 
+% fslmaths original.nii -kernel gauss 2.1233226 -fmean smoothed.nii
+% create new group
+% move scans to new folder
+% add scans
+% concatenate runs
 
 %% open View
 mrLoadRet
@@ -80,7 +104,7 @@ thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
 %   depths (ROIs>transform>expandROI([1 1 6])(replace)),
 
 
-%% Convert data to flatmap space and average over cortical depth
+%% Convert GLM data to flatmap space and average over cortical depth
 % export scan data
 for iScan = 1:glmInfo.nScans
     for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
@@ -196,6 +220,9 @@ for iSide = 1:length(Info.Sides)
 end
 
 
+%% save data
+save(saveName,'data','-v7.3');
+
 %% now create pRF restrict ROI in flat space and project through depths,
 
 
@@ -217,6 +244,8 @@ end
 % name = pRFrestrict
 
 %% pRF analysis
+% maybe move to before exporting to flatmap and then run glm informed pRF
+% later?
 % for ipRFroi = 1:length(pRFrois)
 fit = cell(1,length(Info.Sides));
 for iSide = 1:length(Info.Sides)
@@ -228,13 +257,16 @@ for iSide = 1:length(Info.Sides)
 % get info from glm analysis: BOLD ratio, roi av TW
 % glmInfo.m = 0.0174;
 % glmInfo.b = -0.1176;
-end
-glmInfo.m = (fit{1}(1)+fit{2}(1)); % could compare to taking average of dBSL vs BOLD values rather than the fit
-glmInfo.b = mean(fit{1}(2),fit{2}(2));
-[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,pRFrestrict,1);
+% 
+% glmInfo.m = (fit{1}(1)+fit{2}(1))./2; % could compare to taking average of dBSL vs BOLD values rather than the fit
+% glmInfo.b = (fit{1}(2)+fit{2}(2))./2;
+glmInfo.m = fit{iSide}(1);
+glmInfo.b = fit{iSide}(2);
+[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[Info.Sides{iSide} 'pRFrestrictVOL'],1);
 % get info from glm to inform pRF
 % BOLD change between conditions
 % average tuning curve sigma
+end
 
 
 %% pRF grandient reversals
@@ -277,47 +309,13 @@ end
 
 
 %% Save data
+save(saveName,'data','-v7.3');
 
 
+%% difference map
+% go to flatmap groups > take overlay from each group > subtrack them from
+% each other > install as new overlay
 
-
-
-
-
-% roiAnalysis = script_ROIAnalysis(data_rightROI,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays');
-
-%% save data
-% move to save location
-cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
-
-% save data to structure with subject ID (unique name when loading for group analysis)
-eval(['data_' subjectInfo.subjectID '.roi.left = data.Left.roiAnalysis;'])
-eval(['data_' subjectInfo.subjectID '.roi.right = data.Right.roiAnalysis;'])
-
-% save data
-saveName = [subjectInfo.subjectID '_data.mat'];
-% navigate to correct directory
-% save roi analysis and data seperately due to size
-eval(['save(saveName,data_' subjectInfo.subjectID ',' q '-v7.3' q ',' q '-nocompression' q ')']);
-
-eval('roiData.left = data.Left.roiAnalysis;')
-eval([subjectInfo.subjectID 'roiData.right = data.Right.roiAnalysis;'])
-right_ROIdata = data.Right.roiAnalysis;
-saveName = [subjectInfo.subjectID '_ROIdata.mat'];
-save(saveName,'left_ROIdata','right_ROIdata','-v7.3','-nocompression');
-% save data to disk
-% load later for group analysis
-
-
-cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
-load([subjectInfo.subjectID '_ROIdata.mat']);
-script_ROIAnalysis(left_ROIdata,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays',{'LeftAC'});
-
-script_ROIAnalysis(right_ROIdata,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'overlays',{'RightAC'});
-
-
-plot_dbSLvsBetaWeight( left_ROIdata.LeftAC.roiAnalysis_glm_hrfDoubleGamma_nCons_32.roi_av_ratio , stimInfo.stimLevel_SL_mv , 50 )
-plot_dbSLvsBetaWeight( right_ROIdata.RightAC.roiAnalysis_glm_hrfDoubleGamma_nCons_32.roi_av_ratio , stimInfo.stimLevel_SL_mv , 50 )
 
 %% quit mrLoadRet
 mrQuit()

@@ -127,6 +127,8 @@ Info.conditionRunIndex = {[2,4],[1,3]};
 
 Info.ConATrue = 1;
 
+Info.smooth = 1;
+
 %% Define ROI names to create
 
 % Info.ROInames = {'RightAC','RightPosAC','RightAntAC','LeftAC','LeftPosAC','LeftAntAC','AC'};

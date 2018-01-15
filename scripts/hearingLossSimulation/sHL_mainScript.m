@@ -17,7 +17,7 @@
 % how to remove outliers
 
 
-iSub = 7;
+iSub = 6;
 q = char(39);
 
 %% get study parameters
@@ -56,10 +56,13 @@ sHL_preprocess(Info, subjectInfo, 0);
 % non-linear alignment
 
 %% Setup mrLoadRet
+smooth = 1;
 [thisView, concatedate] = script_setupmrLoadRet(Info,subjectInfo,glmInfo);
 % initiate mrLoadRet
 % motion corerection
+% smooth (optional)
 % group data
+% concatenate runs
 
 %% open View
 mrLoadRet
@@ -211,8 +214,35 @@ end
 %% save data
 save(saveName,'data','-v7.3');
 
-%% now create pRF restrict ROI in flat space and project through depths,
 
+%% perfrom GLM overlay analysis
+fit = cell(1,length(Info.Sides));
+weightingType = {'SL','BOLD'};
+thisView = viewSet(thisView,'curgroup',glmInfo.groupNames{2});
+for iWeight = 1:length(weightingType)
+    
+    switch weightingType{iWeight}
+        
+        case 'SL'
+            namePrefix =  [weightingType{iWeight} 'weighted '];            
+            thisView = script_glmOverlayAnalysis(thisView,2:33,namePrefix,0,conditionNames{1});
+        case 'BOLD'
+            
+            for iSide = 1:length(Info.Sides)
+                
+                eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
+                for iROI = 1:length(ROInames)
+                    eval(['fit{iSide} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.concatData.' glmInfo.analysisNames_Groups{1} '.roiAnalysis.fit;']);
+                end
+                
+                namePrefix =  [Info.Sides{iSide} '_' weightingType{iWeight} 'weighted '];
+                thisView = script_glmOverlayAnalysis(thisView,2:33,namePrefix,fit{iSide},conditionNames{1});
+            end
+    end
+    
+end
+
+%% now create pRF restrict ROI in flat space and project through depths,
 
 % first get view so we have the ROIS
 thisView = getMLRView;
