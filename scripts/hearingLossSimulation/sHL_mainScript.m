@@ -264,6 +264,8 @@ end
 %% pRF analysis
 % maybe move to before exporting to flatmap and then run glm informed pRF
 % later?
+% change export and average over depth functiosn to work on indivudal
+% overlays as well as all in analysis
 % for ipRFroi = 1:length(pRFrois)
 fit = cell(1,length(Info.Sides));
 for iSide = 1:length(Info.Sides)
@@ -280,7 +282,9 @@ for iSide = 1:length(Info.Sides)
 % glmInfo.b = (fit{1}(2)+fit{2}(2))./2;
 glmInfo.m = fit{iSide}(1);
 glmInfo.b = fit{iSide}(2);
-[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[Info.Sides{iSide} 'pRFrestrictVOL'],1);
+% [thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[Info.Sides{iSide} 'pRFrestrictVOL'],1);
+[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,'pRFtest',1);
+
 % get info from glm to inform pRF
 % BOLD change between conditions
 % average tuning curve sigma
@@ -333,6 +337,26 @@ save(saveName,'data','-v7.3');
 %% difference map
 % go to flatmap groups > take overlay from each group > subtrack them from
 % each other > install as new overlay
+overlay = cell(1,length(glmInfo.groupNames));
+for iGroup = 1:length(glmInfo.groupNames)
+
+thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{iGroup});
+
+% 'overlay'
+%    overlay = viewGet(view,'overlay',[overlayNum],[analysisNum])
+%    overlay = viewGet(view,'overlay',overlayNum,[])
+%    overlay = viewGet(view,'overlay',[],analysisNum)
+%    overlay = viewGet(view,'overlay',[],[])
+%    overlay = viewGet(view,'overlay',overlayNum)
+%    overlay = viewGet(view,'overlay')
+
+%% loop over analysis
+% add this in pRF analysis loop?
+overlayNum = viewGet(thisView,'overlayNum','PrefCentreFreq');
+overlay{iGroup} = viewGet(thisView,'overlay',overlayNum);
+
+end
+[ thisView , differenceData ] = script_createDifferenceMaps(thisView,overlay{1},overlay{2});
 
 
 %% quit mrLoadRet
