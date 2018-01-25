@@ -98,7 +98,7 @@ end
 % nStim = [8 32];
 % Set hrf type based on acquisition type
 splitHRFmodel = 1;
-thisView = viewSet(thisView,'curGroup','MotionComp');
+thisView = viewSet(thisView,'curGroup',glmInfo.scanGroupName);
 for iScan = 1:glmInfo.nScans
     thisView = viewSet(thisView,'curScan', iScan);
     for iStim = 1:length(glmInfo.nStim)

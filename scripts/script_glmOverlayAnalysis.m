@@ -10,7 +10,13 @@ for iOverlay = 1:length(overlayNumbers)
     params.customCombineFunction = 'rdivide'; % (overlay,weightingType,fit)
     params.combinationMode = 'Apply function to each overlay';
     params.outputName= namePrefix;
-    eval(['params.additionalArgs = ' num2str(weight(iOverlay)) ';']);
+    
+%     params.additionalArgs = weight(iOverlay);
+curWeight = num2str(weight(iOverlay)) ;
+    eval(['params.additionalArgs = ' curWeight ';']);
+    if ~ischar(params.additionalArgs)
+    params.additionalArgs = num2str(params.additionalArgs);
+    end
     % params.baseSpace = 1;
     [thisView,params] = combineTransformOverlays(thisView,params);
     overlayNames{iOverlay} = [namePrefix '(' conditionNames{iOverlay} ',' num2str(weight(iOverlay)) ')'];

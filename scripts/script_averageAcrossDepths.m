@@ -21,11 +21,19 @@ thisView = viewSet(thisView,'curgroup',groupName);
 thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
 if isempty(overlays)
     analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
-    overlays = 1:length(analysisData.overlays);
+    overlayNumbers = 1:length(analysisData.overlays);
+    
+elseif iscell(overlays)
+    % if overlays provided as names
+    overlayNumbers = nan(1,length(overlays));
+    for i = 1:length(overlays)
+    overlayNumbers(i) = viewGet(thisView,'overlaynum',overlays{i});
+    end
+
 end
 
 
-[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlays)]);
+[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlayNumbers)]);
 params.combineFunction='averageDepthVol';
 params.combinationMode = 'Apply function to each overlay';
 [thisView,params] = combineTransformOverlays(thisView,params);

@@ -18,14 +18,15 @@ if isempty(overlays)
     overlays = 1:length(analysisData.overlays);
 end
 
-data.conditionNames = analysisData.params.EVnames;
-for i = 1:length(analysisData.params.EVnames)
-    if ~isempty(iScan)
-        data.overlayConditionNames{i} = ['Scan ', mat2str(iScan), ' -  (' analysisData.params.EVnames{i} ',0)'];
-    else
-        data.overlayConditionNames{i} = [groupName ' (' analysisData.params.EVnames{i} ',0)'];
-    end
-end
+%% check if glm still works without below code
+% data.conditionNames = analysisData.params.EVnames;
+% for i = 1:length(analysisData.params.EVnames)
+%     if ~isempty(iScan)
+%         data.overlayConditionNames{i} = ['Scan ', mat2str(iScan), ' -  (' analysisData.params.EVnames{i} ',0)'];
+%     else
+%         data.overlayConditionNames{i} = [groupName ' (' analysisData.params.EVnames{i} ',0)'];
+%     end
+% end
 
 % a = viewGet(thisView,'Overlay',data.overlayConditionNames{1})
 
@@ -38,9 +39,9 @@ params.customCombineFunction = 'plus'; %add 0
 params.combinationMode = 'Apply function to each overlay';
 params.additionalArgs = '0';
 if ~isempty(iScan)
-    params.outputName=' ';
+    params.outputName = ' ';
 else
-    params.outputName= [groupName ' '];
+    params.outputName = [groupName '_' analysisName ' '];
 end
 params.baseSpace = 1; %export result to base space (flat map)
 params.exportToNewGroup=1; %export to volume in a new group

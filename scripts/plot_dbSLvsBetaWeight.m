@@ -1,4 +1,4 @@
-function [ fit ] =  plot_dbSLvsBetaWeight(ratio2Plot, level2Plot, fit , error2plot)
+function [ fit ] =  plot_dbSLvsBetaWeight(ratio2Plot, level2Plot, fit , error2plot,stimSensationLevel)
 
 % ratio2Plot = [roi_av_ratio(stimulusLevels~=baseLevel_dB); mean(roi_av_ratio(stimulusLevels==baseLevel_dB))];
 % 
@@ -18,6 +18,9 @@ plot(level2Plot,polyval(fit,level2Plot));
 % plot(f,f,'k--')
 errorbar(error2plot(1),error2plot(2),error2plot(3))
 xlabel('Stimulus Sensation Level (dB SL)'); ylabel('Average Beta Weight Ratio (ConB / ConA)');
+plot(stimSensationLevel,stimSensationLevel./max(stimSensationLevel),'k--')
+
+% figure; plot(stimInfo.stimLevel_SL_mv,stimInfo.stimLevel_SL_mv./max(stimInfo.stimLevel_SL_mv))
 
 % 
 % 

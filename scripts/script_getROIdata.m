@@ -28,8 +28,10 @@ function ROIdata = script_getROIdata(thisView,analysisData,analysisBaseNames,ROI
                 for iAnal = 1:length(analysisBaseNames)
                     %                     data_flatROI = get_ROIdata(analysisData,ROI);
 %                     analysisData.glm_hrfDoubleGamma.overlayData.data
-                    data2get = eval(['analysisData.', analysisBaseNames{iAnal}, '.overlayData.data;']);
-                    eval(['ROIdata.'  analysisBaseNames{iAnal} ' = get_ROIdata(data2get,ROI);']);
+%                     data2get = eval(['analysisData.', analysisBaseNames{iAnal}, '.overlayData.data;']);
+                    data2get = analysisData.data;
+                    ROIdata = get_ROIdata(data2get,ROI);
+%                     eval(['ROIdata.'  analysisBaseNames{iAnal} ' = get_ROIdata(data2get,ROI);']);
                 end
 
             

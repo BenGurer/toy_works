@@ -54,7 +54,7 @@ save('preProcessParams.mat','motionCompParams','params_ConcatenationNH','params_
 
 
 %% smooth and create new group
-if Info.smoothlpxbjg == 1
+if Info.smooth == 1
     % cd to motioncomp group
     % get file names
     % loop
@@ -72,43 +72,57 @@ if Info.smoothlpxbjg == 1
 %     thisView = viewSet(thisView,'curGroup','MotionComp');
     
     % get all file names from directory
+    scanFiles = [];
     scanFiles = dir('*.nii');
     scanFiles = {scanFiles(:).name};
     
     % Smooth scans using fslmaths
-    for iFile = 1:length(scanFiles)        
+    sigma = Info.smoothingFWHM./ 2.355;
+%     sigma = 2;
+    for iFile = 1:length(scanFiles)
         % fslmaths original.nii -kernel gauss 2.1233226 -fmean smoothed.nii
-        system(['fslmaths ' scanFiles{iFile} ' -kernel gauss 4.7096 -fmean' [ '_smoothed_' scanFiles{iFile} ] '.nii']);
+%         system(['fslmaths ' scanFiles{iFile} ' -kernel gauss ' num2str(sigma) ' -fmean' [ '_smoothed_' scanFiles{iFile} ] '.nii']);
+    system(['fslmaths ' scanFiles{iFile} ' -s ' num2str(sigma) ' ' [ 'smoothed_' scanFiles{iFile} ] '.nii']);
+  
     end
+    smoothedScanFiles = [];
+%     smoothedScanFiles = dir('-fmean*.nii');
+    
+    smoothedScanFiles = dir('smoothed_*.nii');
+    smoothedScanFiles = {smoothedScanFiles(:).name};
     % move back to subject root directory
     cd ../..
+    
+    thisView = getMLRView;
     % create 'Smoothed' group in mrTools view
-    thisView = viewSet(thisView,'newGroup','Smoothed');
-    
-    
+%     groupName = ['Smoothed_fwhm' num2str(round(gaus_fwhm))];
+    groupName = Info.smoothingName;
+    thisView = viewSet(thisView,'newGroup',groupName);
+        
     % change mrTools view to 'Smoothed' group
-    thisView = viewSet(thisView,'curGroup','Smoothed');
+    thisView = viewSet(thisView,'curGroup',groupName);
     
-   smoothedGroupNum = viewGet(thisView,'groupnum','Smoothed');
     
-%     cd Smoothed/TSeries/
-%     scanFiles = dir('*.nii');
-%     scanFiles = {scanFiles(:).name};
+   smoothedGroupNum = viewGet(thisView,'groupnum',groupName);
+    
     % import scans and link log files
     
+    logFiles = [];
+    logFiles = dir('Etc/*.mylog.mat');
+    logFiles = {logFiles(:).name};
     % change to importTSeires from motion comp and then delete ffrom
     % motioncomp after
     for iFile = 1:length(logFiles)
-        thisView = importTSeries(thisView,[],'defaultParams=1',['pathname=' fullfile('MotionComp','TSeries',scanFiles{iFile})]);
-        fprintf(1,['Linking ' logFiles{iFile} ' to Group Smoothed, scan ' num2str(viewGet(thisView,'tseriesFile',iFile,1)) '\n']);
+        thisView = importTSeries(thisView,[],'defaultParams=1',['pathname=' fullfile('MotionComp','TSeries',smoothedScanFiles{iFile})]);
+        fprintf(1,['Linking ' logFiles{iFile} ' to Group ' groupName ', scan ' num2str(viewGet(thisView,'tseriesFile',iFile,1)) '\n']);
         thisView = viewSet(thisView,'stimfilename',logFiles{iFile}, iFile,smoothedGroupNum);
     end
  
     % move smoothed data to Smoothed group directory
-    !rm -f MotionComp/TSeries/-fmean_smoothed_*.nii
+    !rm -f MotionComp/TSeries/smoothed_*.nii
     
     for iGroup = 1:length(glmInfo.groupNames)
-        params_Concatenation = getConcatParams_withNewGroupName(thisView,[glmInfo.groupNames{iGroup} '_smoothed_fwhm'],'defaultParams=1',['scanList=' mat2str(subjectInfo.conditionOrder{iGroup})]);
+        params_Concatenation = getConcatParams_withNewGroupName(thisView,glmInfo.groupNames{iGroup},'defaultParams=1',['scanList=' mat2str(subjectInfo.conditionOrder{iGroup})]);
         [thisView, params_Concatenation] = concatTSeries(thisView,params_Concatenation);
     end
     
@@ -116,5 +130,7 @@ end
 
 % save view and quit
 mrSaveView(thisView);
+
+refreshMLRDisplay(thisView.viewNum);
 
 end

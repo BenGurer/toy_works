@@ -15,9 +15,10 @@
 
 %% thoughts/notes
 % how to remove outliers
+% plot glm vs beta weight as a function of frequency as a group average -
+% how does it comepare to SL(normalised) normalise both to remove units
 
-
-iSub = 6;
+iSub = 5;
 q = char(39);
 
 %% get study parameters
@@ -39,10 +40,16 @@ saveName = [subjectInfo.subjectID '_data.mat'];
 %% move to subject folder, delete any current views, open mrLoadRet and get its view
 cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
 % deleteView(thisView);
-load(saveName)
+
+if exist(saveName, 'file')   
+    load(saveName)
+else
+    data = struct;
+end
 
 mrLoadRet
 thisView = getMLRView;
+
 refreshMLRDisplay(thisView.viewNum);
 
 %% organise subject data
@@ -56,7 +63,7 @@ sHL_preprocess(Info, subjectInfo, 0);
 % non-linear alignment
 
 %% Setup mrLoadRet
-smooth = 1;
+% smooth = 1;
 [thisView, concatedate] = script_setupmrLoadRet(Info,subjectInfo,glmInfo);
 % initiate mrLoadRet
 % motion corerection
@@ -101,7 +108,7 @@ for iScan = 1:glmInfo.nScans
     for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
         analysisName = [glmInfo.analysisBaseNames_Scans{iAnal}, '_Scan_' mat2str(iScan)];
         for iSide = 1:length(subjectInfo.flatmapNames)
-            thisView = script_covertData2FlatmapSpace(thisView,'MotionComp',analysisName,iScan,[],subjectInfo.flatmapNames{iSide});
+            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.scanGroupName,analysisName,iScan,[],subjectInfo.flatmapNames{iSide});
         end
     end
 end
@@ -109,8 +116,9 @@ end
 % export group data
 for iGroup = 1:length(glmInfo.groupNames)
     for iSide = 1:length(subjectInfo.flatmapNames)
-        baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
-        thisView = viewSet(thisView,'currentbase',baseNum);
+%         not sure if I need below
+%         baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+%         thisView = viewSet(thisView,'currentbase',baseNum);
         for iAnal = 1:length(glmInfo.analysisNames_Groups)
             thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},glmInfo.analysisNames_Groups{iAnal},[],[1:33, 41, 42],subjectInfo.flatmapNames{iSide});
         end
@@ -131,8 +139,12 @@ end
 conditionNames = cell(1,length(glmInfo.nStim));
 for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
     analysisName = glmInfo.analysisNames_Scans{iAnal};
-    conditionNames{iAnal} = get_analysisConditionNames(thisView,analysisName,'MotionComp',1);
+    conditionNames{iAnal} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
+    
 end
+
+% save condition names
+data.conditions = conditionNames;
 
 % get data from SCANS
 for iScan = 1:glmInfo.nScans
@@ -146,16 +158,27 @@ end
 % get data from GROUPs
 for iGroup = 1:length(glmInfo.groupNames)
     %         overlayNames= ['averageDepthVol(' glmInfo.groupNames{iGroup} ' (Ouput 3 - weightedMeanStd(' conNamesString '),0))'];
+    for iAnal = 1:length(glmInfo.analysisNames_Groups)
     overlayNames = [];
+    conNamesString = [];
     for iCon =1:length(conditionNames{1})
-        overlayNames{iCon} = ['averageDepthVol(' glmInfo.groupNames{iGroup} ' (' conditionNames{1}{iCon} ',0))'];
+        overlayNames{iCon} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames_Groups{iAnal} ' (' conditionNames{1}{iCon} ',0))'];
+        
+        if iCon == 1
+            conNamesString  = [conNamesString conditionNames{1}{iCon}];
+        else
+            conNamesString  = [conNamesString ',' conditionNames{1}{iCon}];
+        end
     end
+    centriodOverlayName = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames_Groups{iAnal} ' (Ouput 3 - weightedMeanStd(' conNamesString '),0))'];
     for iSide = 1:length(subjectInfo.flatmapNames)
         baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
         thisView = viewSet(thisView,'currentbase',baseNum);
         for iAnal = 1:length(glmInfo.analysisNames_Groups)
             eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.overlayData = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',overlayNames,[]);'])
+            eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.glmCentriod = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',centriodOverlayName,[]);'])
         end
+    end
     end
 end
 
@@ -183,10 +206,13 @@ for iSide = 1:length(Info.Sides)
         
         
         for iGroup = 1:length(glmInfo.groupNames)
-            eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} ';']);
             %         eval(['ROI_data_' Info.Sides{iSide} '.' 'glmInfo.groupNames{iGroup} ' = script_getROIdata(thisView,groupDataVar,glmInfo.analysisNames_Groups,roiNames,[],' q 'overlays' q ');']);
-            eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} ' = script_getROIdata(thisView,groupDataVar,glmInfo.analysisNames_Groups,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi,[],' q 'overlays' q ');']);
-            
+            for iAnal = 1:length(glmInfo.analysisNames_Groups)
+                
+            eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.overlayData;']);
+                analysisName = glmInfo.analysisNames_Groups{iAnal};
+            eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} ' = script_getROIdata(thisView,groupDataVar,analysisName,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi,[],' q 'overlays' q ');']);
+            end
         end
         
         % SCANS - get data from ROIs
@@ -219,13 +245,14 @@ save(saveName,'data','-v7.3');
 fit = cell(1,length(Info.Sides));
 weightingType = {'SL','BOLD'};
 thisView = viewSet(thisView,'curgroup',glmInfo.groupNames{2});
+thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',glmInfo.analysisNames_Groups{1}));
 for iWeight = 1:length(weightingType)
     
     switch weightingType{iWeight}
         
         case 'SL'
             namePrefix =  [weightingType{iWeight} 'weighted '];            
-            thisView = script_glmOverlayAnalysis(thisView,2:33,namePrefix,0,conditionNames{1});
+            thisView = script_glmOverlayAnalysis(thisView,2:33,namePrefix,0,data.conditions{1});
         case 'BOLD'
             
             for iSide = 1:length(Info.Sides)
@@ -236,7 +263,7 @@ for iWeight = 1:length(weightingType)
                 end
                 
                 namePrefix =  [Info.Sides{iSide} '_' weightingType{iWeight} 'weighted '];
-                thisView = script_glmOverlayAnalysis(thisView,2:33,namePrefix,fit{iSide},conditionNames{1});
+                thisView = script_glmOverlayAnalysis(thisView,2:33,namePrefix,fit{iSide},data.conditions{1});
             end
     end
     
@@ -247,16 +274,24 @@ end
 % first get view so we have the ROIS
 thisView = getMLRView;
 
-% go to each flat base vol, define large ROI around HG on slice 6, project through depths (ROIs>transform>expandROI([1 1 6])(replace)),
+% go to each flat base vol, define large ROI around HG on slice 6, project through depths (ROIs>transform>expandROI([30 30 6])(post fix 'ex' to name)),
 
-pRFrois = {'LeftpRFrestrict','RightpRFrestrict'}; % this should be defined in setup
-for ipRFroi = 1:length(pRFrois)
+eval(['pRFrois = [Info.' Info.Sides{iSide} 'ROInames ' q 'ex' q '];']);
+% pRFrois = {'LeftpRFrestrict','RightpRFrestrict'}; % this should be defined in setup
+pRFrois = {'LeftACex','RightACex'}; % this should be defined in setup
+
+for iSide = 1:length(pRFrois)
 % roi = viewGet(thisView,'roi','leftpRFrestrict');
-% roi = viewGet(thisView,'roi','pRFrestrict');
-roi = viewGet(thisView,'roi',pRFrois{ipRFroi});
+% roi = viewGet(thisView,'roi','RightAC');       
+baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+thisView = viewSet(thisView,'currentbase',baseNum);
+thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide} 'Volume']);
+
+refreshMLRDisplay(thisView.viewNum);
+roi = viewGet(thisView,'roi',pRFrois{iSide});
 outputRoi = convertFromFlatVolumeToBase(roi);
 thisView = viewSet(thisView,'newROI',outputRoi);
-% post fix VOL to name
+% post fix Vol to name
 end
 % then convert back to vol space, THEN:  ROIs>combine>(choose both ROIS),action:Union, newName:pRFrestrict
 % name = pRFrestrict
@@ -268,26 +303,18 @@ end
 % overlays as well as all in analysis
 % for ipRFroi = 1:length(pRFrois)
 fit = cell(1,length(Info.Sides));
-for iSide = 1:length(Info.Sides)
-    
+for iSide = 1:length(Info.Sides)    
     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
     for iROI = 1:length(ROInames)    
     eval(['fit{iSide} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.concatData.' glmInfo.analysisNames_Groups{1} '.roiAnalysis.fit;']);
     end
 % get info from glm analysis: BOLD ratio, roi av TW
-% glmInfo.m = 0.0174;
-% glmInfo.b = -0.1176;
-% 
-% glmInfo.m = (fit{1}(1)+fit{2}(1))./2; % could compare to taking average of dBSL vs BOLD values rather than the fit
-% glmInfo.b = (fit{1}(2)+fit{2}(2))./2;
-glmInfo.m = fit{iSide}(1);
-glmInfo.b = fit{iSide}(2);
-% [thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[Info.Sides{iSide} 'pRFrestrictVOL'],1);
-[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,'pRFtest',1);
-
 % get info from glm to inform pRF
 % BOLD change between conditions
 % average tuning curve sigma
+glmInfo.m = fit{iSide}(1);
+glmInfo.b = fit{iSide}(2);
+[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[ pRFrois{iSide} , 'Vol' ],1);
 end
 
 
@@ -296,39 +323,129 @@ end
 thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
 % create ROIs with the names: pRFleft, pRFright
 
+%% export pRF overlays
+% export group data
+for iGroup = 1:length(glmInfo.groupNames)
+    for iSide = 1:length(subjectInfo.flatmapNames)
+        %         baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+        %         thisView = viewSet(thisView,'currentbase',baseNum);
+        for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+            %             [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
+            % export of flatmap space
+            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},[pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFrois{iSide}, 'Vol' ],[],[],subjectInfo.flatmapNames{iSide});
+        end
+    end
+end
+%% average pRF overlays over depth
+% average over cortical depth
+
+pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
+overlayNames = cell(size(pRFInfo.analysisNames_Groups));
+for iSide = 1:length(subjectInfo.flatmapNames)
+    %     thisView = script_averageAcrossDepths(thisView,overlays,groupName)
+        % get  group number and analysis number and get analysis, then get overlays
+    % and there names - concat with what makes exported overlay
+    for iGroup = 1:length(glmInfo.groupNames)
+        groupName = glmInfo.groupNames{iGroup};
+        for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+%             analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+
+            analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFrois{iSide}, 'Vol' ];
+            for iOverlay = 1:length(pRFOverlayNames)
+            overlayNames{iGroup}{iAnal}{iOverlay} = [groupName '_' analysisName ' (' pRFOverlayNames{iOverlay} ',0)'];
+            end
+            thisView = script_averageAcrossDepths(thisView,overlayNames{iGroup}{iAnal},[subjectInfo.flatmapNames{iSide}, 'Volume']);
+        end
+    end
+end
+
 %% get pRF data
 % list overlay names and get using script_getOverlayData
-for iGroup = 1:length(glmInfo.groupNames)
+overlayNames = cell(size(pRFInfo.analysisNames_Groups));
+
     %         overlayNames= ['averageDepthVol(' glmInfo.groupNames{iGroup} ' (Ouput 3 - weightedMeanStd(' conNamesString '),0))'];
     
-    overlayNames = 'averageDepthVol(pRF(PrefCentreFreq,0))';
-    
-    for iSide = 1:length(subjectInfo.flatmapNames)
-        baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
-        thisView = viewSet(thisView,'currentbase',baseNum);
-        eval(['data.' Info.Sides{iSide}, '.', glmInfo.groupNames{iGroup}, '.', pRFinfo.analysisNames_Groups{iGroup}{iAnal}, '.overlayData = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',overlayNames,[]);'])
-        %         for iAnal = 1:length(glmInfo.analysisNames_Groups)
-        %             eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.overlayData = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',overlayNames,[]);'])
-        %         end
+%     overlayNames = 'averageDepthVol(pRF(PrefCentreFreq,0))';
+
+for iSide = 1:length(subjectInfo.flatmapNames)
+    baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+    thisView = viewSet(thisView,'currentbase',baseNum);
+    for iGroup = 1:length(glmInfo.groupNames)
+        groupName = [];
+        groupName = glmInfo.groupNames{iGroup};
+        for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+            analysisName = [];
+            analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFrois{iSide}, 'Vol' ];
+            %             analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+            for iOverlay = 1:length(pRFOverlayNames)
+                overlayNames{iGroup}{iAnal}{iOverlay} = ['averageDepthVol(' groupName '_' analysisName ' (' pRFOverlayNames{iOverlay} ',0))'];
+            end
+            %                  overlayNames{iGroup}{iAnal}{iOverlay} = [groupName '_' analysisName ' (' pRFOverlayNames{iOverlay} ',0)'];
+            
+            %             function overlayData = script_getOverlayData(thisView,groupName,analysisName,conditionNames,iScan)
+            eval(['data.' Info.Sides{iSide}, '.', glmInfo.groupNames{iGroup}, '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.overlayData = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',overlayNames{iGroup}{iAnal},[]);'])
+            %         for iAnal = 1:length(glmInfo.analysisNames_Groups)
+            %             eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.overlayData = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',overlayNames,[]);'])
+            %         end
+            
+        end
     end
 end
 
 %% Restrict pRF data by ROI
 % difference number of analysis in each group
 % use the same format as glm - iAnal and loop through for each group
-for iGroup = 1:length(glmInfo.groupNames)
-    for iSide = 1:length(Info.Sides)
-        eval(['dataVar = data.' Info.Sides{iSide}, '.', glmInfo.groupNames{iGroup}, '.' pRFinfo.analysisNames_Groups{iGroup}{iAnal}, '.overlayData;']);
-        eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
-        eval(['ROI_data_' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} ' = script_getROIdata(thisView,dataVar,pRFanalysis,roiNames,[],' q 'overlays' q ');']);
+
+for iSide = 1:length(Info.Sides)    
+    eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
+    for iROI = 1:length(roiNames)
+        roi = viewGet(thisView,'roi',roiNames{iROI});
+        for iGroup = 1:length(glmInfo.groupNames)
+            
+%             for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+            for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+%                 analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+                
+                analysisName = pRFInfo.analysisNames_Groups{iGroup};
+%                 eval(['dataVar = data.' Info.Sides{iSide}, '.', glmInfo.groupNames{iGroup} ';']);
+                            eval(['dataVar = data.' Info.Sides{iSide}, '.', glmInfo.groupNames{iGroup}, '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.overlayData;']);
+                
+                %         function ROIdata = script_getROIdata(thisView,analysisData,analysisBaseNames,ROI,analysisScanNum,dataType)
+                eval(['data.' Info.Sides{iSide} '.' roiNames{iROI} '.' glmInfo.groupNames{iGroup} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} ' = script_getROIdata(thisView,dataVar,analysisName,roi,[],' q 'overlays' q ');']);
+            end
+        end
     end
 end
-
-%% pRF ROI analysis
+%% pRF analysis
 % create function or add to: voxel comparisions;
 % pCF scatter, pCF distribution, pCF correlation
 % r = corr2(A,B)
 
+%% get weighted mean data
+%% get pCF data
+pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
+for iSide = 1:length(Info.Sides)
+    eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
+    for iROI = 1:length(roiNames)
+        %         roi = viewGet(thisView,'roi',roiNames{iROI});
+        for iAnala = 1:length(pRFInfo.analysisNames_Groups{1})
+            
+            eval(['conA_data = data.' Info.Sides{iSide} '.' roiNames{iROI} '.' glmInfo.groupNames{1} '.' pRFInfo.analysisNames_Groups{1}{iAnala} ';']);
+            %             for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+            for iAnalb = 1:length(pRFInfo.analysisNames_Groups{2})
+                
+                
+                % data = script_pRFROIAnalysis(conA_data,conB_data,dataNames)
+                
+                eval(['conB_data = data.' Info.Sides{iSide} '.' roiNames{iROI} '.' glmInfo.groupNames{2} '.' pRFInfo.analysisNames_Groups{2}{iAnalb} ';']);
+                
+                tmpData{iSide}{iROI}{iAnalb} = script_pRFROIAnalysis(conA_data,conB_data,pRFOverlayNames);
+            end
+        end
+    end
+end
+
+           
 
 %% Save data
 save(saveName,'data','-v7.3');
@@ -337,26 +454,36 @@ save(saveName,'data','-v7.3');
 %% difference map
 % go to flatmap groups > take overlay from each group > subtrack them from
 % each other > install as new overlay
-overlay = cell(1,length(glmInfo.groupNames));
+overlay = cell(size(pRFInfo.analysisNames_Groups));
 for iGroup = 1:length(glmInfo.groupNames)
-
-thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{iGroup});
-
-% 'overlay'
-%    overlay = viewGet(view,'overlay',[overlayNum],[analysisNum])
-%    overlay = viewGet(view,'overlay',overlayNum,[])
-%    overlay = viewGet(view,'overlay',[],analysisNum)
-%    overlay = viewGet(view,'overlay',[],[])
-%    overlay = viewGet(view,'overlay',overlayNum)
-%    overlay = viewGet(view,'overlay')
-
-%% loop over analysis
-% add this in pRF analysis loop?
-overlayNum = viewGet(thisView,'overlayNum','PrefCentreFreq');
-overlay{iGroup} = viewGet(thisView,'overlay',overlayNum);
-
+    
+    thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{iGroup});
+    
+    % 'overlay'
+    %    overlay = viewGet(view,'overlay',[overlayNum],[analysisNum])
+    %    overlay = viewGet(view,'overlay',overlayNum,[])
+    %    overlay = viewGet(view,'overlay',[],analysisNum)
+    %    overlay = viewGet(view,'overlay',[],[])
+    %    overlay = viewGet(view,'overlay',overlayNum)
+    %    overlay = viewGet(view,'overlay')
+    
+    %% loop over analysis
+    % add this in pRF analysis loop?
+    for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+        analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+        thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+        overlayNum = viewGet(thisView,'overlayNum','PrefCentreFreq');
+        overlay{iGroup}{iAnal} = viewGet(thisView,'overlay',overlayNum);
+    end
 end
-[ thisView , differenceData ] = script_createDifferenceMaps(thisView,overlay{1},overlay{2});
+for iAnal = 1:length(pRFInfo.analysisNames_Groups{2})
+    analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+    thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+    [ thisView , differenceData ] = script_createDifferenceMaps(thisView,overlay{1}{1},overlay{2}{iAnal});
+end
+
+%% plot study information
+[ data ] = plot_studyInfo(stimInfo, glmInfo, pRFInfo, Info, plotInfo)
 
 
 %% quit mrLoadRet

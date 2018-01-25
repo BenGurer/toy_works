@@ -24,7 +24,7 @@ difference.data{1} = nan(scanDims);
 difference.data{1} = differenceData;
 % difference.data{scanNum}(x(i),y(i),z(i)) = thisr2(i);
 
-thisView = viewSet(thisView,'newoverlay',difference,4);
+thisView = viewSet(thisView,'newoverlay',difference);
 %              'newoverlay'
 %    view = viewSet(view,'newoverlay',overlayStructure,[analysisNum]);
 %

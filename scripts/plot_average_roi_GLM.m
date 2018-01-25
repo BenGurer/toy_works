@@ -37,6 +37,6 @@ end
 if plotLOGIC(3) == 1
     %% plot dB senstation level vs BOLD fMRI activity 
 % [ fit ] =  plot_dbSLvsBetaWeight(ratio2Plot, level2Plot, fit , error2plot)
-plot_dbSLvsBetaWeight(data.ratio2Plot,data.level2Plot,data.fit,data.error2plot);
+plot_dbSLvsBetaWeight(data.ratio2Plot,data.level2Plot,data.fit,data.error2plot,stimulusLevels);
 end
 end

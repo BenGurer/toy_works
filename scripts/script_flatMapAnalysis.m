@@ -16,7 +16,8 @@ for iSide=1:length(subjectInfo.flatmapNames)
     refreshMLRDisplay(thisView);
     [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(Info.gradReversalInfo.overlayBase)]);
     params.combineFunction = 'gradientReversal';
-    params.additionalArgs = '[18 18 21]';
+%     params.additionalArgs = '[18 18 21]';
+        params.additionalArgs = '[12 12 21]';
     params.baseSpaceInterp = 'linear';
     params.nOutputOverlays= 7;
     params.baseSpace = 1;
