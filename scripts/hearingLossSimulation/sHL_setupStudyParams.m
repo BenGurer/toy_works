@@ -128,13 +128,15 @@ end
     
 pRFInfo.analysisNames_Groups{1}{1} = 'pRF';
 pRFInfo.stimulusWeighting{1} = {'None'};
-pRFInfo.stimulusWeighting{2} = {'None','SL_level','BOLD','fit'};
+% pRFInfo.stimulusWeighting{2} = {'None','SL_level','BOLD','fit'};
 
+pRFInfo.stimulusWeighting{2} = {'BOLD'};
 % pRFInfo.stimulusWeighting{2} = {'None','SL_level'};
 for iWeight = 1:length(pRFInfo.stimulusWeighting{2})
     pRFInfo.analysisNames_Groups{2}{iWeight} = ['pRF_' pRFInfo.stimulusWeighting{2}{iWeight}];
 end
 
+pRFInfo.pRFrois = {'LeftACex','RightACex'}; % this should be defined in setup
 
 %% Info - save general info needed to struct
 

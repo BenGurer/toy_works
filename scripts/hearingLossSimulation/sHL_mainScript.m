@@ -18,7 +18,7 @@
 % plot glm vs beta weight as a function of frequency as a group average -
 % how does it comepare to SL(normalised) normalise both to remove units
 
-iSub = 5;
+iSub = 1;
 q = char(39);
 
 %% get study parameters
@@ -92,6 +92,7 @@ thisView = script_glmAnalysis(thisView,glmInfo);
 % don't need to perform weighted mean on individual runs
 
 %% GLM grandient reversals
+% rotate left flatmap 230 and right 290
 thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
 
 %% ROI CREATION
@@ -306,7 +307,8 @@ fit = cell(1,length(Info.Sides));
 for iSide = 1:length(Info.Sides)    
     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
     for iROI = 1:length(ROInames)    
-    eval(['fit{iSide} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.concatData.' glmInfo.analysisNames_Groups{1} '.roiAnalysis.fit;']);
+%     eval(['fit{iSide} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.concatData.' glmInfo.analysisNames_Groups{1} '.roiAnalysis.fit;']);
+     eval(['fit{iSide} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.splitData.' glmInfo.analysisBaseNames_Scans{1} '.roiAnalysis.fit;']);
     end
 % get info from glm analysis: BOLD ratio, roi av TW
 % get info from glm to inform pRF
@@ -454,7 +456,9 @@ save(saveName,'data','-v7.3');
 %% difference map
 % go to flatmap groups > take overlay from each group > subtrack them from
 % each other > install as new overlay
-overlay = cell(size(pRFInfo.analysisNames_Groups));
+
+for iSide = 1:length(Info.Sides)   
+    overlay = cell(size(pRFInfo.analysisNames_Groups));
 for iGroup = 1:length(glmInfo.groupNames)
     
     thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{iGroup});
@@ -470,18 +474,22 @@ for iGroup = 1:length(glmInfo.groupNames)
     %% loop over analysis
     % add this in pRF analysis loop?
     for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
-        analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+%         analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+ analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
+         
         thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
         overlayNum = viewGet(thisView,'overlayNum','PrefCentreFreq');
         overlay{iGroup}{iAnal} = viewGet(thisView,'overlay',overlayNum);
     end
 end
 for iAnal = 1:length(pRFInfo.analysisNames_Groups{2})
-    analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+%     analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+ analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
+         
     thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
     [ thisView , differenceData ] = script_createDifferenceMaps(thisView,overlay{1}{1},overlay{2}{iAnal});
 end
-
+end
 %% plot study information
 [ data ] = plot_studyInfo(stimInfo, glmInfo, pRFInfo, Info, plotInfo)
 
