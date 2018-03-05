@@ -316,7 +316,7 @@ for iSide = 1:length(Info.Sides)
 % average tuning curve sigma
 glmInfo.m = fit{iSide}(1);
 glmInfo.b = fit{iSide}(2);
-[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[ pRFrois{iSide} , 'Vol' ],1);
+[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[ pRFInfo.pRFrois{iSide} , 'Vol' ],1);
 end
 
 
@@ -334,14 +334,14 @@ for iGroup = 1:length(glmInfo.groupNames)
         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
             %             [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
             % export of flatmap space
-            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},[pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFrois{iSide}, 'Vol' ],[],[],subjectInfo.flatmapNames{iSide});
+            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},[pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ],[],[],subjectInfo.flatmapNames{iSide});
         end
     end
 end
 %% average pRF overlays over depth
 % average over cortical depth
 
-pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
+% pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
 overlayNames = cell(size(pRFInfo.analysisNames_Groups));
 for iSide = 1:length(subjectInfo.flatmapNames)
     %     thisView = script_averageAcrossDepths(thisView,overlays,groupName)
@@ -352,9 +352,9 @@ for iSide = 1:length(subjectInfo.flatmapNames)
         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
 %             analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
 
-            analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFrois{iSide}, 'Vol' ];
-            for iOverlay = 1:length(pRFOverlayNames)
-            overlayNames{iGroup}{iAnal}{iOverlay} = [groupName '_' analysisName ' (' pRFOverlayNames{iOverlay} ',0)'];
+            analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
+            for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
+            overlayNames{iGroup}{iAnal}{iOverlay} = [groupName '_' analysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
             end
             thisView = script_averageAcrossDepths(thisView,overlayNames{iGroup}{iAnal},[subjectInfo.flatmapNames{iSide}, 'Volume']);
         end
@@ -377,10 +377,10 @@ for iSide = 1:length(subjectInfo.flatmapNames)
         groupName = glmInfo.groupNames{iGroup};
         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
             analysisName = [];
-            analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFrois{iSide}, 'Vol' ];
+            analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
             %             analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
-            for iOverlay = 1:length(pRFOverlayNames)
-                overlayNames{iGroup}{iAnal}{iOverlay} = ['averageDepthVol(' groupName '_' analysisName ' (' pRFOverlayNames{iOverlay} ',0))'];
+            for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
+                overlayNames{iGroup}{iAnal}{iOverlay} = ['averageDepthVol(' groupName '_' analysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0))'];
             end
             %                  overlayNames{iGroup}{iAnal}{iOverlay} = [groupName '_' analysisName ' (' pRFOverlayNames{iOverlay} ',0)'];
             
@@ -441,7 +441,7 @@ for iSide = 1:length(Info.Sides)
                 
                 eval(['conB_data = data.' Info.Sides{iSide} '.' roiNames{iROI} '.' glmInfo.groupNames{2} '.' pRFInfo.analysisNames_Groups{2}{iAnalb} ';']);
                 
-                tmpData{iSide}{iROI}{iAnalb} = script_pRFROIAnalysis(conA_data,conB_data,pRFOverlayNames);
+                tmpData{iSide}{iROI}{iAnalb} = script_pRFROIAnalysis(conA_data,conB_data,pRFInfo.pRFOverlayNames);
             end
         end
     end

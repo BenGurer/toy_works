@@ -136,7 +136,8 @@ for iWeight = 1:length(pRFInfo.stimulusWeighting{2})
     pRFInfo.analysisNames_Groups{2}{iWeight} = ['pRF_' pRFInfo.stimulusWeighting{2}{iWeight}];
 end
 
-pRFInfo.pRFrois = {'LeftACex','RightACex'}; % this should be defined in setup
+pRFInfo.pRFrois = {'LeftACex','RightACex'}; % ROIs to restrict pRF analysis - expanded around AC
+pRFInfo.pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
 
 %% Info - save general info needed to struct
 
