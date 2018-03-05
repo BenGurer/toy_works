@@ -7,14 +7,19 @@ difference = overlayB;
 dateString = datestr(now);
 r2.date = dateString;
 difference.name = 'difference';
+
+difference.range = [0 33];
+difference.clip = [0 33];
+difference.colorRange = [0 33];
+
 % difference.colorRange = [0 1];
 % difference.range = [0 1];
-% difference.clip = [0 1];
-difference.range = [min(min(min(differenceData))) max(max(max(differenceData)))];
-difference.clip = [min(min(min(differenceData))) max(max(max(differenceData)))];
-difference.colorRange = [min(min(min(differenceData))) max(max(max(differenceData)))];
+% % difference.clip = [0 1];
+% difference.range = [min(min(min(differenceData))) max(max(max(differenceData)))];
+% difference.clip = [min(min(min(differenceData))) max(max(max(differenceData)))];
+% difference.colorRange = [min(min(min(differenceData))) max(max(max(differenceData)))];
 if exist('brewermap.m', 'file')
-    difference.colormap = brewermap(256,'Blues');
+    difference.colormap = brewermap(256,'Reds');
 else
     difference.colormap = hot(256);
 end

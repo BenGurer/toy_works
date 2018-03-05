@@ -56,7 +56,7 @@ freeSurferName{4} = '11108_007';
 T2star{4} = '7';
 refScan{4} = '04'; % scan before t2 structural
 conditionOrder{4} = {[2,4],[1,3]};
-flatmapName{4} = {'x11108_007_left_Flat', 'x11108_007_right_Flat'};
+flatmapName{4} = {'x11108_007_left_WM_Flat_78_111_88_Rad55', 'x11108_007_right_WM_Flat_191_118_82_Rad55'};
 
 subject{5} = '13016_001';
 niftiBaseName{5} = 'HL_13016_001_';
