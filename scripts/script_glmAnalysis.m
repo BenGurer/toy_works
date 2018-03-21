@@ -1,5 +1,12 @@
 function [thisView] = script_glmAnalysis(thisView,glmInfo)
-
+    %
+    %   usage: script_glmAnalysis(thisView,glmInfo)
+    %      by: Ben Gurer
+    %    date: 13/03/2017
+    % purpose: script glm analysis for tonotopy
+    %   input: thisView, glmInfo
+    %  output: thisView
+    %
 hrfModel = glmInfo.hrfModel;
 for i = 1:length(glmInfo.groupNames)
     for iHRF = 1:length(hrfModel)

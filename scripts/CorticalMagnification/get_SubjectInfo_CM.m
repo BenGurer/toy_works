@@ -33,6 +33,7 @@ distCorrectionRefCont{2} = {'11','12'};
 freeSurferName{2} = '12013_001';
 sparseScans{2} =  {'7','14'};
 contScans{2} =  {'8','15'};
+flatmapName{2} = {};
 
 subject{3} = '12022_001';
 psirSubject{3} = '12022_001';
@@ -46,6 +47,7 @@ distCorrectionRefCont{3} = {'11','12'};
 freeSurferName{3} = '12022_001';
 sparseScans{3} =  {'7','15'};
 contScans{3} =  {'8','16'};
+flatmapName{3} = {};
 
 subject{4} = '12023_001';
 psirSubject{4} = '12023_001';
@@ -59,6 +61,7 @@ distCorrectionRefCont{4} = {'12','13'};
 freeSurferName{4} = '12023_001';
 sparseScans{4} =  {'8','15'};
 contScans{4} =  {'9','16'};
+flatmapName{4} = {};
 
 subject{5} = '11108_006';
 niftiBaseName{5} = 'cm_11108_006_';
@@ -71,6 +74,7 @@ distCorrectionRefCont{5} = {'15','16'};
 freeSurferName{5} = '11108_006';
 sparseScans{5} =  {'08','18'};
 contScans{5} =  {'12','19'};
+flatmapName{5} = {};
 
 subject{6} = '11020_002';
 niftiBaseName{6} = 'cm_11020_002_';
@@ -83,6 +87,7 @@ distCorrectionRefCont{6} = {'12','13'};
 freeSurferName{6} = '11020_002';
 sparseScans{6} =  {'08','15'};
 contScans{6} =  {'09','18'};
+flatmapName{6} = {};
 
 % Import raw scans from subject 9 post motion correction
 % Import to one group
@@ -97,6 +102,7 @@ distCorrectionRefCont{7} = {'21','22'};
 freeSurferName{7} = '08773_007';
 sparseScans{7} =  {'10','23'};
 contScans{7} =  {'20',[]};
+flatmapName{7} = {};
 
 % subject 9 is subject 7's repeat session of 3 functional scans
 subject{9} = '08773_008';
@@ -107,6 +113,7 @@ distCorrectionRefSparse{9} = {'12','13'};
 distCorrectionRefCont{9} = {'14','15'};
 sparseScans{9} =  {'10',[]};
 contScans{9} =  {'09','18'};
+flatmapName{9} = {};
 
 subject{8} = '09933_005';
 niftiBaseName{8} = 'cm_09933_005_';
@@ -119,6 +126,7 @@ distCorrectionRefCont{8} = {'09','10'};
 freeSurferName{8} = '09933_005';
 sparseScans{8} =  {'07_scan1','13'};
 contScans{8} =  {'06','14'};
+flatmapName{8} = {};
 
 %% output selected subjects daya
 subjectInfo = struct();

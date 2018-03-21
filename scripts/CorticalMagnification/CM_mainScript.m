@@ -14,7 +14,7 @@
 % 
 
 %% define subject
-iSub = 1;
+iSub = 5;
 q = char(39);
 
 %% Get study parameters
@@ -78,7 +78,10 @@ thisView = script_importAnatomy(thisView);
 % [freeSurferName{iSubj} '_left_Flat.off'] AND [freeSurferName{iSubj} '_right_Flat.off']
 % rotate flatmaps for easy viewing (do before exporting to flatmap space)
 
+%% Tonotopic analysis
+
 %% GLM analysis
+% first do Box Car
 thisView = script_glmAnalysis(thisView,glmInfo);
 % HRF = double gamma and box car
 % All stims and 8 bins
@@ -94,6 +97,23 @@ thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
 % LeftRestrict, RightRestrict 
 %   go to each flat base vol, define large ROI around HG, project through 
 %   depths (ROIs>transform>expandROI([1 1 6])(replace)),
+
+%% HRF estimate
+thisView = script_hrfAnalysis(thisView,glmInfo);
+% estimate hrf using deconvolution
+
+thisView = script_hrfROIAnalysis(thisView)
+% get data from analysis
+% use ROI to restrict
+% perform ROI analysis - average hrf estimate
+% output result
+
+overlayData = script_getOverlayData(thisView)
+
+%% get av HRF estimate for GLM BOXCAR Gradient Reversals ROI
+% use results for GLM
+% add option for hrf model
+thisView = script_glmAnalysis(thisView,glmInfo);
 
 
 %% Convert GLM data to flatmap space and average over cortical depth
