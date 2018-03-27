@@ -28,18 +28,18 @@ elseif shift>0
 end
 
 
-if params.includeDerivative
-  % take the derivative
-  modelHrfDerivative = [diff(modelHrf), 0];
-  % orthogonalize
-  modelHrfDerivative = modelHrfDerivative - modelHrf*(modelHrfDerivative/modelHrf);
-  % remove mean
-  modelHrfDerivative = modelHrfDerivative - mean(modelHrfDerivative);
-  % normalize so that its norm equals the Hrf norm
-  modelHrfDerivative = modelHrfDerivative / norm(modelHrfDerivative)*norm(modelHrf);
-  %concatenate
-  modelHrf = [modelHrf; modelHrfDerivative];
-end
+% if params.includeDerivative
+%   % take the derivative
+%   modelHrfDerivative = [diff(modelHrf), 0];
+%   % orthogonalize
+%   modelHrfDerivative = modelHrfDerivative - modelHrf*(modelHrfDerivative/modelHrf);
+%   % remove mean
+%   modelHrfDerivative = modelHrfDerivative - mean(modelHrfDerivative);
+%   % normalize so that its norm equals the Hrf norm
+%   modelHrfDerivative = modelHrfDerivative / norm(modelHrfDerivative)*norm(modelHrf);
+%   %concatenate
+%   modelHrf = [modelHrf; modelHrfDerivative];
+% end
 
 %normalise so that integral of sum = 1
 modelHrf = modelHrf./sum(modelHrf(:));

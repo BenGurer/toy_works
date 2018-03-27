@@ -12,6 +12,11 @@ thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{2});
 analysisName = 'GLM_Deconv_8bins';
 analysisData = get_analysisData(thisView,analysisName);
 
+%  % get the event related data
+%       deconvData = viewGet(thisView,'d',scanNum,erAnalNum);
+%       deconvAnalysisParams = convertOldGlmParams(viewGet(thisView,'analysisParams',erAnalNum));
+%      
+
 % get ROI
 roi = viewGet(thisView,'roi',roiName);
 
@@ -23,7 +28,7 @@ roi = viewGet(thisView,'roi',roiName);
         volumeIndices = sub2ind(size(r2data{:}),roi.scanCoords(1,:),roi.scanCoords(2,:),roi.scanCoords(3,:));
     [estimate,volumeIndices] = getEstimates(analysisData.d{:}, analysisData.params ,volumeIndices');
     nVoxels = length(volumeIndices);
-    
+    r
 % calcculate average HRF
     data = cal_hrfAverageROI(estimate,analysisData.d{:});
 % 
