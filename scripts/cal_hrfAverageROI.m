@@ -1,8 +1,10 @@
-function data = cal_hrfAverageROI(e,analysisParams)
+function [ x_doubleGamma, x_Gamma, x_dGamma ] = cal_hrfAverageROI(e,analysisParams)
     %% Centre max response to 0 and average
 %     max(a,[],2)
-    hdrTimeMax = 3; % [v i] = max(mean(estimate.hdr(:,:,1),2))
-    curve = e.hdr(hdrTimeMax,:,:);
+% take mean of all and find max time point and use that
+%     hdrMaxTimePoint = 3; % [v i] = max(mean(estimate.hdr(:,:,1),2))
+    [v hdrMaxTimePoint] = max(max(mean(estimate.hdr,3)'))
+    curve = e.hdr(hdrMaxTimePoint,:,:);
     nOverlays = analysisParams.nhdr;
     resolution = 1; %resolution = 2;
     overlaySize = size(e.hdr);
@@ -132,9 +134,9 @@ plot(xdata,deconvHRF)
 % timelag2 = x(4);
 % tau2 = x(5);
 % exponent2 = x(6);
-
+x_dGamma = [];
 p_dGamma = [1 0.6 4 2 1.2 11 0.25]; %guess - Plot?
-lb_dGamma = [0 0 0 0 0 0 0];
+lb_dGamma = [0 0 0 2 0 0 0];
 ub_dGamma = [16 inf 16 16 inf 16 1];
 opts = optimset('MaxFunEvals', 500, 'Display', 'off');
 [x_dGamma, resnorm, ~, exitflag, output] = lsqcurvefit(@get_HRFDiffOfGamma, p_dGamma, xdata, ydata, lb_dGamma, ub_dGamma, opts);

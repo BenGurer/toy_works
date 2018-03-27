@@ -25,9 +25,9 @@ gammafun(find((time-timelag) < 0)) = 0;
 % end
 
 gammafun = gammafun ./max(gammafun);
+gammafun2 = amplitude2 .* (((time-timelag2)/tau2).^(exponent2-1).*exp(-(time-timelag2)/tau2))./(tau2*factorial(exponent2-1));
 
-gammafun = gammafun - (amplitude2 .* (((time-timelag2)/tau2).^(exponent2-1).*exp(-(time-timelag2)/tau2))./(tau2*factorial(exponent2-1)));
-
+gammafun = gammafun - gammafun2;
 gammafun = (amplitude*gammafun+offset);
 
 end
