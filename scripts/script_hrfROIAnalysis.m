@@ -30,7 +30,7 @@ roi = viewGet(thisView,'roi',roiName);
     nVoxels = length(volumeIndices);
     r
 % calcculate average HRF
-    data = cal_hrfAverageROI(estimate,analysisData.d{:});
+    data = cal_hrfROIAverage(estimate,analysisData.d{:});
 % 
 % thisView = viewSet(thisView,'curGroup','MotionComp',['curScan=' mat2str(iScan)]);
 %     thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',[analysisSaveName{1} mat2str(iScan)]));
