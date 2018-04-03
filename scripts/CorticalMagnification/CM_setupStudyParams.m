@@ -58,7 +58,7 @@ stimInfo.stimLevel_SL_mv = stimLevel_SL_mv;
 %% Setup GLM analysis
 % save in glmInfo structure
 glmInfo.hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
-glmInfo.groupNames = {'ConcatenationSparse', 'ConcatenationContinuous'};
+glmInfo.groupNames = {'ConcatenationSparse', 'ConcatenationCont'};
 glmInfo.nScans = 4;
 glmInfo.nStim = [32, 8];
 glmInfo.analysisNames_Scans = cell(1,(glmInfo.nScans.*length(glmInfo.nStim)).*length(glmInfo.hrfModel));
@@ -91,6 +91,8 @@ for iGroup = 1:length(glmInfo.groupNames)
     c = 0;
     d = d + length(glmInfo.hrfModel);
 end
+
+glmInfo.scanGroupName = 'MotionComp';
 
 %% pRF information
 % what info do I need?

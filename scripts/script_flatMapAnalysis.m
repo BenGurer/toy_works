@@ -1,4 +1,4 @@
-function thisView = script_flatMapAnalysis(thisView,Info,subjectInfo)
+function thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,groupBase,analysisBase)
 %% gradient reversals
 % add naming to allow left and right sides for same analysis
 
@@ -12,8 +12,8 @@ for iSide=1:length(subjectInfo.flatmapNames)
     % gradient reversals
   %     thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['x' subjectInfo.freeSurferName '_' Info.sides{iSide} '_WM_Flat_' subjectInfo.flatmapNames{iSide}]));
     thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',subjectInfo.flatmapNames{iSide}));
-     thisView = viewSet(thisView,'curgroup',Info.gradReversalInfo.groupBase);
-    thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',Info.gradReversalInfo.analysisBase));
+    thisView = viewSet(thisView,'curgroup',groupBase);
+    thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisBase));
   
     refreshMLRDisplay(thisView);
     params = [];
@@ -24,7 +24,7 @@ for iSide=1:length(subjectInfo.flatmapNames)
     params.baseSpaceInterp = 'linear';
     params.nOutputOverlays= 7;
     params.baseSpace = 1;
-    params.outputName = ['gradientReversal_' Info.sides{iSide}];
+    params.outputName = ['gradientReversal_' Info.sides{iSide} '_' analysisBase];
     params.exportToNewGroup=1;
     [thisView,params] = combineTransformOverlays(thisView,params);
     curOverlay=viewGet(thisView,'curOverlay');

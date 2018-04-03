@@ -27,15 +27,15 @@ motionCompParams.baseFrame='last';
 motionCompParams.baseScan = refScanNum;
 [thisView, motionCompParams] = motionComp(thisView,motionCompParams);
 
-% Concatenation of Normal Hearing data
+% Concatenation of Group A data
 thisView = viewSet(thisView,'curGroup','MotionComp');
-params_ConcatenationNH = getConcatParams_withNewGroupName(thisView,glmInfo.groupNames{1},'defaultParams=1',['scanList=' mat2str(subjectInfo.conditionOrder{1})]);
-[thisView, params_ConcatenationNH] = concatTSeries(thisView,params_ConcatenationNH);
+params_Concat_GroupA = getConcatParams_withNewGroupName(thisView,glmInfo.groupNames{1},'defaultParams=1',['scanList=' mat2str(subjectInfo.conditionOrder{1})]);
+[thisView, params_Concat_GroupA] = concatTSeries(thisView,params_Concat_GroupA);
 
-% Concatenation of Hearing Loss Simulation data
+% Concatenation of Group B data
 thisView = viewSet(thisView,'curGroup','MotionComp');
-params_ConcatenationHLsim = getConcatParams_withNewGroupName(thisView,glmInfo.groupNames{2},'defaultParams=1',['scanList=' mat2str(subjectInfo.conditionOrder{2})]);
-[thisView, params_ConcatenationHLsim] = concatTSeries(thisView,params_ConcatenationHLsim);
+params_Concat_GroupB = getConcatParams_withNewGroupName(thisView,glmInfo.groupNames{2},'defaultParams=1',['scanList=' mat2str(subjectInfo.conditionOrder{2})]);
+[thisView, params_Concat_GroupB] = concatTSeries(thisView,params_Concat_GroupB);
 
 % link stim files to scans
 system(sprintf('cp %s/*.txt Etc/',fullfile(Info.dataDir,'scanner',subjectInfo.subjectID,'logFiles')));

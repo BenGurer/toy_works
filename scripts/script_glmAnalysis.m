@@ -1,4 +1,4 @@
-function [thisView] = script_glmAnalysis(thisView,glmInfo)
+function [thisView] = script_glmAnalysis(thisView,glmInfo,hrfModel,runSplitHalf)
     %
     %   usage: script_glmAnalysis(thisView,glmInfo)
     %      by: Ben Gurer
@@ -7,7 +7,7 @@ function [thisView] = script_glmAnalysis(thisView,glmInfo)
     %   input: thisView, glmInfo
     %  output: thisView
     %
-hrfModel = glmInfo.hrfModel;
+% hrfModel = glmInfo.hrfModel;
 for i = 1:length(glmInfo.groupNames)
     for iHRF = 1:length(hrfModel)
         analysisName = ['glm_' hrfModel{iHRF}];
@@ -19,12 +19,30 @@ for i = 1:length(glmInfo.groupNames)
         glmParams.hrfParams.description = hrfModel{iHRF};
         switch hrfModel{iHRF}
             case 'hrfBoxcar'
-                glmParams.hrfParams.delayS =  2.5;
-                glmParams.hrfParams.durationS = 2.5;
+%                 switch glmInfo.studyNames
+%                     case 'CM'                        
+%                         switch glmInfo.groupNames{i}
+%                             case glmInfo.groupNames{1}
+%                                 glmParams.hrfParams.delayS =  2.5;
+%                                 glmParams.hrfParams.durationS = 2.5;
+%                             case glmInfo.groupNames{2}
+%                                 glmParams.hrfParams.delayS =  2.5;
+%                                 glmParams.hrfParams.durationS = 2.5;
+%                         end
+%                     case 'sHL'
+                        glmParams.hrfParams.delayS =  2.5;
+                        glmParams.hrfParams.durationS = 2.5;
+%                 end
             case 'hrfDoubleGamma'
-                glmParams.hrfParams.x =  4;
-                glmParams.hrfParams.y = 11;
-                glmParams.hrfParams.z =  4;
+                if isfield(glmInfo,'hrfParamsDoubleGamma')
+                    glmParams.hrfParams.x = glmInfo.hrfParamsDoubleGamma(1);
+                    glmParams.hrfParams.y = glmInfo.hrfParamsDoubleGamma(2);
+                    glmParams.hrfParams.z = glmInfo.hrfParamsDoubleGamma(3);
+                else
+                    glmParams.hrfParams.x =  4;
+                    glmParams.hrfParams.y = 11;
+                    glmParams.hrfParams.z =  4;
+                end
         end
         glmParams.scanParams{1}.stimDurationMode = 'From file';
         glmParams.scanParams{1}.supersamplingMode =  'Set value';
@@ -104,18 +122,19 @@ end
 %% GLM Analysis
 % nStim = [8 32];
 % Set hrf type based on acquisition type
+if runSplitHalf
 splitHRFmodel = 1;
 thisView = viewSet(thisView,'curGroup',glmInfo.scanGroupName);
 for iScan = 1:glmInfo.nScans
     thisView = viewSet(thisView,'curScan', iScan);
     for iStim = 1:length(glmInfo.nStim)
-        analysisName_split{iScan} = ['glm_' hrfModel{splitHRFmodel} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];        
+        analysisName_split{iScan} = ['glm_' glmInfo.hrfModel{splitHRFmodel} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];        
         [thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
-        glmParams.hrfModel = hrfModel{splitHRFmodel};
+        glmParams.hrfModel = glmInfo.hrfModel{splitHRFmodel};
         [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
         %         glmParams.saveName = analysisName;
-        glmParams.hrfParams.description = hrfModel{splitHRFmodel};
-        switch hrfModel{splitHRFmodel}
+        glmParams.hrfParams.description = glmInfo.hrfModel{splitHRFmodel};
+        switch glmInfo.hrfModel{splitHRFmodel}
             case 'hrfBoxcar'
                 glmParams.hrfParams.delayS =  2.5;
                 glmParams.hrfParams.durationS = 2.5;
@@ -144,6 +163,6 @@ for iScan = 1:glmInfo.nScans
               
     end
 end
-
+end
 % save view and quit
 mrSaveView(thisView);

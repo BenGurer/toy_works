@@ -28,12 +28,11 @@ subjectInfo = get_SubjectInfo_CM(iSub);
 % Subject ID, flatmap names
 saveName = [subjectInfo.subjectID '_data.mat'];
 
-%% either load data or mrView
-
 %% move to subject folder, delete any current views, open mrLoadRet and get its view
 cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
 % deleteView(thisView);
 
+%% either load data or mrView
 if exist(saveName, 'file')   
     load(saveName)
 else
@@ -82,39 +81,80 @@ thisView = script_importAnatomy(thisView);
 
 %% GLM analysis
 % first do Box Car
-thisView = script_glmAnalysis(thisView,glmInfo);
+thisView = script_glmAnalysis(thisView,glmInfo,{'hrfBoxcar'},1);
 % HRF = double gamma and box car
 % All stims and 8 bins
 % don't need to perform weighted mean on individual runs
 
+%% Make flatmaps
+% radius = 55
+% centre on HG (use R2 and f-test to guide)
+
 %% GLM grandient reversals
 % rotate left flatmap 230 and right 290
-thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
+thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,glmInfo.groupNames{1}, glmInfo.analysisNames_Groups{1});
 
 %% ROI CREATION
 % create ROIs with the names: 
-% LeftAC, RightAC using gradient reversals - output 4 with alpha overlay output 6
+% LeftAC_glmbc, RightAC_glmbc using gradient reversals - output 4 with alpha overlay output 6
 % LeftRestrict, RightRestrict 
 %   go to each flat base vol, define large ROI around HG, project through 
 %   depths (ROIs>transform>expandROI([1 1 6])(replace)),
+
+%% now create pRF restrict ROI in flat space and project through depths,
+% 
+% % first get view so we have the ROIS
+% thisView = getMLRView;
+% 
+% % go to each flat base vol, define large ROI around HG on slice 6, project through depths (ROIs>transform>expandROI([30 30 6])(post fix 'ex' to name)),
+% 
+% eval(['pRFrois = [Info.' Info.Sides{iSide} 'ROInames ' q 'ex' q '];']);
+% % pRFrois = {'LeftpRFrestrict','RightpRFrestrict'}; % this should be defined in setup
+% pRFrois = {'LeftACex','RightACex'}; % this should be defined in setup
+% 
+% for iSide = 1:length(pRFrois)
+% % roi = viewGet(thisView,'roi','leftpRFrestrict');
+% % roi = viewGet(thisView,'roi','RightAC');       
+% baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+% thisView = viewSet(thisView,'currentbase',baseNum);
+% thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide} 'Volume']);
+% 
+% refreshMLRDisplay(thisView.viewNum);
+% roi = viewGet(thisView,'roi',pRFrois{iSide});
+% outputRoi = convertFromFlatVolumeToBase(roi);
+% thisView = viewSet(thisView,'newROI',outputRoi);
+% % post fix Vol to name
+% end
 
 %% HRF estimate
 thisView = script_hrfAnalysis(thisView,glmInfo);
 % estimate hrf using deconvolution
 
-thisView = script_hrfROIAnalysis(thisView)
+[ x_doubleGamma, x_Gamma, x_dGamma ] = script_hrfROIAnalysis(thisView,roiName,glmInfo);
 % get data from analysis
 % use ROI to restrict
 % perform ROI analysis - average hrf estimate
 % output result
 
-overlayData = script_getOverlayData(thisView)
+glmInfo.hrfParamsDoubleGamma = x_doubleGamma;
+
+% overlayData = script_getOverlayData(thisView)
 
 %% get av HRF estimate for GLM BOXCAR Gradient Reversals ROI
 % use results for GLM
 % add option for hrf model
-thisView = script_glmAnalysis(thisView,glmInfo);
+thisView = script_glmAnalysis(thisView,glmInfo,{'hrfDoubleGamma'},0);
 
+%% GLM grandient reversals
+% rotate left flatmap 230 and right 290
+thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase{1}, glmInfo.analysisNames_Groups{2});
+
+%% ROI CREATION
+% create ROIs with the names: 
+% LeftAC_glmdg, RightAC_glmdg using gradient reversals - output 4 with alpha overlay output 6
+% LeftRestrict, RightRestrict 
+%   go to each flat base vol, define large ROI around HG, project through 
+%   depths (ROIs>transform>expandROI([1 1 6])(replace)),
 
 %% Convert GLM data to flatmap space and average over cortical depth
 % export scan data

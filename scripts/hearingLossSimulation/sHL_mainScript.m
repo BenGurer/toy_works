@@ -86,14 +86,14 @@ thisView = script_importAnatomy(thisView);
 % rotate flatmaps for easy viewing (do before exporting to flatmap space)
 
 %% GLM analysis
-thisView = script_glmAnalysis(thisView,glmInfo);
+thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.hrfModel,1);
 % HRF = double gamma and box car
 % All stims and 8 bins
 % don't need to perform weighted mean on individual runs
 
 %% GLM grandient reversals
 % rotate left flatmap 230 and right 290
-thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
+thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase,Info.gradReversalInfo.analysisBase);
 
 %% ROI CREATION
 % create ROIs with the names: 

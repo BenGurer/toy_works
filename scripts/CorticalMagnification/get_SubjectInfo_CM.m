@@ -74,7 +74,7 @@ distCorrectionRefCont{5} = {'15','16'};
 freeSurferName{5} = '11108_006';
 sparseScans{5} =  {'08','18'};
 contScans{5} =  {'12','19'};
-flatmapName{5} = {};
+flatmapName{5} = {'x11108_006_left_WM_invFNIRT_11108_006_Flat_61_112_76_Rad55',};
 
 subject{6} = '11020_002';
 niftiBaseName{6} = 'cm_11020_002_';
