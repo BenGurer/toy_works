@@ -3,7 +3,7 @@ function gammafun = get_HRFGamma(x,xdata)
 time = xdata;
 timelag = x(1);
 tau = x(2);
-exponent = x(3);
+exponent = round(x(3));
 amplitude = 1; % x(4);
 offset = 0; % x(5);
 

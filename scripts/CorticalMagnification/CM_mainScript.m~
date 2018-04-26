@@ -133,16 +133,16 @@ end
 thisView = script_hrfAnalysis(thisView,glmInfo.groupNames{2});
 % estimate hrf using deconvolution
 
-% for iSide = 1:length(glmbc_rois)
-%     roiName = [glmbc_rois{iSide} '_vol'];
-%     [ x_doubleGamma{iSide}, x_Gamma{iSide}, x_dGamma{iSide} ] = script_hrfROIAnalysis(thisView,roiName,glmInfo);
-%     % get data from analysis
-%     % use ROI to restrict
-%     % perform ROI analysis - average hrf estimate
-%     % output result
-% end
+for iSide = 1:length(glmbc_rois)
+    roiName = [glmbc_rois{iSide} '_vol'];
+    [ x_doubleGamma{iSide}, x_Gamma{iSide}, x_dGamma{iSide} ] = script_hrfROIAnalysis(thisView,roiName,glmInfo);
+    % get data from analysis
+    % use ROI to restrict
+    % perform ROI analysis - average hrf estimate
+    % output result
+end
 
-[ x_doubleGamma, x_Gamma, x_dGamma ] = script_hrfROIAnalysis(thisView,'AC_glmbc_exp_vol',glmInfo);
+[ x_doubleGamma, x_Gamma, x_dGamma{iSide} ] = script_hrfROIAnalysis(thisView,'AC_glmbc_exp_vol',glmInfo);
 glmInfo.hrfParamsDoubleGamma = x_doubleGamma;
 
 % overlayData = script_getOverlayData(thisView)
@@ -150,11 +150,11 @@ glmInfo.hrfParamsDoubleGamma = x_doubleGamma;
 %% get av HRF estimate for GLM BOXCAR Gradient Reversals ROI
 % use results for GLM
 % add option for hrf model
-thisView = script_glmAnalysis(thisView,glmInfo,{'hrfDoubleGamma'},1);
+thisView = script_glmAnalysis(thisView,glmInfo,{'hrfDoubleGamma'},0);
 
 %% GLM grandient reversals
 % rotate left flatmap 230 and right 290
-thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase, glmInfo.analysisNames_Groups{2});
+thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase{1}, glmInfo.analysisNames_Groups{2});
 
 %% ROI CREATION
 % create ROIs with the names: 
@@ -270,9 +270,9 @@ for iSide = 1:length(Info.Sides)
             %         eval(['ROI_data_' Info.Sides{iSide} '.' 'glmInfo.groupNames{iGroup} ' = script_getROIdata(thisView,groupDataVar,glmInfo.analysisNames_Groups,roiNames,[],' q 'overlays' q ');']);
             for iAnal = 1:length(glmInfo.analysisNames_Groups)
                 
-                eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.overlayData;']);
+            eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.overlayData;']);
                 analysisName = glmInfo.analysisNames_Groups{iAnal};
-                eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} ' = script_getROIdata(thisView,groupDataVar,analysisName,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi,[],' q 'overlays' q ');']);
+            eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} ' = script_getROIdata(thisView,groupDataVar,analysisName,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi,[],' q 'overlays' q ');']);
             end
         end
         
@@ -301,6 +301,34 @@ end
 %% save data
 save(saveName,'data','-v7.3');
 
+
+%% perfrom GLM overlay analysis
+fit = cell(1,length(Info.Sides));
+weightingType = {'SL','BOLD'};
+thisView = viewSet(thisView,'curgroup',glmInfo.groupNames{2});
+thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',glmInfo.analysisNames_Groups{1}));
+for iWeight = 1:length(weightingType)
+    
+    switch weightingType{iWeight}
+        
+        case 'SL'
+            namePrefix =  [weightingType{iWeight} 'weighted '];            
+            thisView = script_glmOverlayAnalysis(thisView,2:33,namePrefix,0,data.conditions{1});
+        case 'BOLD'
+            
+            for iSide = 1:length(Info.Sides)
+                
+                eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
+                for iROI = 1:length(ROInames)
+                    eval(['fit{iSide} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.concatData.' glmInfo.analysisNames_Groups{1} '.roiAnalysis.fit;']);
+                end
+                
+                namePrefix =  [Info.Sides{iSide} '_' weightingType{iWeight} 'weighted '];
+                thisView = script_glmOverlayAnalysis(thisView,2:33,namePrefix,fit{iSide},data.conditions{1});
+            end
+    end
+    
+end
 
 %% now create pRF restrict ROI in flat space and project through depths,
 

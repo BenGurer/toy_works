@@ -74,7 +74,8 @@ distCorrectionRefCont{5} = {'15','16'};
 freeSurferName{5} = '11108_006';
 sparseScans{5} =  {'08','18'};
 contScans{5} =  {'12','19'};
-flatmapName{5} = {'x11108_006_left_WM_invFNIRT_11108_006_Flat_61_112_76_Rad55',};
+flatmapName{5} = {'x11108_006_left_WM_Flat_56_111_77_Rad55','x11108_006_right_WM_Flat_179_127_72_Rad55'};
+conditionOrder{5} = {[2,4],[1,3]};
 
 subject{6} = '11020_002';
 niftiBaseName{6} = 'cm_11020_002_';
@@ -133,3 +134,17 @@ subjectInfo = struct();
 subjectInfo.subjectID = subject{iSub};
 subjectInfo.freeSurferName = freeSurferName{iSub};
 subjectInfo.flatmapNames = flatmapName{iSub};
+subjectInfo.niftiBaseName = niftiBaseName{iSub};
+subjectInfo.T2star = T2star{iSub};
+
+% subjectInfo = struct();
+% subjectInfo.subjectID = subject{iSub};
+% subjectInfo.niftiBaseName = niftiBaseName{iSub};
+% subjectInfo.wholeheadMPRAGE = wholeheadMPRAGE{iSub};
+% subjectInfo.fMRIScans = fMRIScans{iSub};
+% subjectInfo.nScans = nScans(iSub);
+% subjectInfo.refScan = refScan{iSub};
+% subjectInfo.T2star = T2star{iSub};
+subjectInfo.conditionOrder = conditionOrder{iSub};
+% subjectInfo.freeSurferName = freeSurferName{iSub};
+% subjectInfo.flatmapNames = flatmapName{iSub};

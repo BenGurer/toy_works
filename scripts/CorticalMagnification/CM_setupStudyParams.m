@@ -10,6 +10,7 @@ function [stimInfo, glmInfo, pRFInfo, Info, plotInfo] = CM_setupStudyParams
 %% Define output structures
 stimInfo = struct();
 glmInfo = struct();
+pRFInfo = struct();
 Info = struct();
 plotInfo = struct();
     
@@ -22,8 +23,9 @@ nStim = 32;
 [stimInfo.stimNames.all, stimInfo.stimNames.bin, stimInfo.stimNames.mv] = convertStimIDtoFrequency(lowFreqkHz,highFreqkHz,nStim);
 
 %% get stimulus senssation level
-% change this to get scanner noise
 [stimLevel_SL, maskingLevel] = calStimulusSensationLevel(stimInfo.stimNames.all);
+stimInfo.sizes = [8 29 32];
+
 
 % bin sensation level
 binSize = 4;
@@ -39,7 +41,7 @@ nBins = 8;
 windowAvSize = length(stimLevel_SL)/nBins;
 
 if isreal(windowAvSize) && rem(windowAvSize,1)==0
-    loopLength = length(stimLevel_SL) - windowAvSize;
+    loopLength = (length(stimLevel_SL) - windowAvSize) +1;
     stimLevel_SL_mv = zeros(1,loopLength);
     for i = 1:loopLength
         stimLevel_SL_mv(i) = mean(stimLevel_SL(i:i+windowAvSize-1));
@@ -53,6 +55,7 @@ stimInfo.stimLevel_SL = stimLevel_SL;
 stimInfo.stimLevel_SL_bin = stimLevel_SL_bin;
 stimInfo.stimLevel_SL_mv = stimLevel_SL_mv;
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Setup GLM analysis
@@ -61,23 +64,25 @@ glmInfo.hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
 glmInfo.groupNames = {'ConcatenationSparse', 'ConcatenationCont'};
 glmInfo.nScans = 4;
 glmInfo.nStim = [32, 8];
-glmInfo.analysisNames_Scans = cell(1,(glmInfo.nScans.*length(glmInfo.nStim)).*length(glmInfo.hrfModel));
+% glmInfo.analysisNames_Scans = cell(1,(glmInfo.nScans.*length(glmInfo.nStim)).*length(glmInfo.hrfModel));
 c = 0;
 d = 0;
 f = 0;
 for iScan = 1:glmInfo.nScans
     for iStim = 1:length(glmInfo.nStim)
         for iHRF = 1:length(glmInfo.hrfModel)
-             c = c + 1;
+            %         iHRF = 1; % only perform boxcar analysis on individual scans
+            c = c + 1;
             glmInfo.analysisNames_Scans{c+d+f} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];
             glmInfo.analysisBaseNames_Scans{c+d+f} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim))];
             glmInfo.analysisScanNum {c+d+f} = iScan;
         end
         c = 0;
-    d = d + length(glmInfo.hrfModel);
+%         d = d + length(glmInfo.hrfModel); % remove when only using boxcar
+        %         d = d + 1;
     end
-    d = 0;
-f = f + length(glmInfo.nStim);
+%     d = 0;
+    f = f + length(glmInfo.nStim);
 end
 
 glmInfo.analysisNames_Groups = cell(1,length(glmInfo.groupNames));
@@ -121,8 +126,8 @@ Info.ConATrue = 0;
 % Must match order of sides
 Info.ROInames = {'LeftAC','RightAC'};
 Info.ROIbasenames = {'AC'};
-Info.LeftROInames = {'LeftAC'};
-Info.RightROInames = {'RightAC'};
+Info.LeftROInames = {'LeftAC_glmdg'};
+Info.RightROInames = {'RightAC_glmdg'};
 % Info.ROInames_flat = {'RightAC_flat','LeftAC_flat'};
 
 Info.epiDims = [128 128 24 73]; % dims of functional scans
