@@ -79,6 +79,7 @@ for iScan = 1:glmInfo.nScans
             glmInfo.analysisNames_Scans{c + d} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];
             glmInfo.analysisBaseNames_Scans{c + d}= ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim))];
             glmInfo.analysisScanNum{c + d} = iScan;
+            glmInfo.analysisNStim{c + d} = glmInfo.nStim(iStim);
         end
 %         c = 0;
 %         d = d + length(glmInfo.hrfModel); % remove when only using boxcar

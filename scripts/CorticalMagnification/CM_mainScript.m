@@ -200,20 +200,54 @@ end
 
 % get condition names
 conditionNames = cell(1,length(glmInfo.nStim));
-for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
-    analysisName = glmInfo.analysisNames_Scans{iAnal};
-    conditionNames{iAnal} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
-    
-end
+% for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
+%     analysisName = glmInfo.analysisNames_Scans{iAnal};
+%     conditionNames{iAnal} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
+%     
+% end
+analysisName = glmInfo.analysisNames_Scans{1};
+conditionNames{1} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
+analysisName = glmInfo.analysisNames_Scans{3};
+conditionNames{2} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
+
 
 % save condition names
 data.conditions = conditionNames;
 
 % get data from SCANS
-for iScan = 1:glmInfo.nScans
-    for iSide = 1:length(subjectInfo.flatmapNames)
-        for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
-            eval(['data.' Info.Sides{iSide}, '.scanData.', glmInfo.analysisBaseNames_Scans{iAnal}, '.overlayData{iScan} = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',conditionNames{iAnal},iScan);'])
+
+analysisName = 'combineTransformOverlays';
+for iSide = 1:length(subjectInfo.flatmapNames)
+    groupName = [subjectInfo.flatmapNames{iSide} 'Volume'];
+    thisView = viewSet(thisView,'curgroup',groupName);
+    
+    thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+    % if isempty(overlays)
+    %     analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',analysisName));
+    %     overlays = 1:length(analysisData.overlays);
+    % end
+    % if ~isempty(iScan)
+    %     for iCon = 1:length(conditionNames)
+    %         overlayNames{iCon} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' analysisName ' (' conditionNames{iCon} ',0))'];
+    %     end
+    % overlayData = get_overlayData(thisView,overlayNames);
+    % else
+    for iScan = 1:glmInfo.nScans
+        for iAnal = 1:length(glmInfo.hrfModel)*length(glmInfo.nStim)
+            overlayNames = [];
+            if glmInfo.analysisNStim{iAnal} == length(conditionNames{1});
+                for iCon = 1:length(conditionNames{1})
+                    overlayNames{iCon} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisBaseNames_Scans{iAnal} '_Scan_' mat2str(iScan) ' (' conditionNames{1}{iCon} ',0))'];
+                end
+            else
+                for iCon = 1:length(conditionNames{2})
+                    overlayNames{iCon} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisBaseNames_Scans{iAnal} '_Scan_' mat2str(iScan)  ' (' conditionNames{2}{iCon} ',0))'];
+                end
+            end
+            overlayData = get_overlayData(thisView,overlayNames);
+            eval(['data.' Info.Sides{iSide}, '.scanData.', glmInfo.analysisBaseNames_Scans{iAnal}, '.overlayData{iScan} =  overlayData']);
+            %             eval(['data.' Info.Sides{iSide}, '.scanData.', glmInfo.analysisBaseNames_Scans{iAnal}, '.overlayData{iScan} = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',overlayNames,iScan);'])
+            %             eval(['data.' Info.Sides{iSide}, '.scanData.', glmInfo.analysisBaseNames_Scans{iAnal}, '.overlayData{iScan} = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',conditionNames{iAnal},iScan);'])
         end
     end
 end
