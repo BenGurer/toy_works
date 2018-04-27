@@ -72,21 +72,22 @@ for iScan = 1:glmInfo.nScans
     for iStim = 1:length(glmInfo.nStim)
         for iHRF = 1:length(glmInfo.hrfModel)
             %         iHRF = 1; % only perform boxcar analysis on individual scans
-           c = c + 1;
+%             c = c + 1;
 %             glmInfo.analysisNames_Scans{c+d+f} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];
 %             glmInfo.analysisBaseNames_Scans{c+d+f} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim))];
 %             glmInfo.analysisScanNum {c+d+f} = iScan;
-            glmInfo.analysisNames_Scans{c + d} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];
-            glmInfo.analysisBaseNames_Scans{c + d}= ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim))];
-            glmInfo.analysisScanNum{c + d} = iScan;
+            glmInfo.analysisNames_Scans{c + iStim + iHRF - 1} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];
+            glmInfo.analysisBaseNames_Scans{c+ iStim + iHRF - 1} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim))];
+            glmInfo.analysisScanNum{c+ iStim + iHRF - 1} = iScan;
+            c+d+f
         end
 %         c = 0;
 %         d = d + length(glmInfo.hrfModel); % remove when only using boxcar
 %                 d = d + 1;
     end
-    c = 0;
+%     d = 0;
 %     f = f + length(glmInfo.nStim);
-d = d + length(glmInfo.hrfModel) + length(glmInfo.nStim);
+c = c + length(glmInfo.hrfModel) + length(glmInfo.nStim);
 end
 
 glmInfo.analysisNames_Groups = cell(1,length(glmInfo.groupNames));
@@ -151,8 +152,8 @@ Info.gradReversalInfo.overlayBase = 41; % 39
 % list of analysis to plot from
 plotInfo.ROIplotList = {['roiAnalysis_' glmInfo.analysisBaseNames_Scans{1}], ['roiAnalysis_' glmInfo.analysisBaseNames_Scans{2}]};
 
-% plotLogic = [roiAv, roiTWav, ratio]
+% plotLogic = [roiAv, roiTWav]
 % use logicals to tell function what to plot
 plotInfo.plotLOGIC.ROI_bin = [0, 1, 0];
-plotInfo.plotLOGIC.ROI_mv = [1, 0, 0];
+plotInfo.plotLOGIC.ROI_mv = [1, 0, 1];
 plotInfo.plotLOGIC.ROI_all = [0, 0, 0];

@@ -24,7 +24,8 @@ q = char(39);
 % condition names
 % nummber of subjects
 
-Info.dataDir
+% use is pc to set data directory - could do in cm_setupStduyparams
+% Info.dataDir
 dataMount = '/Volumes/DataDisk/data';
 
 %% Get subject info
@@ -142,6 +143,7 @@ thisView = script_hrfAnalysis(thisView,glmInfo.groupNames{2});
 %     % output result
 % end
 
+% save result to data
 [ x_doubleGamma, x_Gamma, x_dGamma ] = script_hrfROIAnalysis(thisView,'AC_glmbc_exp_vol',glmInfo);
 glmInfo.hrfParamsDoubleGamma = x_doubleGamma;
 
