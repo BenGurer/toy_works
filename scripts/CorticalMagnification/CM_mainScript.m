@@ -114,7 +114,7 @@ thisView = getMLRView;
 
 % eval(['glmbc_rois = [Info.' Info.Sides{iSide} 'ROInames ' q 'ex' q '];']);
 % pRFrois = {'LeftpRFrestrict','RightpRFrestrict'}; % this should be defined in setup
-glmbc_rois = {'LeftAC_glmbc_exp','RightAC_glmbc_exp'}; % this should be defined in setup
+glmbc_rois = {'LeftAC_glmbc_vol','RightAC_glmbc_vol'}; % this should be defined in setup
 
 for iSide = 1:length(glmbc_rois)
 % roi = viewGet(thisView,'roi','leftpRFrestrict');
@@ -142,10 +142,12 @@ thisView = script_hrfAnalysis(thisView,glmInfo.groupNames{2});
 %     % perform ROI analysis - average hrf estimate
 %     % output result
 % end
-
+thisView = getMLRView;
 % save result to data
-[ x_doubleGamma, x_Gamma, x_dGamma ] = script_hrfROIAnalysis(thisView,'AC_glmbc_exp_vol',glmInfo);
-glmInfo.hrfParamsDoubleGamma = x_doubleGamma;
+[ data.x_doubleGamma, data.x_Gamma, data.x_dGamma ] = script_hrfROIAnalysis(thisView,'AC_glmbc_vol',glmInfo);
+glmInfo.hrfParamsDoubleGamma = data.x_doubleGamma;
+pRFInfo.hrfParamsGamma = data.x_Gamma;
+pRFInfo.hrfParamsDiffofGamma = data.x_dGamma;
 
 % overlayData = script_getOverlayData(thisView)
 
@@ -329,6 +331,13 @@ for iSide = 1:length(Info.Sides)
     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
     for iROI = 1:length(ROInames)
         eval(['roidata = data.' Info.Sides{iSide} '.' ROInames{iROI} ';']);
+        
+%         e = estimate.hdr;
+% [index, threshold] = cal_R2threshold(r2data{:}(volumeIndices));
+% e = e(:,:,index(:));
+% could add index option to script_ROIfunction or save it to data struct
+
+
         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} ' = script_ROIAnalysis(roidata,Info,glmInfo,stimInfo,plotInfo,subjectInfo,glmInfo.analysisScanNum,' q 'overlays' q ',ROInames{iROI});']);
     end
 end
@@ -347,7 +356,7 @@ thisView = getMLRView;
 
 eval(['pRFrois = [Info.' Info.Sides{iSide} 'ROInames ' q 'ex' q '];']);
 % pRFrois = {'LeftpRFrestrict','RightpRFrestrict'}; % this should be defined in setup
-pRFrois = {'LeftACex','RightACex'}; % this should be defined in setup
+pRFInfo.pRFrois = {'LeftAC_glmbc_ex','RightAC_glmbc_ex'}; % this should be defined in setup
 
 for iSide = 1:length(pRFrois)
 % roi = viewGet(thisView,'roi','leftpRFrestrict');
@@ -370,21 +379,12 @@ end
 % later?
 % change export and average over depth functiosn to work on indivudal
 % overlays as well as all in analysis
-% for ipRFroi = 1:length(pRFrois)
-fit = cell(1,length(Info.Sides));
 for iSide = 1:length(Info.Sides)    
     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
-    for iROI = 1:length(ROInames)    
-%     eval(['fit{iSide} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.concatData.' glmInfo.analysisNames_Groups{1} '.roiAnalysis.fit;']);
-     eval(['fit{iSide} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.splitData.' glmInfo.analysisBaseNames_Scans{1} '.roiAnalysis.fit;']);
-    end
-% get info from glm analysis: BOLD ratio, roi av TW
-% get info from glm to inform pRF
-% BOLD change between conditions
+% get from glm analysis
 % average tuning curve sigma
-glmInfo.m = fit{iSide}(1);
-glmInfo.b = fit{iSide}(2);
-[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[ pRFInfo.pRFrois{iSide} , 'Vol' ],1);
+% hrf estimate
+[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[ pRFInfo.pRFrois{iSide} , '_vol' ],0);
 end
 
 
@@ -399,11 +399,13 @@ for iGroup = 1:length(glmInfo.groupNames)
     for iSide = 1:length(subjectInfo.flatmapNames)
         %         baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
         %         thisView = viewSet(thisView,'currentbase',baseNum);
-        for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
-            %             [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
-            % export of flatmap space
-            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},[pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ],[],[],subjectInfo.flatmapNames{iSide});
-        end
+        thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},[pRFInfo.analysisNames_Groups{1}{1}, '_', pRFInfo.pRFrois{iSide}, '_vol' ],[],[],subjectInfo.flatmapNames{iSide});
+     
+%         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+%             %             [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
+%             % export of flatmap space
+%             thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},[pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, '_vol' ],[],[],subjectInfo.flatmapNames{iSide});
+%         end
     end
 end
 %% average pRF overlays over depth
@@ -420,7 +422,7 @@ for iSide = 1:length(subjectInfo.flatmapNames)
         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
 %             analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
 
-            analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
+            analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, '_vol' ];
             for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
             overlayNames{iGroup}{iAnal}{iOverlay} = [groupName '_' analysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
             end
