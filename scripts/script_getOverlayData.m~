@@ -12,12 +12,12 @@ thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysi
 %     analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',analysisName));
 %     overlays = 1:length(analysisData.overlays);
 % end
-% if ~isempty(iScan)
-%     for iCon = 1:length(conditionNames)
-%         overlayNames{iCon} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' analysisName ' (' conditionNames{iCon} ',0))'];
-%     end
-% overlayData = get_overlayData(thisView,overlayNames);
-% else
+if ~isempty(iScan)
+    for iCon = 1:length(conditionNames)
+        overlayNames{iCon} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' analysisName ' (' conditionNames{iCon} ',0))'];
+    end
+overlayData = get_overlayData(thisView,overlayNames);
+else
     overlayData = get_overlayData(thisView,conditionNames);
-% end
+end
 end

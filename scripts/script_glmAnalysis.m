@@ -123,46 +123,49 @@ end
 % nStim = [8 32];
 % Set hrf type based on acquisition type
 if runSplitHalf
-splitHRFmodel = 1;
+% splitHRFmodel = hrfModel;
 thisView = viewSet(thisView,'curGroup',glmInfo.scanGroupName);
 for iScan = 1:glmInfo.nScans
     thisView = viewSet(thisView,'curScan', iScan);
-    for iStim = 1:length(glmInfo.nStim)
-        analysisName_split{iScan} = ['glm_' glmInfo.hrfModel{splitHRFmodel} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];        
-        [thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
-        glmParams.hrfModel = glmInfo.hrfModel{splitHRFmodel};
-        [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
-        %         glmParams.saveName = analysisName;
-        glmParams.hrfParams.description = glmInfo.hrfModel{splitHRFmodel};
-        switch glmInfo.hrfModel{splitHRFmodel}
-            case 'hrfBoxcar'
-                glmParams.hrfParams.delayS =  2.5;
-                glmParams.hrfParams.durationS = 2.5;
-            case 'hrfDoubleGamma'
-                glmParams.hrfParams.x =  4;
-                glmParams.hrfParams.y = 11;
-                glmParams.hrfParams.z =  4;
+    for iHRF = 1:length(hrfModel)
+        for iStim = 1:length(glmInfo.nStim)
+            analysisName_split{iScan} = ['glm_' hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];
+            [thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
+            glmParams.hrfModel = hrfModel{iHRF};
+            [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
+            %         glmParams.saveName = analysisName;
+            glmParams.hrfParams.description = hrfModel{iHRF};
+            switch hrfModel{iHRF}
+                case 'hrfBoxcar'
+                    glmParams.hrfParams.delayS =  2.5;
+                    glmParams.hrfParams.durationS = 2.5;
+                case 'hrfDoubleGamma'
+                    glmParams.hrfParams.x =  4;
+                    glmParams.hrfParams.y = 11;
+                    glmParams.hrfParams.z =  4;
+            end
+            
+            if glmInfo.nStim(iStim) == 8
+                glmParams.scanParams{1, iScan}.preprocess  = 'binStimFreq';
+                glmParams.EVnames = {'1','2','3','4','5','6','7','8'};
+            end
+            glmParams.numberContrasts = glmInfo.nStim(iStim);
+            glmParams.numberEVs = glmInfo.nStim(iStim);
+            [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
+            glmParams.scanParams{iScan}.stimDurationMode = 'From File';
+            glmParams.scanParams{iScan}.supersamplingMode =  'Set value';
+            glmParams.scanParams{iScan}.designSupersampling = 3;
+            glmParams.scanParams{iScan}.acquisitionDelay = .75;
+            glmParams.numberContrasts = 0;
+            glmParams.parametricTests = 0;
+            glmParams.outputEstimatesAsOverlays = 1;
+            glmParams.saveName = analysisName_split{iScan};
+            [thisView, glmParams] = glmAnalysis(thisView,glmParams,['scanList=' mat2str(iScan)]);
+            
         end
-        
-        if glmInfo.nStim(iStim) == 8
-            glmParams.scanParams{1, iScan}.preprocess  = 'binStimFreq';
-            glmParams.EVnames = {'1','2','3','4','5','6','7','8'};
-        end
-        glmParams.numberContrasts = glmInfo.nStim(iStim);
-        glmParams.numberEVs = glmInfo.nStim(iStim);
-        [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1',['scanList=' mat2str(iScan)]);
-        glmParams.scanParams{iScan}.stimDurationMode = 'From File';
-        glmParams.scanParams{iScan}.supersamplingMode =  'Set value';
-        glmParams.scanParams{iScan}.designSupersampling = 3;
-        glmParams.scanParams{iScan}.acquisitionDelay = .75;
-        glmParams.numberContrasts = 0;
-        glmParams.parametricTests = 0;
-        glmParams.outputEstimatesAsOverlays = 1;
-        glmParams.saveName = analysisName_split{iScan};
-        [thisView, glmParams] = glmAnalysis(thisView,glmParams,['scanList=' mat2str(iScan)]);
-              
     end
 end
+
 end
 % save view and quit
 mrSaveView(thisView);

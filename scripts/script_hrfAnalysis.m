@@ -1,5 +1,5 @@
 
-function thisView = script_hrfAnalysis(thisView,glmInfo)
+function thisView = script_hrfAnalysis(thisView,group)
 %
 %   usage: script_hrfAnalysis(thisView,glmInfo)
 %      by: Ben Gurer
@@ -12,7 +12,7 @@ function thisView = script_hrfAnalysis(thisView,glmInfo)
 % set to continouus conca group
 
 % thisView = viewSet(thisView,'curGroup','ConcatenationCont');
-thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{2});
+thisView = viewSet(thisView,'curGroup',group);
 % thisView = viewSet(thisView,'curGroup','Concatenation Cont');
 refreshMLRDisplay(thisView);
 

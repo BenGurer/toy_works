@@ -39,7 +39,7 @@ params.customCombineFunction = 'plus'; %add 0
 params.combinationMode = 'Apply function to each overlay';
 params.additionalArgs = '0';
 if ~isempty(iScan)
-    params.outputName = ' ';
+    params.outputName = [analysisName ' '];
 else
     params.outputName = [groupName '_' analysisName ' '];
 end
