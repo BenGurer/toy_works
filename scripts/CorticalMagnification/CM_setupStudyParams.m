@@ -104,10 +104,34 @@ end
 
 glmInfo.scanGroupName = 'MotionComp';
 
+
 %% pRF information
 % what info do I need?
 
-pRFInfo.name = 'pRF';
+% pRFInfo.name = pRF;
+
+% pRFinfo.analysisNames_Groups{iGroup}{iAnal}
+% stimulusWeighting = {'None','SL_level','BOLD','fit'};
+% pRFinfo.analysisNames_Groups{1}{1} = {'pRF'};
+% pRFInfo.stimulusWeighting = {'None','SL_level','BOLD','fit'};
+% for iWeight = 1:length(stimulusWeighting)
+%     pRFinfo.analysisNames_Groups{2}{iWeight} = {['pRF_' stimulusWeighting{iWeight}]};
+% end
+    
+pRFInfo.analysisNames_Groups{1}{1} = 'pRF';
+pRFInfo.analysisNames_Groups{2}{1} = 'pRF';
+% pRFInfo.stimulusWeighting{1} = {'None'};
+% % pRFInfo.stimulusWeighting{2} = {'None','SL_level','BOLD','fit'};
+% 
+% pRFInfo.stimulusWeighting{2} = {'BOLD'};
+% % pRFInfo.stimulusWeighting{2} = {'None','SL_level'};
+% for iWeight = 1:length(pRFInfo.stimulusWeighting{2})
+%     pRFInfo.analysisNames_Groups{2}{iWeight} = ['pRF_' pRFInfo.stimulusWeighting{2}{iWeight}];
+% end
+
+pRFInfo.pRFrois = {'LeftAC_glmbc_ex','RightAC_glmbc_ex'}; % ROIs to restrict pRF analysis - expanded around AC
+pRFInfo.pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
+
 
 
 %% Info - save general info needed to struct

@@ -74,7 +74,8 @@ distCorrectionRefCont{5} = {'15','16'};
 freeSurferName{5} = '11108_006';
 sparseScans{5} =  {'08','18'};
 contScans{5} =  {'12','19'};
-flatmapName{5} = {'x11108_006_left_WM_Flat_56_111_77_Rad55','x11108_006_right_WM_Flat_179_127_72_Rad55'};
+% flatmapName{5} = {'x11108_006_left_WM_Flat_56_111_77_Rad55','x11108_006_right_WM_Flat_179_127_72_Rad55'};
+flatmapName{5} = {'x11108_006_left_WM_invFNIRT_Flat_56_111_77_Rad55','x11108_006_right_WM_invFNIRT_Flat_179_127_72_Rad55'};
 conditionOrder{5} = {[2,4],[1,3]};
 
 subject{6} = '11020_002';
