@@ -32,7 +32,7 @@ function [index, threshold, nVoxels] = cal_R2threshold(r2data)
 % threshold = Qk;
 
 h = histogram(r2data,4);
-binIndex = 3;
+binIndex = 2;
 threshold = h.BinEdges(binIndex);
 index = r2data>threshold;
 nVoxels = h.Values(binIndex);

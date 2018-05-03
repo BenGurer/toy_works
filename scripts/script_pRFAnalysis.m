@@ -10,14 +10,32 @@ function [thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,roi
 % NEED: ROI, save name, fit hdr?, weight stim?
 % this function will be run after glm, gradient reversals and roi creation
 if ~weightStim
-    for iGroup = 1:length(Info.groupNames)
-        thisView = viewSet(thisView,'curGroup',glmInfo.groupNames);
+    for iGroup = 1:length(glmInfo.groupNames)
+        thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{iGroup});
         analysisSaveName = ['pRF' '_' roiName];
         [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1','defaultParams=1');
         pRFParams.saveName = [analysisSaveName];
         pRFParams.restrict = ['ROI: ' roiName];
         pRFParams.pRFFit.supersampling = 1;
         pRFParams.pRFFit.fitHDR = 0;
+        if isfield(pRFInfo,'hrfParamsDiffofGamma')
+            pRFParams.pRFFit.diffOfGamma = 1;
+            %             pRFParams find params for HRF
+            % timelag = x(1);
+            % tau = x(2);
+            % exponent = x(3);
+            % timelag2 = x(4);
+            % tau2 = x(5);
+            % exponent2 = x(6);
+            % amplitude2 = x(7);
+            pRFParams.pRFFit.timelag = pRFInfo.hrfParamsDiffofGamma(1);
+            pRFParams.pRFFit.tau = pRFInfo.hrfParamsDiffofGamma(2);
+            pRFParams.pRFFit.exponent = pRFInfo.hrfParamsDiffofGamma(3);
+            pRFParams.pRFFit.timelag2 = pRFInfo.hrfParamsDiffofGamma(4);
+            pRFParams.pRFFit.tau2 = pRFInfo.hrfParamsDiffofGamma(5);
+            pRFParams.pRFFit.exponent2 = pRFInfo.hrfParamsDiffofGamma(6);            
+            pRFParams.pRFFit.amplitudeRatio = pRFInfo.hrfParamsDiffofGamma(7);            
+        end
         [thisView, pRFParams] = pRF_auditory(thisView,pRFParams);
     end
     

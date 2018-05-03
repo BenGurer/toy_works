@@ -63,8 +63,14 @@ averageHDRTunindCurves = nansum(HDRS,3);
 % 
 % figure; waterfall([1-nOverlays:1/resolution:nOverlays-1],[1:1:analysisParams.nHrfComponents],averageHDRTunindCurves);
 % figure; surf([1-nOverlays:1/resolution:nOverlays-1],[1:1:analysisParams.nHrfComponents],averageHDRTunindCurves);
+
+figure; 
+
+subplot(3,2,1)
 a = permute(averageHDRTunindCurves, [2 1 3]);
-figure; surf([1:1:analysisParams.nHrfComponents],[1-nOverlays:1/resolution:nOverlays-1],a);
+surf([1:1:analysisParams.nHrfComponents],[1-nOverlays:1/resolution:nOverlays-1],a);
+title('Deconv')
+
 
 hrf_Deconv = a(7,:)/max(a(7,:)); % normalise to allow analysis to scale and offset
 % t = e.time;
@@ -73,11 +79,13 @@ p_fmribHRF = [6 12 0.9 0.9 0.35 1]; %guess
 opts = optimset('MaxFunEvals', 500, 'Display', 'off');
 [x_fmribHRF, resnorm, ~, exitflag, output] = lsqcurvefit(@get_HRFfmrib, p_fmribHRF, t, hrf_Deconv, [], [], opts);
 % disp(x_fmribHRF);
-figure
+subplot(3,2,2)
 fittedHRF = get_HRFfmrib(x_fmribHRF,t);
 plot(t,fittedHRF)
 hold on
 plot(t,hrf_Deconv)
+title('fmribHRF')
+legend('fitted','deconv')
 
 
 %% GLM Double Gamma
@@ -89,7 +97,7 @@ lb_DoubleGamma = [0 0 0 0 0];
 ub_DoubleGamma = [15 15 15 1 10];
 opts = optimset('MaxFunEvals', 500, 'Display', 'off');
 [x_doubleGamma, resnorm, ~, exitflag, output] = lsqcurvefit(@get_HRFDoubleGamma, p_doubleGamma, t, hrf_Deconv, lb_DoubleGamma, ub_DoubleGamma, opts);
-figure
+subplot(3,2,3)
 % disp(x_doubleGamma)
 fittedHRF = get_HRFDoubleGamma(x_doubleGamma,t);
 plot(t,fittedHRF)
@@ -98,6 +106,8 @@ plot(t,get_HRFDoubleGamma(p_doubleGamma,t), '--r')
 % deconvHRF = a(7,:)
 deconvHRF = hrf_Deconv;
 plot(t,deconvHRF)
+title('Double Gamma')
+legend('fitted params','starting params','deconv')
 
 % time = xdata;
 % timelag = x(1);
@@ -111,7 +121,7 @@ ub_Gamma = [16 inf 16 1 10];
 
 opts = optimset('MaxFunEvals', 500, 'Display', 'off');
 [x_Gamma, resnorm, ~, exitflag, output] = lsqcurvefit(@get_HRFGamma, p_Gamma, t, hrf_Deconv, lb_Gamma, ub_Gamma, opts);
-figure
+subplot(3,2,4)
 % disp(x_Gamma)
 fittedHRF = get_HRFGamma(x_Gamma,t);
 plot(t,fittedHRF)
@@ -120,6 +130,8 @@ plot(t,get_HRFGamma(p_Gamma,t), '--r')
 % deconvHRF = a(7,:)
 deconvHRF = hrf_Deconv;
 plot(t,deconvHRF)
+title('Gamma')
+legend('fitted params','starting params','deconv')
 
 % timelag = x(1);
 % tau = x(2);
@@ -127,18 +139,21 @@ plot(t,deconvHRF)
 % timelag2 = x(4);
 % tau2 = x(5);
 % exponent2 = x(6);
+% amplitude2 = x(7);
 x_dGamma = [];
 p_dGamma = [1 0.6 4 2 1.2 11 0.25]; %guess - Plot?
 lb_dGamma = [0 0 0 0 0 0 -1];
 ub_dGamma = [16 inf 16 16 inf 16 1];
 opts = optimset('MaxFunEvals', 500, 'Display', 'off');
 [x_dGamma, resnorm, ~, exitflag, output] = lsqcurvefit(@get_HRFDiffOfGamma, p_dGamma, t, hrf_Deconv, lb_dGamma, ub_dGamma, opts);
-figure
+subplot(3,2,5)
 % disp(x_dGamma)
 fittedHRF = get_HRFDiffOfGamma(x_dGamma,t);
 plot(t,fittedHRF)
 hold on
 plot(t,get_HRFDiffOfGamma(p_dGamma,t), '--r')
 plot(t,hrf_Deconv)
+title('Difference of Gamma')
+legend('fitted params','starting params','deconv')
 
 end
