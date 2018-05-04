@@ -1,4 +1,4 @@
-function [ x_doubleGamma, x_Gamma, x_dGamma ,threshold, nVoxels] = script_hrfROIAnalysis(thisView,roiName,glmInfo)
+function [ x_doubleGamma, x_Gamma, x_dGamma, estimate, threshold, nVoxels] = script_hrfROIAnalysis(thisView,roiName,glmInfo)
 % set to correct group and analysis;
 % get data from analysis
 % use ROI to restrict
@@ -24,8 +24,8 @@ volumeIndices = sub2ind(size(r2data{:}),roi.scanCoords(1,:),roi.scanCoords(2,:),
 % nVoxels = length(volumeIndices);
 
 e = estimate.hdr;
-[index, threshold] = cal_R2threshold(r2data{:}(volumeIndices));
-e = e(:,:,index(:));
+% [index, threshold] = cal_R2threshold(r2data{:}(volumeIndices));
+% e = e(:,:,index(:));
 
 % calcculate average HRF
 % [ x_doubleGamma, x_Gamma, x_dGamma ] = cal_hrfROIAverage(e,analysisParams)

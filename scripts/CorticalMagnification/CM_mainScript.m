@@ -144,10 +144,10 @@ thisView = script_hrfAnalysis(thisView,glmInfo.groupNames{2});
 % end
 thisView = getMLRView;
 % save result to data
-[ data.x_doubleGamma, data.x_Gamma, data.x_dGamma ] = script_hrfROIAnalysis(thisView,'AC_glmbc_vol',glmInfo);
-glmInfo.hrfParamsDoubleGamma = data.x_doubleGamma;
-pRFInfo.hrfParamsGamma = data.x_Gamma;
-pRFInfo.hrfParamsDiffofGamma = data.x_dGamma;
+[ data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'AC_glmbc_vol',glmInfo);
+glmInfo.hrfParamsDoubleGamma = data.hrf.x_doubleGamma;
+pRFInfo.hrfParamsGamma = data.hrf.x_Gamma;
+pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
 
 % overlayData = script_getOverlayData(thisView)
 
