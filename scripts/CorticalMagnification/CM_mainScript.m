@@ -97,7 +97,7 @@ thisView = script_glmAnalysis(thisView,glmInfo,{'hrfBoxcar'},1);
 
 %% GLM grandient reversals
 % rotate left flatmap 230 and right 290
-thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,glmInfo.groupNames{1}, glmInfo.analysisNames_Groups{1});
+thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,glmInfo.groupNames{1}, glmInfo.analysisNames_Groups{1},'[18 18 21]');
 
 %% ROI CREATION
 % create ROIs with the names: 
@@ -158,7 +158,7 @@ thisView = script_glmAnalysis(thisView,glmInfo,{'hrfDoubleGamma'},1);
 
 %% GLM grandient reversals
 % rotate left flatmap 230 and right 290
-thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase, glmInfo.analysisNames_Groups{2});
+thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase, glmInfo.analysisNames_Groups{2},'[18 18 21]');
 
 %% ROI CREATION
 % create ROIs with the names: 

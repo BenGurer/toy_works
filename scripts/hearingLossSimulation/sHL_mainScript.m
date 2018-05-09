@@ -93,7 +93,7 @@ thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.hrfModel,1);
 
 %% GLM grandient reversals
 % rotate left flatmap 230 and right 290
-thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase,Info.gradReversalInfo.analysisBase);
+thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase,Info.gradReversalInfo.analysisBase,'[12 12 21]');
 
 %% ROI CREATION
 % create ROIs with the names: 

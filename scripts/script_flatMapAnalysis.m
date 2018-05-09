@@ -1,4 +1,4 @@
-function thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,groupBase,analysisBase)
+function thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,groupBase,analysisBase,smoothingParams)
 %% gradient reversals
 % add naming to allow left and right sides for same analysis
 
@@ -7,20 +7,21 @@ function thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,groupBase,a
 % for iGroup = 1:length(concatenationGroup)
 % for iAnalysis = 1:length(functionalAnalysis)
 
-   
+
 for iSide=1:length(subjectInfo.flatmapNames)
     % gradient reversals
-  %     thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['x' subjectInfo.freeSurferName '_' Info.sides{iSide} '_WM_Flat_' subjectInfo.flatmapNames{iSide}]));
+    %     thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['x' subjectInfo.freeSurferName '_' Info.sides{iSide} '_WM_Flat_' subjectInfo.flatmapNames{iSide}]));
     thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',subjectInfo.flatmapNames{iSide}));
     thisView = viewSet(thisView,'curgroup',groupBase);
     thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisBase));
-  
+    
     refreshMLRDisplay(thisView);
     params = [];
     [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(Info.gradReversalInfo.overlayBase)]);
     params.combineFunction = 'gradientReversal';
-%     params.additionalArgs = '[18 18 21]';
-        params.additionalArgs = '[12 12 21]';
+    %     params.additionalArgs = '[18 18 21]';
+    %         params.additionalArgs = '[12 12 21]';
+    params.additionalArgs = smoothingParams;    
     params.baseSpaceInterp = 'linear';
     params.nOutputOverlays= 7;
     params.baseSpace = 1;
