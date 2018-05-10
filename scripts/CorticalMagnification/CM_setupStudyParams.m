@@ -147,7 +147,7 @@ Info.studyDir = 'CorticalMagnification';
 Info.conditionRunIndex = {[1,3],[2,4]};
 % Info.conditionRunIndex = {[2,4],[6,8]};
 
-Info.ConATrue = 0;
+Info.ConATrue = 1;
 
 %% Define ROI names to create
 % Info.ROInames = {'RightAC','RightPosAC','RightAntAC','LeftAC','LeftPosAC','LeftAntAC','AC'};

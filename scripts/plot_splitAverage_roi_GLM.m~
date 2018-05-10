@@ -36,7 +36,7 @@ plot_compareConditions_pTW(data.roi_pTW{1}, data.roi_pTW{2},nCols,xlabel,figureN
 normpTW{1} = data.roi_pTW{1}./max(data.roi_pTW{1}(:));
 normpTW{2} = data.roi_pTW{2}./max(data.roi_pTW{2}(:));
 
-plot_compareConditions_pTW(normpTW{1}, normpTW{2},nCols,xlabel,[figureName, ' (normalised)']);
+plot_compareConditions_pTW(data.roi_pTW{1}, data.roi_pTW{2},nCols,xlabel,[figureName, ' (normalised)']);
 
 end
 
