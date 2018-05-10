@@ -3,7 +3,7 @@ x = 1:(length(conA));
 yLimMax = max(max([conA,conB]));
 yLimMin = min(min([conA,conB,conA - conB]));
 
-figure('Name',[figureName, '-pTW'],'color',[1 1 1])
+figure('Name',[figureName, '- Average Beta Weights'],'color',[1 1 1])
 
 plot(x,conA,'color',[0 113 188]/255)
 hold on

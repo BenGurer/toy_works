@@ -1,5 +1,5 @@
 function plot_compareConditions_pTW(conA,conB,nRows,stimIDs,figureName)
-figure('Name',[figureName, '-pTW'],'color',[1 1 1])
+figure('Name',[figureName, '- Tuning Width (Split half estiamte)'],'color',[1 1 1])
 subIndex = round ([size(conA,1)/(size(conA,1)/nRows) size(conA,1)/nRows]);
 yLimMax = max(max([conA,conB]));
 yLimMin = min(min([conA,conB]));
