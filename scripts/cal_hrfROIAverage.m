@@ -64,13 +64,14 @@ averageHDRTunindCurves = nansum(HDRS,3);
 % figure; waterfall([1-nOverlays:1/resolution:nOverlays-1],[1:1:analysisParams.nHrfComponents],averageHDRTunindCurves);
 % figure; surf([1-nOverlays:1/resolution:nOverlays-1],[1:1:analysisParams.nHrfComponents],averageHDRTunindCurves);
 
+%% Plotting fitting of HRF or HRF deconvolution estimate
+
 figure; 
 
 subplot(3,2,1)
 a = permute(averageHDRTunindCurves, [2 1 3]);
 surf([1:1:analysisParams.nHrfComponents],[1-nOverlays:1/resolution:nOverlays-1],a);
-title('Deconv')
-
+% title('Deconv')
 
 hrf_Deconv = a(7,:)/max(a(7,:)); % normalise to allow analysis to scale and offset
 % t = e.time;
@@ -155,5 +156,69 @@ plot(t,get_HRFDiffOfGamma(p_dGamma,t), '--r')
 plot(t,hrf_Deconv)
 title('Difference of Gamma')
 legend('fitted params','starting params','deconv')
+
+delayS = 2.5;
+durationS = 2.5;
+sampleDuration = 1.5;
+totalDurationS = delayS+durationS;
+totalDuration = round(totalDurationS/sampleDuration);  %total duration in samples
+delay = round(delayS/sampleDuration);  %duration of delay in samples
+duration = totalDuration - delay;
+totalT = length(t);
+hrfboxcar = [zeros(1,delay),ones(1,duration),zeros(1,totalT-totalDuration)];
+subplot(3,2,6)
+plot(t,hrfboxcar)
+hold on
+plot(t,hrf_Deconv)
+
+title('Boxcar')
+legend('Model','deconv')
+
+
+%% Using Gramm to plot deconv HRF
+% TR = 1.5;
+% timePoints = 0 : TR : (TR * analysisParams.nHrfComponents - TR);
+timePoints = t;
+freqBin = 1-nOverlays : 1/resolution : nOverlays-1;
+HRF_TWestimate = a;
+% 
+% grammHRF_TWestimate =reshape(HRF_TWestimate,[1,numel(HRF_TWestimate)]);
+% grammTimePoints = repmat(timePoints,1,size(HRF_TWestimate,1));
+% grammFreqBin = reshape(repmat(freqBin',1,size(HRF_TWestimate,2)),[1,numel(HRF_TWestimate)]);
+% 
+% figure
+% g = gramm('x',grammTimePoints,'y',grammFreqBin,'z',grammHRF_TWestimate)
+% g.geom_line();
+% % g.facet_grid(grammFreqBin,[]);
+% g.draw()
+
+grammTimePoints = repmat(timePoints,size(HRF_TWestimate,1),1);
+grammFreqBin = repmat(freqBin',1,size(HRF_TWestimate,2));
+
+figure
+g = gramm('x',grammTimePoints,'y',grammFreqBin,'z',HRF_TWestimate)
+g.geom_line();
+% g.facet_grid([],grammFreqBin);
+g.draw()
+
+figure
+clear g
+g = gramm('x',grammTimePoints,'y',HRF_TWestimate)
+g.geom_line();
+% g.facet_wrap(grammFreqBin,[]);
+g.draw()
+
+figure
+clear g
+g = gramm('x',grammTimePoints,'y',HRF_TWestimate,'color',freqBin')
+g.geom_line();
+g.draw()
+
+figure
+clear g
+g = gramm('x',grammTimePoints,'y',HRF_TWestimate,'color',freqBin')
+g.geom_line();
+g.facet_grid(freqBin,[]);
+g.draw()
 
 end
