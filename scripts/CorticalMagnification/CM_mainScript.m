@@ -149,6 +149,8 @@ glmInfo.hrfParamsDoubleGamma = data.hrf.x_doubleGamma;
 pRFInfo.hrfParamsGamma = data.hrf.x_Gamma;
 pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
 
+[ x, tw_Deconv, estimate, threshold, nVoxels] = script_centredTWROIAnalysis(thisView,'AC_glmbc_vol',glmInfo);
+
 % overlayData = script_getOverlayData(thisView)
 
 %% get av HRF estimate for GLM BOXCAR Gradient Reversals ROI

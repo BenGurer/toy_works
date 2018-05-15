@@ -50,31 +50,23 @@ end
 % tuningCurves = reshape(tuningCurves,[overlaySize nTuningCurvesIndices]);
 % unsmoothedTuningCurves = tuningCurves;
 averageTunindCurves = nansum(tuningCurves,3);
-% figure; plot([1-nOverlays:1/resolution:nOverlays-1],averageTunindCurves);
 averageHDRTunindCurves = nansum(HDRS,3);
-% figure;
-% for i = 1:analysisParams.nHrfComponents
-%     % plot([1:1:glmData.nHrfComponents],[1-nOverlays:1/resolution:nOverlays-1],averageHDRTunindCurves(i,:));
-%     plot(averageHDRTunindCurves(i,:));
-%     legendInfo{i} = ['HDR Component ' num2str(i)];
-%     hold on
-% end
-% legend(legendInfo)
-% 
-% figure; waterfall([1-nOverlays:1/resolution:nOverlays-1],[1:1:analysisParams.nHrfComponents],averageHDRTunindCurves);
-% figure; surf([1-nOverlays:1/resolution:nOverlays-1],[1:1:analysisParams.nHrfComponents],averageHDRTunindCurves);
 
 %% Plotting fitting of HRF or HRF deconvolution estimate
+% get data ready/ in the right format
+timePoints = t;
+freqBin = 1-nOverlays : 1/resolution : nOverlays-1;
+% permute "average hrf tunding curve" matrix dimentions (from frequency,time to time, frequency)
+HRF_TW_est = permute(averageHDRTunindCurves, [2 1 3]);
+% normalise to allow analysis to scale and offset
+hrf_Deconv = HRF_TW_est(7,:)/max(HRF_TW_est(7,:));
 
-figure; 
 
+% Now plot
+figure
 subplot(3,2,1)
-a = permute(averageHDRTunindCurves, [2 1 3]);
-surf([1:1:analysisParams.nHrfComponents],[1-nOverlays:1/resolution:nOverlays-1],a);
-% title('Deconv')
-
-hrf_Deconv = a(7,:)/max(a(7,:)); % normalise to allow analysis to scale and offset
-% t = e.time;
+waterfall(t,freqBin,HRF_TW_est)
+% surf([1:1:analysisParams.nHrfComponents],[1-nOverlays:1/resolution:nOverlays-1],HRF_TW_est);
 
 p_fmribHRF = [6 12 0.9 0.9 0.35 1]; %guess
 opts = optimset('MaxFunEvals', 500, 'Display', 'off');
@@ -178,45 +170,32 @@ legend('Model','deconv')
 %% Using Gramm to plot deconv HRF
 % TR = 1.5;
 % timePoints = 0 : TR : (TR * analysisParams.nHrfComponents - TR);
-timePoints = t;
-freqBin = 1-nOverlays : 1/resolution : nOverlays-1;
-HRF_TWestimate = a;
-% 
-% grammHRF_TWestimate =reshape(HRF_TWestimate,[1,numel(HRF_TWestimate)]);
-% grammTimePoints = repmat(timePoints,1,size(HRF_TWestimate,1));
-% grammFreqBin = reshape(repmat(freqBin',1,size(HRF_TWestimate,2)),[1,numel(HRF_TWestimate)]);
-% 
-% figure
-% g = gramm('x',grammTimePoints,'y',grammFreqBin,'z',grammHRF_TWestimate)
-% g.geom_line();
-% % g.facet_grid(grammFreqBin,[]);
-% g.draw()
 
-grammTimePoints = repmat(timePoints,size(HRF_TWestimate,1),1);
-grammFreqBin = repmat(freqBin',1,size(HRF_TWestimate,2));
+grammTimePoints = repmat(timePoints,size(HRF_TW_est,1),1);
+grammFreqBin = repmat(freqBin',1,size(HRF_TW_est,2));
 
 figure
-g = gramm('x',grammTimePoints,'y',grammFreqBin,'z',HRF_TWestimate)
+g = gramm('x',grammTimePoints,'y',grammFreqBin,'z',HRF_TW_est)
 g.geom_line();
 % g.facet_grid([],grammFreqBin);
 g.draw()
 
+% figure
+% clear g
+% g = gramm('x',grammTimePoints,'y',HRF_TW_est)
+% g.geom_line();
+% % g.facet_wrap(grammFreqBin,[]);
+% g.draw()
+
 figure
 clear g
-g = gramm('x',grammTimePoints,'y',HRF_TWestimate)
+g = gramm('x',grammTimePoints,'y',HRF_TW_est,'color',freqBin')
 g.geom_line();
-% g.facet_wrap(grammFreqBin,[]);
 g.draw()
 
 figure
 clear g
-g = gramm('x',grammTimePoints,'y',HRF_TWestimate,'color',freqBin')
-g.geom_line();
-g.draw()
-
-figure
-clear g
-g = gramm('x',grammTimePoints,'y',HRF_TWestimate,'color',freqBin')
+g = gramm('x',grammTimePoints,'y',HRF_TW_est,'color',freqBin')
 g.geom_line();
 g.facet_grid(freqBin,[]);
 g.draw()
