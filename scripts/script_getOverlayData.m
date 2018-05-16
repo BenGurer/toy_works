@@ -6,8 +6,16 @@ function overlayData = script_getOverlayData(thisView,groupName,analysisName,con
     % purpose: Get overlay data from  group
     %   input: mrTools view, names of overlays
 
-thisView = viewSet(thisView,'curgroup',groupName);
-thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+    if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
+        thisView = viewSet(thisView,'curgroup',groupName);
+    end
+    
+    if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum',analysisName)
+        thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+    end
+    
+% thisView = viewSet(thisView,'curgroup',groupName);
+% thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
 % if isempty(overlays)
 %     analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',analysisName));
 %     overlays = 1:length(analysisData.overlays);

@@ -18,7 +18,7 @@ if ~weightStim
         pRFParams.restrict = ['ROI: ' roiName];
         pRFParams.pRFFit.supersampling = 1;
         pRFParams.pRFFit.fitHDR = 0;
-        pRFParams.pRFFit.fwhm = 1;
+        pRFParams.pRFFit.fwhm = 0;
         if isfield(pRFInfo,'hrfParamsDiffofGamma')
             pRFParams.pRFFit.diffOfGamma = 1;
             %             pRFParams find params for HRF

@@ -183,11 +183,8 @@ end
 % export group data
 for iGroup = 1:length(glmInfo.groupNames)
     for iSide = 1:length(subjectInfo.flatmapNames)
-%         not sure if I need below
-%         baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
-%         thisView = viewSet(thisView,'currentbase',baseNum);
         for iAnal = 1:length(glmInfo.analysisNames_Groups)
-            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},glmInfo.analysisNames_Groups{iAnal},[],[1:33, 41, 42],subjectInfo.flatmapNames{iSide});
+            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},glmInfo.analysisNames_Groups{iAnal},[],[1:42],subjectInfo.flatmapNames{iSide});
         end
     end
 end
@@ -204,14 +201,6 @@ end
 
 % get condition names
 getConditionNames = cell(1,length(glmInfo.nStim));
-% for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
-%     analysisName = glmInfo.analysisNames_Scans{iAnal};
-%     conditionNames{iAnal} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
-%     
-% end
-
-
-
 % save condition names
 if isfield(data, 'conditions')
     conditionNames = data.conditions;
@@ -228,63 +217,72 @@ end
 analysisName = 'combineTransformOverlays';
 for iSide = 1:length(subjectInfo.flatmapNames)
     groupName = [subjectInfo.flatmapNames{iSide} 'Volume'];
-    thisView = viewSet(thisView,'curgroup',groupName);
-    
+    thisView = viewSet(thisView,'curgroup',groupName);    
     thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
-    % if isempty(overlays)
-    %     analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum',analysisName));
-    %     overlays = 1:length(analysisData.overlays);
-    % end
-    % if ~isempty(iScan)
-    %     for iCon = 1:length(conditionNames)
-    %         overlayNames{iCon} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' analysisName ' (' conditionNames{iCon} ',0))'];
-    %     end
-    % overlayData = get_overlayData(thisView,overlayNames);
-    % else
     for iScan = 1:glmInfo.nScans
         for iAnal = 1:length(glmInfo.hrfModel)*length(glmInfo.nStim)
-            overlayNames = [];
+            % define overlay names
+            % First, deteremine how many stimuli
             if glmInfo.analysisNStim{iAnal} == length(conditionNames{1});
                 for iCon = 1:length(conditionNames{1})
+                    overlayNames = cell(1,length(conditionNames{1}));
                     overlayNames{iCon} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisBaseNames_Scans{iAnal} '_Scan_' mat2str(iScan) ' (' conditionNames{1}{iCon} ',0))'];
                 end
             else
                 for iCon = 1:length(conditionNames{2})
+                    overlayNames = cell(1,length(conditionNames{2}));
                     overlayNames{iCon} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisBaseNames_Scans{iAnal} '_Scan_' mat2str(iScan)  ' (' conditionNames{2}{iCon} ',0))'];
                 end
             end
             overlayData = get_overlayData(thisView,overlayNames);
             eval(['data.' Info.Sides{iSide}, '.scanData.', glmInfo.analysisBaseNames_Scans{iAnal}, '.overlayData{iScan} =  overlayData']);
-            %             eval(['data.' Info.Sides{iSide}, '.scanData.', glmInfo.analysisBaseNames_Scans{iAnal}, '.overlayData{iScan} = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',overlayNames,iScan);'])
-            %             eval(['data.' Info.Sides{iSide}, '.scanData.', glmInfo.analysisBaseNames_Scans{iAnal}, '.overlayData{iScan} = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',conditionNames{iAnal},iScan);'])
         end
     end
 end
 
 % get data from GROUPs
-for iGroup = 1:length(glmInfo.groupNames)
-    %         overlayNames= ['averageDepthVol(' glmInfo.groupNames{iGroup} ' (Ouput 3 - weightedMeanStd(' conNamesString '),0))'];
+for iGroup = 1:length(glmInfo.groupNames)    
     for iAnal = 1:length(glmInfo.analysisNames_Groups)/length(glmInfo.groupNames)
-    overlayNames = [];
-    conNamesString = [];
-    for iCon =1:length(conditionNames{1})
-        overlayNames{iCon} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames_Groups{iAnal} ' (' conditionNames{1}{iCon} ',0))'];
-        
-        if iCon == 1
-            conNamesString  = [conNamesString conditionNames{1}{iCon}];
-        else
-            conNamesString  = [conNamesString ',' conditionNames{1}{iCon}];
+        % define overlay names
+        overlayNames = cell(1,length(conditionNames{1}));
+        conNamesString = [];
+        for iCon =1:length(conditionNames{1})
+            overlayNames{iCon} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames_Groups{iAnal} ' (' conditionNames{1}{iCon} ',0))'];
+            if iCon == 1
+                conNamesString  = [conNamesString conditionNames{1}{iCon}];
+            else
+                conNamesString  = [conNamesString ',' conditionNames{1}{iCon}];
+            end
         end
-    end
-    centriodOverlayName = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames_Groups{iAnal} ' (Ouput 3 - weightedMeanStd(' conNamesString '),0))'];
-    for iSide = 1:length(subjectInfo.flatmapNames)
-        baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
-        thisView = viewSet(thisView,'currentbase',baseNum);
-%         for iAnal = 1:length(glmInfo.analysisNames_Groups)
+        
+        r2OverlayName = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames_Groups{iAnal} ' (r2,0))'];
+        % get voxel property estmates - define overlay names
+        % index max, centriod, spread, julienCentriod, julienTuningWidth
+        voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
+        voxelPropertyOverlayName = cell(1,length(voxelPropertyNames));
+        for iName = 1:length(voxelPropertyNames) - 1
+            voxelPropertyOverlayName{iName} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames_Groups{iAnal} ' (Ouput ' num2str(iName) ' - weightedMeanStd(' conNamesString '),0))'];
+        end
+        voxelPropertyOverlayName{end} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames_Groups{iAnal} ' (Ouput 1 - indexMax(' conNamesString '),0))'];
+        
+        for iSide = 1:length(subjectInfo.flatmapNames)
+            baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+            thisView = viewSet(thisView,'currentbase',baseNum);
+            
+            % get overlay data
+            % beta weights
             eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.overlayData = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',overlayNames,[]);'])
-            eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.glmCentriod = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',centriodOverlayName,[]);'])
-%         end
-    end
+            
+            % voxel property estiamtes
+            for iName = 1:length(voxelPropertyNames)
+                eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.voxelProperty.data{iName} = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',voxelPropertyOverlayName{iName},[]);'])
+                eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.voxelProperty.name{iName} = voxelPropertyOverlayName{iName};']);
+            end
+            % R2
+            eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.voxelProperty.data{end + 1} = script_getOverlayData(thisView,[subjectInfo.flatmapNames{iSide},' q 'Volume' q '],' q 'combineTransformOverlays' q ',r2OverlayName,[]);'])
+            eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames_Groups{iAnal}, '.voxelProperty.name{end + 1} = ' q 'R2' q ';']);
+                        
+        end
     end
 end
 
@@ -385,12 +383,12 @@ end
 % later?
 % change export and average over depth functiosn to work on indivudal
 % overlays as well as all in analysis
-for iSide = 1:length(Info.Sides)    
+for iSide = 1:length(Info.Sides)
     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
-% get from glm analysis
-% average tuning curve sigma
-% hrf estimate
-[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[ pRFInfo.pRFrois{iSide} , '_vol' ],0);
+    % get from glm analysis
+    % average tuning curve sigma
+    % hrf estimate
+    [thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[ pRFInfo.pRFrois{iSide} , '_vol' ],0);
 end
 
 
