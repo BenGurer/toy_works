@@ -1,4 +1,4 @@
-function [ x, tw_Deconv, estimate, threshold, nVoxels] = script_centredTWROIAnalysis(thisView,roiName,glmInfo)
+function [ thisView, x_g, x_r, tw_Deconv, estimate, threshold, nVoxels] = script_centredTWROIAnalysis(thisView,roiName,glmInfo)
 % set to correct group and analysis;
 % get data from analysis
 % use ROI to restrict
@@ -6,7 +6,9 @@ function [ x, tw_Deconv, estimate, threshold, nVoxels] = script_centredTWROIAnal
 % output result
 
 % set view to group we want data from
-thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{2});
+if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',glmInfo.groupNames{2})
+    thisView = viewSet(thisView,'curgroup',glmInfo.groupNames{2});
+end
 
 % get data from analysis
 analysisName = 'GLM_Deconv_8bins';
@@ -21,14 +23,15 @@ roi.scanCoords = getROICoordinates(thisView,roi);
 r2data = analysisData.overlays(1).data;
 volumeIndices = sub2ind(size(r2data{:}),roi.scanCoords(1,:),roi.scanCoords(2,:),roi.scanCoords(3,:));
 [estimate,volumeIndices] = getEstimates(analysisData.d{:}, analysisData.params ,volumeIndices');
-% nVoxels = length(volumeIndices);
+nVoxels = length(volumeIndices);
 
 e = estimate.hdr;
+threshold = [];
 % [index, threshold] = cal_R2threshold(r2data{:}(volumeIndices));
 % e = e(:,:,index(:));
 
 % calcculate average HRF
 % [ x_doubleGamma, x_Gamma, x_dGamma ] = cal_hrfROIAverage(e,analysisParams)
-[ x, tw_Deconv ] = cal_centredTWROIAverage(e,estimate.time,analysisData.d{:});
+[ x_g, x_r, tw_Deconv ] = cal_centredTWROIAverage(e,estimate.time,analysisData.d{:});
 
 end

@@ -1,4 +1,4 @@
-function [ x_doubleGamma, x_Gamma, x_dGamma, estimate, threshold, nVoxels] = script_hrfROIAnalysis(thisView,roiName,glmInfo)
+function [ thisView, x_doubleGamma, x_Gamma, x_dGamma, estimate, threshold, nVoxels] = script_hrfROIAnalysis(thisView,roiName,glmInfo)
 % set to correct group and analysis;
 % get data from analysis
 % use ROI to restrict
@@ -6,7 +6,9 @@ function [ x_doubleGamma, x_Gamma, x_dGamma, estimate, threshold, nVoxels] = scr
 % output result
 
 % set view to group we want data from
-thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{2});
+if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',glmInfo.groupNames{2})
+    thisView = viewSet(thisView,'curgroup',glmInfo.groupNames{2});
+end
 
 % get data from analysis
 analysisName = 'GLM_Deconv_8bins';

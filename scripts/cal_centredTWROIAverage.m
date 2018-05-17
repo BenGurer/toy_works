@@ -1,4 +1,4 @@
-function [ x, tw_Deconv ] = cal_centredTWROIAverage(e,t,analysisParams)
+function [ x_g, x_r, tw_Deconv ] = cal_centredTWROIAverage(e,t,analysisParams)
     %
     %   usage: cal_centredTWAverage
     %      by: Ben Gurer
@@ -12,7 +12,7 @@ function [ x, tw_Deconv ] = cal_centredTWROIAverage(e,t,analysisParams)
 %     max(a,[],2)
 % take mean of all and find max time point and use that
 %     hdrMaxTimePoint = 3; % [v i] = max(mean(estimate.hdr(:,:,1),2))
-[v hdrMaxTimePoint] = max(max(mean(e,3)'));
+[v, hdrMaxTimePoint] = max(max(mean(e,3)'));
 curve = e(hdrMaxTimePoint,:,:);
 nOverlays = analysisParams.nhdr;
 resolution = 1; %resolution = 2;

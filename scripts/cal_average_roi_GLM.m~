@@ -14,7 +14,7 @@ for iGroup = 1:length(groupNames)
     %     eval(['conB = cell2mat(roiData.' groupNames{iGroup} '.' roiName '.' analName ');'])
     %     end
    
-    eval(['raw{iGroup} = cell2mat(roiData.' groupNames{iGroup} '.' analName '.betas' q ');']) % q stores ' - need to rotate matrix/ cell array to work with cell2mat
+    eval(['raw{iGroup} = cell2mat(roiData.' groupNames{iGroup} '.' analName '.betas' q ');']) 
     
     % Remove nans
     raw{iGroup}(isnan(raw{iGroup}(:))) = [];
