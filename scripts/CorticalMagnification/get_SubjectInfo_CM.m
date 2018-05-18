@@ -11,14 +11,16 @@ function subjectInfo = get_SubjectInfo_CM(iSub)
 % define subject info
 % Subject info
 subject{1} = '03644_012';
-niftiBaseName{1} = 'pRFpilot2_';
+% niftiBaseName{1} = 'pRFpilot2_';
+niftiBaseName{1} = '03644_012_';
 T2star{1} = '16';
 refScan{1} = '15'; % scan before t2 structural
 wholeheadPSIR{1} = [];
 distCorrectionRefSparse{1} = {'17','18'};
 distCorrectionRefCont{2} = {'20','21'};
 % scanList = [13,15,19,22];
-freeSurferName{1} = 'kkPSIR_reorient_p7';
+% freeSurferName{1} = 'kkPSIR_reorient_p7';
+freeSurferName{1} = '03644_010';
 % distCorrectionRef = {'20','21'};
 flatmapName{1} = {};
 conditionOrder{1} = {[1,3],[2,4]};
@@ -98,7 +100,7 @@ conditionOrder{6} = {[1,3],[2,4]};
 
 % Import raw scans from subject 9 post motion correction
 % Import to one group
-subject{7} = '08773_007';
+subject{7} = '08773';
 niftiBaseName{7} = 'cm_08773_007_';
 psirNiftiBaseName{7} = 'cm_08773_007';
 T2star{7} = '16';

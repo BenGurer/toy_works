@@ -5,7 +5,7 @@ function thisView = script_importAnatomy(thisView,Info,subjectInfo)
 thisView = loadAnat(thisView,'lastFrameEPI.nii',fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID,'FNIRT'));
 
 %% Load HighRes inplane T2*
-thisView = loadAnat(thisView,[subjectInfo.niftiBaseName, subjectInfo.T2star, '_1_modulus_stripped.nii'],fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID,'Anatomy'));
+thisView = loadAnat(thisView,['cm_', subjectInfo.niftiBaseName, '_' subjectInfo.T2star, '_1_modulus_stripped.nii'],fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID,'Anatomy'));
 
 %load skull-stripped  EPI as overlay
 % [thisView,params] = importOverlay(thisView,[],'defaultParams=1',['pathname=' fullfile(dataDir,studyDir,subjects{iSubj},'/FNIRT/lastFrameEPI_stripped.nii')]);

@@ -34,7 +34,7 @@ subjectInfo = get_SubjectInfo_CM(iSub);
 saveName = [subjectInfo.subjectID '_data.mat'];
 
 %% move to subject folder, delete any current views, open mrLoadRet and get its view
-cd(fullfile(dataMount,Info.studyDir,subjectInfo.subjectID));
+cd(fullfile(Info.dataDir ,Info.studyDir,subjectInfo.subjectID));
 % deleteView(thisView);
 
 %% either load data or mrView
@@ -50,11 +50,11 @@ thisView = getMLRView;
 refreshMLRDisplay(thisView.viewNum);
 
 %% organise subject data
-sHL_organiseData(Info, subjectInfo);
+% sHL_organiseData(Info, subjectInfo);
 % import, convert and move subject data
 
 %% pre-process
-sHL_preprocess(Info, subjectInfo, 0);
+% sHL_preprocess(Info, subjectInfo, 0);
 % distortion correct
 % linear alignment
 % non-linear alignment
@@ -68,16 +68,6 @@ sHL_preprocess(Info, subjectInfo, 0);
 % group data
 % concatenate runs
 
-% Concatenation of Group A data
-thisView = viewSet(thisView,'curGroup','MotionComp');
-params_Concat_GroupA = getConcatParams_withNewGroupName(thisView,glmInfo.groupNames{1},'defaultParams=1',['scanList=' mat2str(subjectInfo.conditionOrder{1})]);
-[thisView, params_Concat_GroupA] = concatTSeries(thisView,params_Concat_GroupA);
-
-% Concatenation of Group B data
-thisView = viewSet(thisView,'curGroup','MotionComp');
-params_Concat_GroupB = getConcatParams_withNewGroupName(thisView,glmInfo.groupNames{2},'defaultParams=1',['scanList=' mat2str(subjectInfo.conditionOrder{2})]);
-[thisView, params_Concat_GroupB] = concatTSeries(thisView,params_Concat_GroupB);
-
 %% open View
 mrLoadRet
 
@@ -87,6 +77,9 @@ thisView = script_importAnatomy(thisView,Info,subjectInfo);
 % reference EPI
 % High resolution in-plane T2*
 % surfaces
+
+% rotate surfaces and then get view
+thisView = getMLRView;
 
 %% Tonotopic analysis
 
@@ -101,7 +94,7 @@ thisView = script_glmAnalysis(thisView,glmInfo,{'hrfBoxcar'},1);
 % radius = 55
 % centre on HG (use R2 and f-test to guide)
 % use default names
-% resolution = 3 
+% resolution = 3; method = mrFlatMesh
 % rotate flatmaps for easy viewing (do before exporting to flatmap space)
 
 %% GLM grandient reversals
@@ -111,7 +104,8 @@ thisView = script_glmAnalysis(thisView,glmInfo,{'hrfBoxcar'},1);
 %% ROI CREATION
 % create ROIs with the names: 
 % LeftAR and RightAR: Group=Sparse; Analysis=glm_hrfboxcar; Overlay=f-test - set to 0.005
-% Create ROI - continuous voxels; ROIs>transform>expandROI([2 2 2])(convolves ROI with a sphere with a diameter of 2^3 voxels)
+% Create ROI - continuous voxels; ROIs>transform>expandROI([3 3 3])(convolves ROI with a sphere with a diameter of 2^3 voxels)
+% Project through depths 0.3 to 0.7 to remove voxels outside of grey matter
 % Combine ROIS: name=AuditoryResponsive
 
 % LeftAC_glmbc, RightAC_glmbc using gradient reversals - output 4 with alpha overlay output 6  

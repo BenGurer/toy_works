@@ -14,7 +14,7 @@
 % 
 
 %% define subject
-iSub = 2;
+iSub = 1;
 q = char(39);
 
 
@@ -87,9 +87,9 @@ thisView = script_importAnatomy(thisView,Info,subjectInfo);
 % reference EPI
 % High resolution in-plane T2*
 % surfaces
-% create flatmaps
-% MAKE ORIGINAL FLAT MAPS (LEFT AND RIGHT) USING MAKEFLAT AND use defualt names
-% rotate flatmaps for easy viewing (do before exporting to flatmap space)
+
+% rotate surfaces and then get view
+thisView = getMLRView;
 
 %% Tonotopic analysis
 
@@ -103,6 +103,9 @@ thisView = script_glmAnalysis(thisView,glmInfo,{'hrfBoxcar'},1);
 %% Make flatmaps
 % radius = 55
 % centre on HG (use R2 and f-test to guide)
+% use default names
+% resolution = 3; method = mrFlatMesh
+% rotate flatmaps for easy viewing (do before exporting to flatmap space)
 
 %% GLM grandient reversals
 % rotate left flatmap 230 and right 290
@@ -157,12 +160,12 @@ thisView = script_hrfAnalysis(thisView,glmInfo.groupNames{2});
 % end
 thisView = getMLRView;
 % save result to data
-[ thisView, data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'AC_glmbc_vol',glmInfo);
+[ thisView, data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'AuditoryResponsive',glmInfo);
 glmInfo.hrfParamsDoubleGamma = data.hrf.x_doubleGamma;
 pRFInfo.hrfParamsGamma = data.hrf.x_Gamma;
 pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
 
-[ thisView, data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'RightAR2_2',glmInfo);
+[ thisView, data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'AC_glmbc_vol',glmInfo);
 
 [ thisView, x_g, x_r, tw_Deconv, estimate, ~, nVoxels] = script_centredTWROIAnalysis(thisView,'AC_glmbc_vol',glmInfo);
 % overlayData = script_getOverlayData(thisView)
@@ -178,7 +181,9 @@ thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInf
 
 %% ROI CREATION
 % create ROIs with the names: 
+% NEW: LeftAC, RightAC
 % LeftAC_glmdg, RightAC_glmdg using gradient reversals - output 4 with alpha overlay output 6
+% use AuditoryResponsive rather than created expanded ROIs
 % LeftRestrict, RightRestrict 
 %   go to each flat base vol, define large ROI around HG, project through 
 %   depths (ROIs>transform>expandROI([1 1 6])(replace)),
