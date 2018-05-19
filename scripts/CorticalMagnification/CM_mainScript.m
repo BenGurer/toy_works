@@ -14,7 +14,7 @@
 % 
 
 %% define subject
-iSub = 2;
+iSub = 5;
 q = char(39);
 
 
@@ -104,9 +104,11 @@ thisView = script_glmAnalysis(thisView,glmInfo,{'hrfBoxcar'},1);
 %% ROI CREATION
 % create ROIs with the names: 
 % LeftAR and RightAR: Group=Sparse; Analysis=glm_hrfboxcar; Overlay=f-test - set to 0.005
-% Create ROI - continuous voxels; ROIs>transform>expandROI([3 3 3])(convolves ROI with a sphere with a diameter of 2^3 voxels)
+% Create ROI - continuous voxels; 
 % Project through depths 0.3 to 0.7 to remove voxels outside of grey matter
 % Combine ROIS: name=AuditoryResponsive
+% ROIs>transform>expandROI([3 3 3] or [2 2 2])(convolves ROI with a sphere with a diameter of 2^3 voxels)
+% name=AuditoryResponsiveExp
 
 % LeftAC_glmbc, RightAC_glmbc using gradient reversals - output 4 with alpha overlay output 6  
 %   go to each flat base vol, define large ROI around HG, project through 
@@ -151,6 +153,8 @@ thisView = script_hrfAnalysis(thisView,glmInfo.groupNames{2});
 % end
 thisView = getMLRView;
 % save result to data
+
+[ thisView, data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'AuditoryResponsiveExp',glmInfo);
 [ thisView, data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'AuditoryResponsive',glmInfo);
 glmInfo.hrfParamsDoubleGamma = data.hrf.x_doubleGamma;
 pRFInfo.hrfParamsGamma = data.hrf.x_Gamma;
