@@ -34,7 +34,7 @@ subjectInfo = get_SubjectInfo_CM(iSub);
 saveName = [subjectInfo.subjectID '_data.mat'];
 
 %% move to subject folder, delete any current views, open mrLoadRet and get its view
-cd(fullfile(Info.dataDir ,Info.studyDir,subjectInfo.subjectID));
+cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
 % deleteView(thisView);
 
 %% either load data or mrView
@@ -81,6 +81,9 @@ thisView = script_importAnatomy(thisView,Info,subjectInfo);
 % rotate surfaces and then get view
 thisView = getMLRView;
 
+% Import PSIR
+thisView = importPSIRasOverlay(thisView,Info,subjectInfo);
+
 %% Tonotopic analysis
 
 %% GLM analysis
@@ -105,10 +108,10 @@ thisView = script_glmAnalysis(thisView,glmInfo,{'hrfBoxcar'},1);
 % create ROIs with the names: 
 % LeftAR and RightAR: Group=Sparse; Analysis=glm_hrfboxcar; Overlay=f-test - set to 0.005
 % Create ROI - continuous voxels; 
+% ROIs>transform>expandROI([3 3 3])(convolves ROI with a sphere with a diameter of 2^3 voxels)
+% name=(Left or Right)ARexp
 % Project through depths 0.3 to 0.7 to remove voxels outside of grey matter
-% Combine ROIS: name=AuditoryResponsive
-% ROIs>transform>expandROI([3 3 3] or [2 2 2])(convolves ROI with a sphere with a diameter of 2^3 voxels)
-% name=AuditoryResponsiveExp
+% combine LeftAR and RightAR = AR & combine LeftARexp and RightARexp = ARexp
 
 % LeftAC_glmbc, RightAC_glmbc using gradient reversals - output 4 with alpha overlay output 6  
 %   go to each flat base vol, define large ROI around HG, project through 
@@ -154,20 +157,19 @@ thisView = script_hrfAnalysis(thisView,glmInfo.groupNames{2});
 thisView = getMLRView;
 % save result to data
 
-[ thisView, data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'AuditoryResponsiveExp',glmInfo);
-[ thisView, data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'AuditoryResponsive',glmInfo);
+%% get av HRF estimate for GLM BOXCAR Gradient Reversals ROI
+% use results for GLM
+[ thisView, data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'ARexp',glmInfo);
+[ thisView, data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'AR',glmInfo);
 glmInfo.hrfParamsDoubleGamma = data.hrf.x_doubleGamma;
 pRFInfo.hrfParamsGamma = data.hrf.x_Gamma;
 pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
 
-[ thisView, data.hrf.x_doubleGamma, data.hrf.x_Gamma, data.hrf.x_dGamma, data.hrf.deconv] = script_hrfROIAnalysis(thisView,'AC_glmbc_vol',glmInfo);
-
-[ thisView, x_g, x_r, tw_Deconv, estimate, ~, nVoxels] = script_centredTWROIAnalysis(thisView,'AC_glmbc_vol',glmInfo);
+[ thisView, x_g, x_r, tw_Deconv, estimate, ~, nVoxels] = script_centredTWROIAnalysis(thisView,'AR',glmInfo);
 % overlayData = script_getOverlayData(thisView)
 
-%% get av HRF estimate for GLM BOXCAR Gradient Reversals ROI
-% use results for GLM
-% add option for hrf model
+
+%% GLM Analysis with Double Gamma HRF
 thisView = script_glmAnalysis(thisView,glmInfo,{'hrfDoubleGamma'},1);
 
 %% GLM grandient reversals
@@ -365,63 +367,58 @@ end
 save(saveName,'data','-v7.3');
 
 
-%% now create pRF restrict ROI in flat space and project through depths,
-
-% first get view so we have the ROIS
+% first get view so we have the ROIs
 thisView = getMLRView;
 
 % go to each flat base vol, define large ROI around HG on slice 6, project through depths (ROIs>transform>expandROI([30 30 6])(post fix 'ex' to name)),
 
-eval(['pRFrois = [Info.' Info.Sides{iSide} 'ROInames ' q 'ex' q '];']);
-% pRFrois = {'LeftpRFrestrict','RightpRFrestrict'}; % this should be defined in setup
-pRFInfo.pRFrois = {'LeftAC_glmbc_ex','RightAC_glmbc_ex'}; % this should be defined in setup
-
-for iSide = 1:length(pRFrois)
-% roi = viewGet(thisView,'roi','leftpRFrestrict');
-% roi = viewGet(thisView,'roi','RightAC');       
-baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
-thisView = viewSet(thisView,'currentbase',baseNum);
-thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide} 'Volume']);
-
-refreshMLRDisplay(thisView.viewNum);
-roi = viewGet(thisView,'roi',pRFrois{iSide});
-outputRoi = convertFromFlatVolumeToBase(roi);
-thisView = viewSet(thisView,'newROI',outputRoi);
-% post fix Vol to name
-end
-% then convert back to vol space, THEN:  ROIs>combine>(choose both ROIS),action:Union, newName:pRFrestrict
-% name = pRFrestrict
+% eval(['pRFrois = [Info.' Info.Sides{iSide} 'ROInames ' q 'ex' q '];']);
+% % pRFrois = {'LeftpRFrestrict','RightpRFrestrict'}; % this should be defined in setup
+% pRFInfo.pRFrois = {'LeftAC_glmbc_ex','RightAC_glmbc_ex'}; % this should be defined in setup
+% 
+% for iSide = 1:length(pRFrois)
+% % roi = viewGet(thisView,'roi','leftpRFrestrict');
+% % roi = viewGet(thisView,'roi','RightAC');       
+% baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+% thisView = viewSet(thisView,'currentbase',baseNum);
+% thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide} 'Volume']);
+% 
+% refreshMLRDisplay(thisView.viewNum);
+% roi = viewGet(thisView,'roi',pRFrois{iSide});
+% outputRoi = convertFromFlatVolumeToBase(roi);
+% thisView = viewSet(thisView,'newROI',outputRoi);
+% % post fix Vol to name
+% end
+% % then convert back to vol space, THEN:  ROIs>combine>(choose both ROIS),action:Union, newName:pRFrestrict
+% % name = pRFrestrict
+% 
+% %% pRF analysis
+% % maybe move to before exporting to flatmap and then run glm informed pRF
+% % later?
+% % change export and average over depth functiosn to work on indivudal
+% % overlays as well as all in analysis
+% for iSide = 1:length(Info.Sides)
+%     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
+%     % get from glm analysis
+%     % average tuning curve sigma
+%     % hrf estimate
+%     [thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[ pRFInfo.pRFrois{iSide} , '_vol' ],0);
+% end
 
 %% pRF analysis
-% maybe move to before exporting to flatmap and then run glm informed pRF
-% later?
-% change export and average over depth functiosn to work on indivudal
-% overlays as well as all in analysis
-for iSide = 1:length(Info.Sides)
-    eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
-    % get from glm analysis
-    % average tuning curve sigma
-    % hrf estimate
-    [thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,[ pRFInfo.pRFrois{iSide} , '_vol' ],0);
-end
-
+% add analysis per scan
+[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,'ARExp',0);
 
 %% pRF grandient reversals
 % doesn't work?
-thisView = script_flatMapAnalysis(thisView,Info,subjectInfo);
+thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase, 'pRF_AR','[18 18 21]');
 % create ROIs with the names: pRFleft, pRFright
 
 %% export pRF overlays
-% export group data
-for iGroup = 1:length(glmInfo.groupNames)
-    for iSide = 1:length(subjectInfo.flatmapNames)
-        %         baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
-        %         thisView = viewSet(thisView,'currentbase',baseNum);
-%         thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},[pRFInfo.analysisNames_Groups{1}{1}, '_', pRFInfo.pRFrois{iSide}, '_vol' ],[],[],subjectInfo.flatmapNames{iSide});
-     
+% export group data from volumetric to flatmap space
+for iSide = 1:length(subjectInfo.flatmapNames)   
+    for iGroup = 1:length(glmInfo.groupNames)
         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
-            %             [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
-            % export of flatmap space
             thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},[pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, '_vol' ],[],[],subjectInfo.flatmapNames{iSide});
         end
     end
@@ -432,17 +429,16 @@ end
 % pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
 overlayNames = cell(size(pRFInfo.analysisNames_Groups));
 for iSide = 1:length(subjectInfo.flatmapNames)
-    %     thisView = script_averageAcrossDepths(thisView,overlays,groupName)
-        % get  group number and analysis number and get analysis, then get overlays
+    % get  group number and analysis number and get analysis, then get overlays
     % and there names - concat with what makes exported overlay
     for iGroup = 1:length(glmInfo.groupNames)
         groupName = glmInfo.groupNames{iGroup};
         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
-%             analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
-
+            %             analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+            
             analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, '_vol' ];
             for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
-            overlayNames{iGroup}{iAnal}{iOverlay} = [groupName '_' analysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
+                overlayNames{iGroup}{iAnal}{iOverlay} = [groupName '_' analysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
             end
             thisView = script_averageAcrossDepths(thisView,overlayNames{iGroup}{iAnal},[subjectInfo.flatmapNames{iSide}, 'Volume']);
         end
