@@ -175,7 +175,7 @@ grammTimePoints = repmat(timePoints,size(HRF_TW_est,1),1);
 grammFreqBin = repmat(freqBin',1,size(HRF_TW_est,2));
 
 figure
-g = gramm('x',grammTimePoints,'y',grammFreqBin,'z',HRF_TW_est)
+g = gramm('x',grammTimePoints,'y',grammFreqBin,'z',HRF_TW_est);
 g.geom_line();
 % g.facet_grid([],grammFreqBin);
 g.draw()
@@ -189,13 +189,13 @@ g.draw()
 
 figure
 clear g
-g = gramm('x',grammTimePoints,'y',HRF_TW_est,'color',freqBin')
+g = gramm('x',grammTimePoints,'y',HRF_TW_est,'color',freqBin');
 g.geom_line();
 g.draw()
 
 figure
 clear g
-g = gramm('x',grammTimePoints,'y',HRF_TW_est,'color',freqBin')
+g = gramm('x',grammTimePoints,'y',HRF_TW_est,'color',freqBin');
 g.geom_line();
 g.facet_grid(freqBin,[]);
 g.draw()
