@@ -14,7 +14,7 @@
 % 
 
 %% define subject
-iSub = 8;
+iSub = 4;
 q = char(39);
  
  
@@ -167,6 +167,24 @@ glmInfo.hrfParamsDoubleGamma = data.hrf.x_doubleGamma;
 pRFInfo.hrfParamsGamma = data.hrf.x_Gamma;
 pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
 
+thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.groupNames,{'hrfDoubleGamma'},0,1);
+
+thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase, glmInfo.analysisNames_Groups{2},'[18 18 21]');
+for iSide = 1:length(subjectInfo.flatmapNames)
+    groupName = 'ConcatenationSparse';
+    if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
+        thisView = viewSet(thisView,'curgroup',groupName);
+    end
+    analysisName = 'glm_hrfBoxcar';
+    thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+    overlayNum = viewGet(thisView,'overlayNum','P [F (fTest - all conditions)]');
+    thisView = script_covertData2FlatmapSpace(thisView,'ConcatenationSparse',analysisName,[],overlayNum,subjectInfo.flatmapNames{iSide});
+end
+% average over cortical depth
+for iSide = 1:length(subjectInfo.flatmapNames)
+    thisView = script_averageAcrossDepths(thisView,[],[subjectInfo.flatmapNames{iSide}, 'Volume']);
+end
+
 % [ thisView, x_g, x_r, tw_Deconv, estimate, ~, nVoxels] = script_centredTWROIAnalysis(thisView,'AR',glmInfo);
 % overlayData = script_getOverlayData(thisView)
 
@@ -178,6 +196,7 @@ thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.groupNames,{'hrfDoubleGam
 %% GLM grandient reversals
 % rotate left flatmap 230 and right 290
 thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase, glmInfo.analysisNames_Groups{2},'[18 18 21]');
+
 
 %% ROI CREATION
 % create ROIs with the names: 
