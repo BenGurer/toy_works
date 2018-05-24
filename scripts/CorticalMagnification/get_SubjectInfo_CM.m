@@ -66,7 +66,7 @@ distCorrectionRefCont{4} = {'12','13'};
 freeSurferName{4} = '12023_001';
 sparseScans{4} =  {'8','15'};
 contScans{4} =  {'9','16'};
-flatmapName{4} = {};
+flatmapName{4} = {'x12023_001_left_WM_invFNIRT_12023_001_Flat_61_126_66_Rad55','x12023_001_right_WM_invFNIRT_12023_001_Flat_196_129_70_Rad55'};
 conditionOrder{4} = {[1,3],[2,4]};
 
 subject{5} = '11108_006';
@@ -95,7 +95,7 @@ distCorrectionRefCont{6} = {'12','13'};
 freeSurferName{6} = '11020_002';
 sparseScans{6} =  {'08','15'};
 contScans{6} =  {'09','18'};
-flatmapName{6} = {};
+flatmapName{6} = {'x11020_002_left_WM_invFNIRT_11020_002_Flat_74_112_61_Rad55','x11020_002_right_WM_invFNIRT_11020_002_Flat_185_125_75_Rad55'};
 conditionOrder{6} = {[1,3],[2,4]};
 
 % Import raw scans from subject 9 post motion correction
