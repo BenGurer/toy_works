@@ -1,4 +1,4 @@
-function [thisView] = script_glmAnalysis(thisView,glmInfo,hrfModel,runSplitHalf)
+function [thisView] = script_glmAnalysis(thisView,glmInfo,groupNames,hrfModel,runSplitHalf,runTonotopic)
     %
     %   usage: script_glmAnalysis(thisView,glmInfo)
     %      by: Ben Gurer
@@ -8,10 +8,10 @@ function [thisView] = script_glmAnalysis(thisView,glmInfo,hrfModel,runSplitHalf)
     %  output: thisView
     %
 % hrfModel = glmInfo.hrfModel;
-for i = 1:length(glmInfo.groupNames)
+for i = 1:length(groupNames)
     for iHRF = 1:length(hrfModel)
         analysisName = ['glm_' hrfModel{iHRF}];
-        thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{i});
+        thisView = viewSet(thisView,'curGroup',groupNames{i});
         [thisView, glmParams] = glmAnalysis(thisView,[],'justGetParams=1','defaultParams=1');
         glmParams.hrfModel = hrfModel{iHRF};
         [thisView, glmParams] = glmAnalysis(thisView,glmParams,'justGetParams=1','defaultParams=1');
@@ -87,12 +87,13 @@ for i = 1:length(glmInfo.groupNames)
         glmParams.alphaContrastOverlay = 'Uncorrected';
         glmParams.parametricTests = 1;
         glmParams.fweAdjustment = 0;
-        glmParams.fdrAdjustment = 0;
-        glmParams.outputStatistic = 0;
+        glmParams.fdrAdjustment = 1;
+        glmParams.outputStatistic = 1;
         glmParams.numberContrasts = 0;
         glmParams.outputEstimatesAsOverlays = 1;
         [thisView, glmParams] = glmAnalysis(thisView,glmParams);
         
+        if runTonotopic
         %Tonotopy analysis
         % Index max
         [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:33])]);
@@ -114,6 +115,8 @@ for i = 1:length(glmInfo.groupNames)
         
         %% save analysis
         saveAnalysis(thisView,analysisName)
+        
+        end
                 
     end
 end

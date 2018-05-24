@@ -136,7 +136,7 @@ distCorrectionRefCont{8} = {'09','10'};
 freeSurferName{8} = '09933_005';
 sparseScans{8} =  {'07_scan1','13'};
 contScans{8} =  {'06','14'};
-flatmapName{8} = {'x09933_005_left_WM_invFNIRT_09933_005_Flat_71_105_79_Rad55','x09933_005_right_WM_invFNIRT_09933_005_Flat_190_115_90_Rad55',};
+flatmapName{8} = {'x09933_005_left_WM_invFNIRT_09933_005_Flat_71_105_79_Rad55.off','x09933_005_right_WM_invFNIRT_09933_005_Flat_190_115_90_Rad55',};
 conditionOrder{8} = {[1,3],[2,4]};
 
 %% output selected subjects daya
