@@ -22,7 +22,7 @@ distCorrectionRefCont{2} = {'20','21'};
 % freeSurferName{1} = 'kkPSIR_reorient_p7';
 freeSurferName{1} = '03644_010';
 % distCorrectionRef = {'20','21'};
-flatmapName{1} = {};
+flatmapName{1} = {'x03644_010_left_WM_invFNIRT_03644_012_Flat_37_131_130_Rad55','x03644_010_right_WM_invFNIRT_03644_012_Flat_140_132_128_Rad55'};
 conditionOrder{1} = {[1,3],[2,4]};
 
 subject{2} = '12013_001';
@@ -36,7 +36,7 @@ distCorrectionRefCont{2} = {'11','12'};
 freeSurferName{2} = '12013_001';
 sparseScans{2} =  {'7','14'};
 contScans{2} =  {'8','15'};
-flatmapName{2} = {};
+flatmapName{2} = {'x12013_001_left_WM_invFNIRT_12013_001_Flat_56_109_74_Rad55','x12013_001_right_WM_invFNIRT_12013_001_Flat_187_124_69_Rad55'};
 conditionOrder{2} = {[1,3],[2,4]};
 
 subject{3} = '12022_001';
@@ -51,7 +51,7 @@ distCorrectionRefCont{3} = {'11','12'};
 freeSurferName{3} = '12022_001';
 sparseScans{3} =  {'7','15'};
 contScans{3} =  {'8','16'};
-flatmapName{3} = {};
+flatmapName{3} = {'x12022_001_left_WM_invFNIRT_12022_001_Flat_64_114_84_Rad55','x12022_001_right_WM_invFNIRT_12022_001_Flat_191_114_85_Rad55'};
 conditionOrder{3} = {[1,3],[2,4]};
 
 subject{4} = '12023_001';

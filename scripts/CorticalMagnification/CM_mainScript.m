@@ -14,7 +14,7 @@
 % 
 
 %% define subject
-iSub = 4;
+iSub = 1;
 q = char(39);
  
  
