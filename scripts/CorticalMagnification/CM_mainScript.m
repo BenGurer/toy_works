@@ -30,11 +30,12 @@ Info.dataDir = '/Volumes/DataDisk/data';
 
 %% Get subject info
 subjectInfo = get_SubjectInfo_CM(iSub);
+
 % Subject ID, flatmap names
 saveName = [subjectInfo.subjectID '_data.mat'];
 
 %% move to subject folder, delete any current views, open mrLoadRet and get its view
-cd(fullfile(Info.dataDir ,Info.studyDir,subjectInfo.subjectID));
+cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
 % deleteView(thisView);
 
 %% either load data or mrView
@@ -83,6 +84,9 @@ thisView = getMLRView;
 % Import PSIR
 thisView = importPSIRasOverlay(thisView,Info,subjectInfo);
 
+% import flatmaps without FNIRT coords (after flatmaps have been created)
+thisView = script_importFlatmaps(thisView,Info,subjectInfo);
+
 %% Tonotopic analysis
 
 %% GLM Analysis with Boxcar HRF
@@ -90,7 +94,7 @@ thisView = importPSIRasOverlay(thisView,Info,subjectInfo);
 % hrf = Box Car
 % concatenated runs only
 % [thisView] = script_glmAnalysis(thisView,glmInfo,groupNames,hrfModel,runSplitHalf,runTonotopic)
-thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.groupNames,{'hrfBoxcar'},0,1);
+thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.groupNames,{'hrfBoxcar'},1,1);
 
 
 %% Make flatmaps
@@ -135,9 +139,6 @@ pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
 % [thisView] = script_glmAnalysis(thisView,glmInfo,groupNames,hrfModel,runSplitHalf,runTonotopic)
 thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.groupNames,{'hrfDoubleGamma'},1,1);
 
-%% GLM Analysis with Double Gamma HRF
-% [thisView] = script_glmAnalysis(thisView,glmInfo,groupNames,hrfModel,runSplitHalf,runTonotopic)
-thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.groupNames,{'hrfDoubleGamma'},1,1);
 
 %% GLM grandient reversals
 % calculate gradient reversals using GLM (double gamma) analysis.
