@@ -90,7 +90,7 @@ for iScan = 1:glmInfo.nScans
 d = d + length(glmInfo.hrfModel) + length(glmInfo.nStim);
 end
 
-glmInfo.analysisNames_Groups = cell(1,length(glmInfo.groupNames));
+glmInfo.analysisNames_Groups = cell(1,length(glmInfo.groupNames)*length(glmInfo.groupNames));
 c = 0;
 d = 0;
 for iGroup = 1:length(glmInfo.groupNames)
@@ -104,6 +104,24 @@ end
 
 glmInfo.scanGroupName = 'MotionComp';
 
+for iStim = 1:length(glmInfo.nStim)
+    for iHRF = 1:length(glmInfo.hrfModel)
+        c = c + 1;
+
+        glmInfo.analysisNames_Scans{c + d} = ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim)) '_Scan_' mat2str(iScan)];
+        glmInfo.analysisBaseNames_Scans{c + d}= ['glm_' glmInfo.hrfModel{iHRF} '_nCons_' mat2str(glmInfo.nStim(iStim))];
+        glmInfo.analysisScanNum{c + d} = iScan;
+        glmInfo.analysisNStim{c + d} = glmInfo.nStim(iStim);
+    end
+    %         c = 0;
+    %         d = d + length(glmInfo.hrfModel); % remove when only using boxcar
+    %                 d = d + 1;
+end
+
+glmInfo.analysisNames = cell(1,length(glmInfo.hrfModel));
+for iHRF = 1:length(glmInfo.hrfModel)
+    glmInfo.analysisNames{iHRF} = ['glm_' glmInfo.hrfModel{iHRF}];
+end
 
 %% pRF information
 % what info do I need?
@@ -129,7 +147,7 @@ pRFInfo.analysisNames_Groups{2}{1} = 'pRF';
 %     pRFInfo.analysisNames_Groups{2}{iWeight} = ['pRF_' pRFInfo.stimulusWeighting{2}{iWeight}];
 % end
 
-pRFInfo.pRFrois = {'LeftAC_glmbc_ex','RightAC_glmbc_ex'}; % ROIs to restrict pRF analysis - expanded around AC
+pRFInfo.pRFrois = {'Left_AR_exp','Right_AR_exp'}; % ROIs to restrict pRF analysis - expanded around AC
 pRFInfo.pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
 
 
