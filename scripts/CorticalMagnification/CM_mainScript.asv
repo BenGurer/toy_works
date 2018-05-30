@@ -363,13 +363,14 @@ thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInf
 for iSide = 1:length(subjectInfo.flatmapNames)
     for iGroup = 1:length(glmInfo.groupNames)
         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
-            % [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
+            %              [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
             thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},[pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, '_vol' ],[],[],subjectInfo.flatmapNames{iSide});
         end
     end
 end
+%% average pRF overlays over depth
+% average over cortical depth
 
-%% average pRF overlays over depth cortical depth
 % pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
 overlayNames = cell(size(pRFInfo.analysisNames_Groups));
 for iSide = 1:length(subjectInfo.flatmapNames)
@@ -379,6 +380,7 @@ for iSide = 1:length(subjectInfo.flatmapNames)
         groupName = glmInfo.groupNames{iGroup};
         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
             %             analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+            
             analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, '_vol' ];
             for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
                 overlayNames{iGroup}{iAnal}{iOverlay} = [groupName '_' analysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
@@ -391,8 +393,10 @@ end
 %% get pRF data
 % list overlay names and get using script_getOverlayData
 overlayNames = cell(size(pRFInfo.analysisNames_Groups));
-% overlayNames= ['averageDepthVol(' glmInfo.groupNames{iGroup} ' (Ouput 3 - weightedMeanStd(' conNamesString '),0))'];
-% overlayNames = 'averageDepthVol(pRF(PrefCentreFreq,0))';
+
+%         overlayNames= ['averageDepthVol(' glmInfo.groupNames{iGroup} ' (Ouput 3 - weightedMeanStd(' conNamesString '),0))'];
+
+%     overlayNames = 'averageDepthVol(pRF(PrefCentreFreq,0))';
 
 for iSide = 1:length(subjectInfo.flatmapNames)
     baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
