@@ -23,6 +23,7 @@ distCorrectionRefCont{2} = {'20','21'};
 freeSurferName{1} = '03644_010';
 % distCorrectionRef = {'20','21'};
 flatmapName{1} = {'x03644_010_left_WM_invFNIRT_03644_012_Flat_37_131_130_Rad55','x03644_010_right_WM_invFNIRT_03644_012_Flat_140_132_128_Rad55'};
+% kkPSIR_reorient_p7_right_WM_invFNIRT_03644_012_Flat_249_155_173.off
 conditionOrder{1} = {[1,3],[2,4]};
 
 subject{2} = '12013_001';

@@ -137,6 +137,7 @@ thisView = script_hrfAnalysis(thisView,glmInfo.groupNames{2});
 
 thisView = getMLRView;
 
+
 %% get av HRF estimate for GLM BOXCAR Gradient Reversals ROI
 % use results for GLM
 % save result to data
