@@ -143,6 +143,7 @@ pRFInfo.analysisNames_Groups{2}{1} = 'pRF';
 
 pRFInfo.pRFrois = {'Left_AR_exp','Right_AR_exp'}; % ROIs to restrict pRF analysis - expanded around AC
 pRFInfo.pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
+pRFInfo.pRFgradientReversalOverlay = 2;
 
 
 
@@ -168,7 +169,7 @@ Info.ConATrue = 1;
 Info.ROInames = {'LeftGR','RightGR'};
 Info.ROIbasenames = {'GR'};
 Info.LeftROInames = {'LeftGR','LeftGRa','LeftGRp'};
-Info.RightROInames = {'RightGR','RighGRa','RighGRp'};
+Info.RightROInames = {'RightGR','RightGRa','RightGRp'};
 % Info.ROInames_flat = {'RightAC_flat','LeftAC_flat'};
 
 Info.epiDims = [128 128 24 73]; % dims of functional scans
