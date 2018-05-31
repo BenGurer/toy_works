@@ -20,7 +20,9 @@ function ROIdata = script_getROIdata(thisView,analysisData,analysisBaseNames,ROI
 
                 for iAnal = 1:length(analysisBaseNames)
                     %                     data_flatROI = get_ROIdata(analysisData,ROI);
-                    data2get = eval(['analysisData.', analysisBaseNames{iAnal}, '.overlayData{' mat2str(analysisScanNum{iAnal}) '}.data;']);
+%                     data2get = eval(['analysisData.', analysisBaseNames{iAnal}, '.overlayData{' mat2str(analysisScanNum{iAnal}) '}.data;']);
+
+                    data2get = eval(['analysisData.', analysisBaseNames{iAnal}, '.betas{' mat2str(analysisScanNum{iAnal}) '}.data;']);
                     eval(['ROIdata.' analysisBaseNames{iAnal} '{' mat2str(analysisScanNum{iAnal}) '} = get_ROIdata(data2get,ROI);']);
                 end
 
