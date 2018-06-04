@@ -39,7 +39,7 @@ freeSurferName{2} = '12013_001';
 sparseScans{2} =  {'7','14'};
 contScans{2} =  {'8','15'};
 flatmapName{2} = {'x12013_001_left_WM_invFNIRT_12013_001_Flat_56_109_74_Rad55','x12013_001_right_WM_invFNIRT_12013_001_Flat_187_124_69_Rad55'};
-flatmapRotation{2} = {[],[]};
+flatmapRotation{2} = {250,300};
 conditionOrder{2} = {[1,3],[2,4]};
 
 subject{3} = '12022_001';
@@ -55,7 +55,7 @@ freeSurferName{3} = '12022_001';
 sparseScans{3} =  {'7','15'};
 contScans{3} =  {'8','16'};
 flatmapName{3} = {'x12022_001_left_WM_invFNIRT_12022_001_Flat_64_114_84_Rad55','x12022_001_right_WM_invFNIRT_12022_001_Flat_191_114_85_Rad55'};
-flatmapRotation{3} = {[],[]};
+flatmapRotation{3} = {50,340};
 conditionOrder{3} = {[1,3],[2,4]};
 
 subject{4} = '12023_001';
@@ -102,7 +102,7 @@ freeSurferName{6} = '11020_002';
 sparseScans{6} =  {'08','15'};
 contScans{6} =  {'09','18'};
 flatmapName{6} = {'x11020_002_left_WM_invFNIRT_11020_002_Flat_74_112_61_Rad55','x11020_002_right_WM_invFNIRT_11020_002_Flat_185_125_75_Rad55'};
-flatmapRotation{6} = {[],[]};
+flatmapRotation{6} = {0,330};
 conditionOrder{6} = {[1,3],[2,4]};
 
 % Import raw scans from subject 9 post motion correction
@@ -119,7 +119,7 @@ freeSurferName{7} = '08773_007';
 sparseScans{7} =  {'10','23'};
 contScans{7} =  {'20',[]};
 flatmapName{7} = {'x08773_007_left_WM_invFNIRT_08773_007_Flat_71_105_84_Rad55','x08773_007_right_WM_invFNIRT_08773_007_Flat_186_111_86_Rad55',};
-flatmapRotation{7} = {[],[]};
+flatmapRotation{7} = {200,340};
 conditionOrder{7} = {[1,3],[4,6]};
 
 % subject 9 is subject 7's repeat session of 3 functional scans

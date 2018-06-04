@@ -14,7 +14,7 @@
 %
 
 %% define subject
-iSub = 1;
+iSub = 5;
 q = char(39);
 
 
@@ -39,11 +39,11 @@ cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
 % deleteView(thisView);
 
 %% either load data or mrView
-% if exist(saveName, 'file')
-%     load(saveName)
-% else
-%     data = struct;
-% end
+if exist(saveName, 'file')
+    load(saveName)
+else
+    data = struct;
+end
 
 mrLoadRet
 thisView = getMLRView;
@@ -146,22 +146,22 @@ thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.groupNames,{'hrfDoubleGam
 % pCF estimation = Juliensdebiased method
 thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase, glmInfo.analysisNames_Groups{2},Info.gradReversalInfo.overlayBase,'[18 18 21]');
 
-%% ROI CREATION
-% get f-test maps in to flatspace and average overdepth
-for iSide = 1:length(subjectInfo.flatmapNames)
-    groupName = 'ConcatenationSparse';
-    if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
-        thisView = viewSet(thisView,'curgroup',groupName);
-    end
-    analysisName = 'glm_hrfBoxcar';
-    thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
-    overlayNum = viewGet(thisView,'overlayNum','P [F (fTest - all conditions)]');
-    thisView = script_covertData2FlatmapSpace(thisView,'ConcatenationSparse',analysisName,[],overlayNum,subjectInfo.flatmapNames{iSide});
-end
-% average over cortical depth
-for iSide = 1:length(subjectInfo.flatmapNames)
-    thisView = script_averageAcrossDepths(thisView,[],[subjectInfo.flatmapNames{iSide}, 'Volume']);
-end
+% %% ROI CREATION
+% % get f-test maps in to flatspace and average overdepth
+% for iSide = 1:length(subjectInfo.flatmapNames)
+%     groupName = 'ConcatenationSparse';
+%     if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
+%         thisView = viewSet(thisView,'curgroup',groupName);
+%     end
+%     analysisName = 'glm_hrfBoxcar';
+%     thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+%     overlayNum = viewGet(thisView,'overlayNum','P [F (fTest - all conditions)]');
+%     thisView = script_covertData2FlatmapSpace(thisView,'ConcatenationSparse',analysisName,[],overlayNum,subjectInfo.flatmapNames{iSide});
+% end
+% % average over cortical depth
+% for iSide = 1:length(subjectInfo.flatmapNames)
+%     thisView = script_averageAcrossDepths(thisView,[],[subjectInfo.flatmapNames{iSide}, 'Volume']);
+% end
 
 %% ROI CREATION
 % create ROIs with the names:
