@@ -21,7 +21,7 @@ if ~weightStim
         pRFParams.pRFFit.fwhm = 0;
         if isfield(pRFInfo,'hrfParamsDiffofGamma')
             pRFParams.pRFFit.diffOfGamma = 1;
-            % pRFParams find params for HRF
+            %             pRFParams find params for HRF
             % timelag = x(1);
             % tau = x(2);
             % exponent = x(3);
@@ -40,7 +40,7 @@ if ~weightStim
         [thisView, pRFParams] = pRF_auditory(thisView,pRFParams);
     end
     
-    if runSplitHalf
+      if runSplitHalf
         % splitHRFmodel = hrfModel;
         thisView = viewSet(thisView,'curGroup',glmInfo.scanGroupName);
         for iScan = 1:glmInfo.nScans
@@ -71,7 +71,8 @@ if ~weightStim
                 pRFParams.pRFFit.amplitudeRatio = pRFInfo.hrfParamsDiffofGamma(7);
             end
             [thisView, pRFParams] = pRF_auditory(thisView,pRFParams);
-        end        
+        end
+        
     end
     
 else
