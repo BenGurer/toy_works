@@ -421,6 +421,7 @@ end
 % save so don't need to load again
 save(saveName,'data','-v7.3');
 
+if dopRF
 % first get view so we have the ROIs
 thisView = getMLRView;
 
@@ -513,6 +514,7 @@ end
 %% Save data
 save(saveName,'data','-v7.3');
 
+end
 
 %% quit mrLoadRet
 mrQuit()
