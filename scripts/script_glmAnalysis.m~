@@ -172,54 +172,54 @@ if runSplitHalf
                 glmParams.scanNum = iScan;
                 [thisView, glmParams] = glmAnalysis(thisView,glmParams,['scanList=' mat2str(iScan)]);
                 
-                %                 switch hrfModel{iHRF}
-                %                     case 'hrfDoubleGamma'
-                %                         if glmInfo.nStim(iStim) == 32
-                if runTonotopic
-                    %Tonotopy analysis
-                    % Index max
-                    if glmInfo.nStim(iStim) == 32
-                        [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:33])]);
-                        params.combineFunction='indexMax';
-                        params.nOutputOverlays=2;
-                        [thisView,params] = combineTransformOverlays(thisView,params);
-                        curOverlay=viewGet(thisView,'curOverlay');
-                        thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-1);
-                        
-                        % Weighted mean and corrected weighted mean
-                        params.combineFunction='weightedMeanStd';
-                        params.nOutputOverlays=4;
-                        [thisView,params] = combineTransformOverlays(thisView,params);
-                        curOverlay=viewGet(thisView,'curOverlay');
-                        thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-3);
-                        thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-2);
-                        thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay-1);
-                        thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay);
-                    else
-                        
-                        [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:9])]);
-                        params.combineFunction='indexMax';
-                        params.nOutputOverlays=2;
-                        [thisView,params] = combineTransformOverlays(thisView,params);
-                        curOverlay=viewGet(thisView,'curOverlay');
-                        thisView = viewSet(thisView,'overlaycolorrange',[0 8],curOverlay-1);
-                        
-                        % Weighted mean and corrected weighted mean
-                        params.combineFunction='weightedMeanStd';
-                        params.nOutputOverlays=4;
-                        [thisView,params] = combineTransformOverlays(thisView,params);
-                        curOverlay=viewGet(thisView,'curOverlay');
-                        thisView = viewSet(thisView,'overlaycolorrange',[0 8],curOverlay-3);
-                        thisView = viewSet(thisView,'overlaycolorrange',[0 8],curOverlay-2);
-                        thisView = viewSet(thisView,'overlaycolorrange',[0 10],curOverlay-1);
-                        thisView = viewSet(thisView,'overlaycolorrange',[0 10],curOverlay);
-                    end
-                    %% save analysis
-                        % saveAnalysis(thisView,analysisName)
-                end
-                
-                %                         end
-                %                 end
+%                 switch hrfModel{iHRF}
+%                     case 'hrfDoubleGamma'
+%                         if glmInfo.nStim(iStim) == 32
+                            if runTonotopic
+                                %Tonotopy analysis
+                                % Index max
+                                if glmInfo.nStim(iStim) == 32
+                                [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:33])]);
+                                params.combineFunction='indexMax';
+                                params.nOutputOverlays=2;
+                                [thisView,params] = combineTransformOverlays(thisView,params);
+                                curOverlay=viewGet(thisView,'curOverlay');
+                                thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-1);
+                                
+                                % Weighted mean and corrected weighted mean
+                                params.combineFunction='weightedMeanStd';
+                                params.nOutputOverlays=4;
+                                [thisView,params] = combineTransformOverlays(thisView,params);
+                                curOverlay=viewGet(thisView,'curOverlay');
+                                thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-3);
+                                thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-2);
+                                thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay-1);
+                                thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay);
+                                else
+                                    
+                                                                [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str([2:33])]);
+                                params.combineFunction='indexMax';
+                                params.nOutputOverlays=2;
+                                [thisView,params] = combineTransformOverlays(thisView,params);
+                                curOverlay=viewGet(thisView,'curOverlay');
+                                thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-1);
+                                
+                                % Weighted mean and corrected weighted mean
+                                params.combineFunction='weightedMeanStd';
+                                params.nOutputOverlays=4;
+                                [thisView,params] = combineTransformOverlays(thisView,params);
+                                curOverlay=viewGet(thisView,'curOverlay');
+                                thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-3);
+                                thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-2);
+                                thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay-1);
+                                thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay);
+                                
+                                %% save analysis
+%                                 saveAnalysis(thisView,analysisName)
+                            end
+                            
+%                         end
+%                 end
                 
             end
         end
