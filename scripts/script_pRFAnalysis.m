@@ -52,6 +52,7 @@ if ~weightStim
             pRFParams.pRFFit.supersampling = 1;
             pRFParams.pRFFit.fitHDR = 0;
             pRFParams.pRFFit.fwhm = 0;
+            pRFParams.scanNum = iScan;
             if isfield(pRFInfo,'hrfParamsDiffofGamma')
                 pRFParams.pRFFit.diffOfGamma = 1;
                 % pRFParams find params for HRF

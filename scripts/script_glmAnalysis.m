@@ -143,9 +143,15 @@ if runSplitHalf
                         glmParams.hrfParams.delayS =  2.5;
                         glmParams.hrfParams.durationS = 2.5;
                     case 'hrfDoubleGamma'
-                        glmParams.hrfParams.x =  4;
-                        glmParams.hrfParams.y = 11;
-                        glmParams.hrfParams.z =  4;
+                        if isfield(glmInfo,'hrfParamsDoubleGamma')
+                            glmParams.hrfParams.x = glmInfo.hrfParamsDoubleGamma(1);
+                            glmParams.hrfParams.y = glmInfo.hrfParamsDoubleGamma(2);
+                            glmParams.hrfParams.z = glmInfo.hrfParamsDoubleGamma(3);
+                        else
+                            glmParams.hrfParams.x =  4;
+                            glmParams.hrfParams.y = 11;
+                            glmParams.hrfParams.z =  4;
+                        end
                 end
                 
                 if glmInfo.nStim(iStim) == 8
@@ -163,6 +169,7 @@ if runSplitHalf
                 glmParams.parametricTests = 0;
                 glmParams.outputEstimatesAsOverlays = 1;
                 glmParams.saveName = analysisName_split{iScan};
+                glmParams.scanNum = iScan;
                 [thisView, glmParams] = glmAnalysis(thisView,glmParams,['scanList=' mat2str(iScan)]);
                 
                 switch hrfModel{iHRF}

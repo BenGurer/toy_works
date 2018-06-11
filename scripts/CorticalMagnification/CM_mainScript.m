@@ -433,7 +433,7 @@ pRFanalysisName = ['pRF_', pRFrestrictROI];
 pRFInfo.hrfParamsGamma = data.hrf.x_Gamma;
 pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
 
-[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,pRFrestrictROI,0);
+[thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,pRFrestrictROI,1,0);
 
 %% pRF grandient reversals
 % thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,groupBase,analysisBase,overlayNumber,smoothingParams)
