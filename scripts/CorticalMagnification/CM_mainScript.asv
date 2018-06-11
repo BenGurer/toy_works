@@ -517,7 +517,7 @@ for iSide = 1:length(subjectInfo.flatmapNames)
         groupName = glmInfo.groupNames{iGroup};
         
         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
-            pRFanalysisName = ['pRF_',  pRFrestrictROI, '_Scan - 1'];
+            pRFanalysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_',  pRFrestrictROI];
             % get overlay names and numbers
             overlayNames = cell(1,length(pRFInfo.pRFOverlayNames));
             overlayNum = zeros(1,length(pRFInfo.pRFOverlayNames));

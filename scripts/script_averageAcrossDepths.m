@@ -1,4 +1,4 @@
-function thisView = script_averageAcrossDepths(thisView,overlays,groupName)
+function thisView = script_averageAcrossDepths(thisView,overlays,groupName,deleteOverlays)
     %
     %   usage: script_averageAcrossDepths(thisView,overlayNames)
     %      by: Ben Gurer
@@ -19,6 +19,8 @@ function thisView = script_averageAcrossDepths(thisView,overlays,groupName)
 
 thisView = viewSet(thisView,'curgroup',groupName);
 thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
+
+% get overlay numbers to pass to combine overlays function
 if isempty(overlays)
     analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
     overlayNumbers = 1:length(analysisData.overlays);
@@ -32,8 +34,13 @@ elseif iscell(overlays)
 
 end
 
-
+% use combine overlays function to average across depths
 [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlayNumbers)]);
 params.combineFunction='averageDepthVol';
 params.combinationMode = 'Apply function to each overlay';
 [thisView,params] = combineTransformOverlays(thisView,params);
+
+% delete overlays if no longer needed
+if deleteOverlays    
+    thisView = viewSet(thisView,'deleteoverlay',overlayNumbers);
+end
