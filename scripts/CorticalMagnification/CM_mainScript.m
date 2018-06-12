@@ -157,6 +157,47 @@ pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
 thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.groupNames,{'hrfDoubleGamma'},1,1);
 
 
+%% Convert GLM data to flatmap space and average over cortical depth
+% [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
+% export scan data
+% delete overlays if no longer needed
+
+% auto delete all overlaysbecause its a pain to do
+if deleteOverlays
+    thisView = getMLRView;
+    for iSide = 1:length(subjectInfo.flatmapNames)        
+        thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide}, 'Volume']);
+        thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
+        analysisData = viewGet(thisView,'analysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
+        overlayNumbers = 1:length(analysisData.overlays);        
+        thisView = viewSet(thisView,'deleteoverlay',overlayNumbers);
+    end
+end
+
+
+for iScan = 1:glmInfo.nScans
+    for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
+        analysisName = [glmInfo.analysisBaseNames_Scans{iAnal}, '_Scan_' mat2str(iScan)];
+        for iSide = 1:length(subjectInfo.flatmapNames)
+            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.scanGroupName,analysisName,iScan,[],subjectInfo.flatmapNames{iSide});
+        end
+    end
+end
+
+% export group data
+for iGroup = 1:length(glmInfo.groupNames)
+    for iSide = 1:length(subjectInfo.flatmapNames)
+        for iAnal = 1:length(glmInfo.analysisNames_Groups)
+            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},glmInfo.analysisNames_Groups{iAnal},[],[],subjectInfo.flatmapNames{iSide});
+        end
+    end
+end
+
+% average over cortical depth
+for iSide = 1:length(subjectInfo.flatmapNames)
+    thisView = script_averageAcrossDepths(thisView,[],[subjectInfo.flatmapNames{iSide}, 'Volume'],1);
+end
+
 %% GLM grandient reversals
 % calculate gradient reversals using GLM (double gamma) analysis.
 % pCF estimation = Juliensdebiased method
@@ -183,32 +224,6 @@ thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInf
 % create ROIs with the names:
 % LeftGR, RightGR based on gradient reversals, unsmoothed tonotopic maps and f-test maps
 
-%% Convert GLM data to flatmap space and average over cortical depth
-% [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
-% export scan data
-for iScan = 1:glmInfo.nScans
-    for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
-        analysisName = [glmInfo.analysisBaseNames_Scans{iAnal}, '_Scan_' mat2str(iScan)];
-        for iSide = 1:length(subjectInfo.flatmapNames)
-            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.scanGroupName,analysisName,iScan,[],subjectInfo.flatmapNames{iSide});
-        end
-    end
-end
-
-% export group data
-for iGroup = 1:length(glmInfo.groupNames)
-    for iSide = 1:length(subjectInfo.flatmapNames)
-        for iAnal = 1:length(glmInfo.analysisNames_Groups)
-            thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},glmInfo.analysisNames_Groups{iAnal},[],[],subjectInfo.flatmapNames{iSide});
-        end
-    end
-end
-
-% average over cortical depth
-for iSide = 1:length(subjectInfo.flatmapNames)
-    thisView = script_averageAcrossDepths(thisView,[],[subjectInfo.flatmapNames{iSide}, 'Volume']);
-end
-
 %% get GLM data
 % data has now be converted to flatmap space and averaged across cortical depth,
 % the follow gets data from flatmap group, in flatmap space, from one layer that is the average across cortical depth.
@@ -229,6 +244,7 @@ end
 
 %% get data from SCANS
 analysisName = 'combineTransformOverlays';
+voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
 for iSide = 1:length(subjectInfo.flatmapNames)
     groupName = [subjectInfo.flatmapNames{iSide} 'Volume'];
     thisView = viewSet(thisView,'curgroup',groupName);
@@ -239,13 +255,25 @@ for iSide = 1:length(subjectInfo.flatmapNames)
             % First, deteremine how many stimuli
             if glmInfo.analysisNStim{iAnal} == length(conditionNames{1});
                 overlayNames = cell(1,length(conditionNames{1}));
+                conNamesString = [];
                 for iCon = 1:length(conditionNames{1})
                     overlayNames{iCon} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' (' conditionNames{1}{iCon} ',0))'];
+                    if iCon == 1
+                        conNamesString  = [conNamesString conditionNames{1}{iCon}];
+                    else
+                        conNamesString  = [conNamesString ',' conditionNames{1}{iCon}];
+                    end
                 end
             else
                 overlayNames = cell(1,length(conditionNames{2}));
+                conNamesString = [];
                 for iCon = 1:length(conditionNames{2})
                     overlayNames{iCon} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan)  ' (' conditionNames{2}{iCon} ',0))'];
+                    if iCon == 1
+                        conNamesString  = [conNamesString conditionNames{2}{iCon}];
+                    else
+                        conNamesString  = [conNamesString ',' conditionNames{2}{iCon}];
+                    end
                 end
             end
             
@@ -354,24 +382,20 @@ for iSide = 1:length(Info.Sides)
                 analysisName = glmInfo.analysisNames_Groups{iAnal};
                 
                 % restrict r2
-                eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2;']);
-                %                 eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2 = script_getROIdata(thisView,groupDataVar,analysisName,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi,[],' q 'overlays' q ');']);
-                
-                eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2  = get_ROIdata(groupDataVar,' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2.data;']);                
+                eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
                 clear groupDataVar
                 
                 % restrict betas
-                eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);
-                %                 eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas = script_getROIdata(thisView,groupDataVar,analysisName,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi,[],' q 'overlays' q ');']);
-                eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas  = get_ROIdata(groupDataVar,' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas.data;']);
+                 eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
                 
                 clear groupDataVar
                 
                 % restrict estimates
                 for iName = 1:length(voxelPropertyNames)
-                    eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ';']);
-                    %                     eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ' = script_getROIdata(thisView,groupDataVar,analysisName,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi,[],' q 'overlays' q ');']);
-                    eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '  = get_ROIdata(groupDataVar,' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                    eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '.data;']);
+                    eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
                     
                     clear groupDataVar
                 end
@@ -379,32 +403,34 @@ for iSide = 1:length(Info.Sides)
             end
         end
         
-        %
-        %         eval(['scanDataVar = data.' Info.Sides{iSide} '.scans;']);
-        %         % could improve this bit
-        %         %     eval(['ROI_data_' Info.Sides{iSide} '.scanData = script_getROIdata(thisView,scanDataVar,glmInfo.analysisBaseNames_Scans,roiNames,glmInfo.analysisScanNum,' q 'overlays' q ');']);
-        %         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData = script_getROIdata(thisView,scanDataVar,glmInfo.analysisBaseNames_Scans,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi,glmInfo.analysisScanNum,' q 'overlays' q ');']);
-        
         % Restrict Scan data
-        for iScan = 1:glmInfo.nScans
-            % restrict r2
-            eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisNames_Groups{iAnal} '.r2.data{iScan};']);            
-            eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisNames_Groups{iAnal} '.r2{iScan} = get_ROIdata(scanDataVar,' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-            clear scanDataVar
-            
-            eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisNames_Groups{iAnal} '.betas.data{iScan};']);            
-            eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisNames_Groups{iAnal} '.betas{iScan} = get_ROIdata(scanDataVar,' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-            clear scanDataVar
-            
-            
-            % restrict estimates
-            for iName = 1:length(voxelPropertyNames)
-                eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '.data{iScan};']);
-                eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '{iScan} = script_getROIdata(thisView,groupDataVar,analysisName,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi,[],' q 'overlays' q ');']);
+        for iAnal = 1:length(glmInfo.analysisBaseNames_Scans)/glmInfo.nScans
+            for iScan = 1:glmInfo.nScans
+                
+                % restrict r2
+                tempData = [];
+                eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2{iScan}.data;']);
+                eval(['tempData = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2{iScan} = tempData{:};']);
                 clear scanDataVar
+                
+                eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas{iScan}.data;']);
+                eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas{iScan} = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                clear scanDataVar
+                
+                
+                % restrict estimates
+                for iName = 1:length(voxelPropertyNames)
+                    
+                    tempData = [];
+                    eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.' voxelPropertyNames{iName} '{iScan}.data;']);
+                    eval(['tempData = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                    eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.' voxelPropertyNames{iName} '{iScan} = tempData{:};']);
+                    clear scanDataVar
+                    
+                end
             end
         end
-        
     end
 end
 
@@ -471,7 +497,7 @@ for iSide = 1:length(subjectInfo.flatmapNames)
             thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},pRFanalysisName,[],overlayNum,subjectInfo.flatmapNames{iSide});
             
             % average over cortical depth
-            thisView = script_averageAcrossDepths(thisView,overlayNames,[subjectInfo.flatmapNames{iSide}, 'Volume']);
+            thisView = script_averageAcrossDepths(thisView,overlayNames,[subjectInfo.flatmapNames{iSide}, 'Volume'],1);
             
             % get data
 %             for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
