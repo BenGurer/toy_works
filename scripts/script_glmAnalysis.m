@@ -215,7 +215,7 @@ if runSplitHalf
                         thisView = viewSet(thisView,'overlaycolorrange',[0 10],curOverlay);
                     end
                     %% save analysis
-                        % saveAnalysis(thisView,analysisName)
+                        saveAnalysis(thisView,analysisName_split{iScan})
                 end
                 
                 %                         end
