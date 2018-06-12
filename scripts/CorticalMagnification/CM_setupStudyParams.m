@@ -16,44 +16,48 @@ plotInfo = struct();
     
 %% Get stimulus properties
 % get stimulus frequencies
-lowFreqkHz = 0.1;
-highFreqkHz = 8;
-nStim = 32;
+stimInfo.lowFreqkHz = 0.1;
+stimInfo.highFreqkHz = 8;
+stimInfo.nStim = 32;
 
-[stimInfo.stimNames.all, stimInfo.stimNames.bin, stimInfo.stimNames.mv] = convertStimIDtoFrequency(lowFreqkHz,highFreqkHz,nStim);
+[stimInfo.stimFreqs, stimInfo.stimFreqs_bin, stimInfo.stimFreqs_mv, stimInfo.stimNERBs, stimInfo.stimNERBs_bin, stimInfo.stimNERBs_mv] = convertStimIDtoFrequency(stimInfo.lowFreqkHz,stimInfo.highFreqkHz,stimInfo.nStim);
 
-%% get stimulus senssation level
-[stimLevel_SL, maskingLevel] = calStimulusSensationLevel(stimInfo.stimNames.all);
 stimInfo.sizes = [8 29 32];
 
+% below is too allow older code to still work
+stimInfo.stimNames.all = stimInfo.stimFreqs;
+stimInfo.stimNames.bin = stimInfo.stimFreqs_bin;
+stimInfo.stimNames.mvstim = stimInfo.stimFreqs_mv;
 
-% bin sensation level
-binSize = 4;
-stimLevel_SL_bin = zeros(1,length(stimLevel_SL)/binSize);
-c = 1;
-for i = 1:length(stimLevel_SL)/binSize
-    stimLevel_SL_bin(i) = mean(stimLevel_SL(c:c + (binSize-1)));
-    c = c + binSize;
-end
-
-% moving average sensation level
-nBins = 8;
-windowAvSize = length(stimLevel_SL)/nBins;
-
-if isreal(windowAvSize) && rem(windowAvSize,1)==0
-    loopLength = (length(stimLevel_SL) - windowAvSize) +1;
-    stimLevel_SL_mv = zeros(1,loopLength);
-    for i = 1:loopLength
-        stimLevel_SL_mv(i) = mean(stimLevel_SL(i:i+windowAvSize-1));
-    end
-else
-    error('Moving average window not an integer')
-end
-
-% save in structure
-stimInfo.stimLevel_SL = stimLevel_SL;
-stimInfo.stimLevel_SL_bin = stimLevel_SL_bin;
-stimInfo.stimLevel_SL_mv = stimLevel_SL_mv;
+%% get stimulus senssation level
+% [stimLevel_SL, maskingLevel] = calStimulusSensationLevel(stimInfo.stimNames.all);
+% % bin sensation level
+% binSize = 4;
+% stimLevel_SL_bin = zeros(1,length(stimLevel_SL)/binSize);
+% c = 1;
+% for i = 1:length(stimLevel_SL)/binSize
+%     stimLevel_SL_bin(i) = mean(stimLevel_SL(c:c + (binSize-1)));
+%     c = c + binSize;
+% end
+% 
+% % moving average sensation level
+% nBins = 8;
+% windowAvSize = length(stimLevel_SL)/nBins;
+% 
+% if isreal(windowAvSize) && rem(windowAvSize,1)==0
+%     loopLength = (length(stimLevel_SL) - windowAvSize) +1;
+%     stimLevel_SL_mv = zeros(1,loopLength);
+%     for i = 1:loopLength
+%         stimLevel_SL_mv(i) = mean(stimLevel_SL(i:i+windowAvSize-1));
+%     end
+% else
+%     error('Moving average window not an integer')
+% end
+% 
+% % save in structure
+% stimInfo.stimLevel_SL = stimLevel_SL;
+% stimInfo.stimLevel_SL_bin = stimLevel_SL_bin;
+% stimInfo.stimLevel_SL_mv = stimLevel_SL_mv;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
