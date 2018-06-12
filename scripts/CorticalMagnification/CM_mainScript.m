@@ -51,6 +51,11 @@ cd(fullfile(Info.dataDir,Info.studyDir,subjectInfo.subjectID));
 %% either load data or mrView
 if exist(saveName, 'file')
     load(saveName)
+    if isfield(data, 'hrf')
+        glmInfo.hrfParamsDoubleGamma = data.hrf.x_doubleGamma;
+        pRFInfo.hrfParamsGamma = data.hrf.x_Gamma;
+        pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
+    end
 else
     data = struct;
 end
@@ -244,7 +249,7 @@ end
 
 %% get data from SCANS
 analysisName = 'combineTransformOverlays';
-voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
+% voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
 for iSide = 1:length(subjectInfo.flatmapNames)
     groupName = [subjectInfo.flatmapNames{iSide} 'Volume'];
     thisView = viewSet(thisView,'curgroup',groupName);
@@ -285,8 +290,8 @@ for iSide = 1:length(subjectInfo.flatmapNames)
             r2OverlayName = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' (r2,0))'];
              
             % voxel property estmate overlay names
-            voxelPropertyOverlayName = cell(1,length(voxelPropertyNames));
-            for iName = 1:length(voxelPropertyNames) - 1
+            voxelPropertyOverlayName = cell(1,length(glmInfo.voxelPropertyNames));
+            for iName = 1:length(glmInfo.voxelPropertyNames) - 1
                 voxelPropertyOverlayName{iName} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' (Ouput ' num2str(iName) ' - weightedMeanStd(' conNamesString '),0))'];
             end
             voxelPropertyOverlayName{end} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' (Ouput 1 - indexMax(' conNamesString '),0))'];
@@ -298,18 +303,17 @@ for iSide = 1:length(subjectInfo.flatmapNames)
             eval(['data.' Info.Sides{iSide}, '.scans.', glmInfo.analysisNames_nCons{iAnal}, '.r2{iScan}  = tempData;']);
             
             % voxel property estiamtes
-            for iName = 1:length(voxelPropertyNames)
+            for iName = 1:length(glmInfo.voxelPropertyNames)
                 clear tempData
                 tempData = get_overlayData(thisView,voxelPropertyOverlayName{iName});
-                eval(['data.' Info.Sides{iSide}, '.scans.', glmInfo.analysisNames_nCons{iAnal}, '.', voxelPropertyNames{iName},'{iScan} = tempData;']);
+                eval(['data.' Info.Sides{iSide}, '.scans.', glmInfo.analysisNames_nCons{iAnal}, '.', glmInfo.voxelPropertyNames{iName},'{iScan} = tempData;']);
             end
         end
     end
 end
 
 %% get data from GROUPs
-% define vocel property overlay names - index max, centriod, spread, julienCentriod, julienTuningWidth
-voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
+% glmInfo.voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
 for iSide = 1:length(subjectInfo.flatmapNames)
     baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
     thisView = viewSet(thisView,'currentbase',baseNum);
@@ -332,8 +336,8 @@ for iSide = 1:length(subjectInfo.flatmapNames)
             r2OverlayName = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames{iAnal} ' (r2,0))'];
             
             % voxel property estmate overlay names
-            voxelPropertyOverlayName = cell(1,length(voxelPropertyNames));
-            for iName = 1:length(voxelPropertyNames) - 1
+            voxelPropertyOverlayName = cell(1,length(glmInfo.voxelPropertyNames));
+            for iName = 1:length(glmInfo.voxelPropertyNames) - 1
                 voxelPropertyOverlayName{iName} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames{iAnal} ' (Ouput ' num2str(iName) ' - weightedMeanStd(' conNamesString '),0))'];
             end
             voxelPropertyOverlayName{end} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames{iAnal} ' (Ouput 1 - indexMax(' conNamesString '),0))'];
@@ -350,10 +354,10 @@ for iSide = 1:length(subjectInfo.flatmapNames)
             eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames{iAnal}, '.betas = tempData;']);
             
             % voxel property estiamtes
-            for iName = 1:length(voxelPropertyNames)
+            for iName = 1:length(glmInfo.voxelPropertyNames)
                 clear tempData
                 tempData = get_overlayData(thisView,voxelPropertyOverlayName{iName});
-                eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames{iAnal}, '.', voxelPropertyNames{iName},' = tempData;']);
+                eval(['data.' Info.Sides{iSide}, '.' glmInfo.groupNames{iGroup} '.', glmInfo.analysisNames{iAnal}, '.', glmInfo.voxelPropertyNames{iName},' = tempData;']);
             end
             
         end
@@ -388,7 +392,7 @@ for iSide = 1:length(Info.Sides)
                 
                 % restrict betas
                 eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas.data;']);
-                 eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
                 
                 clear groupDataVar
                 
@@ -440,12 +444,59 @@ end
 %% perform ROI analysis
 % NOTE: selecting data should happen outside of function
 % roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'GLM');
+% for iSide = 1:length(Info.Sides)
+%     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
+%     for iROI = 1:length(ROInames)
+%         eval(['roidata = data.' Info.Sides{iSide} '.' ROInames{iROI} ';']);
+%         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} ' = script_ROIAnalysis(roidata,Info,glmInfo,stimInfo,plotInfo,subjectInfo,glmInfo.analysisScanNum,' q 'overlays' q ',ROInames{iROI});']);
+%     end
+% end
+
+%% check data
+% quick plots to make sure its worked
 for iSide = 1:length(Info.Sides)
     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
-    for iROI = 1:length(ROInames)
-        eval(['roidata = data.' Info.Sides{iSide} '.' ROInames{iROI} ';']);
-        eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} ' = script_ROIAnalysis(roidata,Info,glmInfo,stimInfo,plotInfo,subjectInfo,glmInfo.analysisScanNum,' q 'overlays' q ',ROInames{iROI});']);
-    end
+    iROI = 1;
+    iGroup = 1;
+    iAnal = 2;
+    iName = 3;
+                
+        eval(['roipCFdataA = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ';']); 
+        eval(['roipCFdataB = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ';']); 
+        figure
+        subplot(2,1,1)
+        histogram(cell2mat(roipCFdataA))
+        hold on       
+        histogram(cell2mat(roipCFdataB))
+        
+        
+        eval(['roiBetadataA = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);       
+        eval(['roiBetadataB = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);  
+        
+        betas_mv_A = cal_movingAverage(cell2mat(roiBetadataA'));
+        betas_mv_B = cal_movingAverage(cell2mat(roiBetadataB'));
+        
+        subplot(2,1,2)
+        plot(mean(betas_mv_A,2))
+        hold on
+        plot(mean(betas_mv_B,2))
+        
+        for iScan = 1:4
+        eval(['roiSplitBetas{iScan} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{4} '.betas{iScan};']);
+        splitBetas{iScan} = cell2mat(roiSplitBetas{iScan}');
+        end
+        [splitMeanA, ROI_data, Voxel_data, totalROIpCF] = cal_splitMean(splitBetas{1},splitBetas{3});
+        
+        [splitMeanB, ROI_data, Voxel_data, totalROIpCF] = cal_splitMean(splitBetas{2},splitBetas{4});
+        
+        figure
+        for i =1:8
+        subplot(2,4,i)
+        plot(splitMeanA(i,:))
+        hold on
+        plot(splitMeanB(i,:))
+        end       
+        
 end
 
 
