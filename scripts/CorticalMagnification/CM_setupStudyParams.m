@@ -184,7 +184,7 @@ Info.sides = {'left','right'};
 Info.Sides = {'Left','Right'};
 
 Info.gradReversalInfo.analysisBase = glmInfo.analysisNames_Groups{1};
-Info.gradReversalInfo.groupBase = glmInfo.groupNames{2};
+Info.gradReversalInfo.groupBase = glmInfo.groupNames{1};
 Info.gradReversalInfo.overlayBase = 41; % 39
 
 %% Define what to plot
