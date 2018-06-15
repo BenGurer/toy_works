@@ -66,6 +66,8 @@ stimInfo.stimNames.mvstim = stimInfo.stimFreqs_mv;
 % save in glmInfo structure
 glmInfo.hrfModel = {'hrfBoxcar', 'hrfDoubleGamma'};
 glmInfo.groupNames = {'ConcatenationSparse', 'ConcatenationCont'};
+% define vocel property overlay names - index max, centriod, spread, julienCentriod, julienTuningWidth
+glmInfo.voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
 glmInfo.nScans = 4;
 glmInfo.nStim = [32, 8];
 % glmInfo.analysisNames_Scans = cell(1,(glmInfo.nScans.*length(glmInfo.nStim)).*length(glmInfo.hrfModel));
@@ -182,7 +184,7 @@ Info.sides = {'left','right'};
 Info.Sides = {'Left','Right'};
 
 Info.gradReversalInfo.analysisBase = glmInfo.analysisNames_Groups{1};
-Info.gradReversalInfo.groupBase = glmInfo.groupNames{2};
+Info.gradReversalInfo.groupBase = glmInfo.groupNames{1};
 Info.gradReversalInfo.overlayBase = 41; % 39
 
 %% Define what to plot
