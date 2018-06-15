@@ -1,4 +1,4 @@
-function [ x_doubleGamma, x_Gamma, x_dGamma ] = cal_hrfROIAverage(e,t,analysisParams)
+function [ x_doubleGamma, x_Gamma, x_dGamma, hrf_Deconv, HRF_TW_est] = cal_hrfROIAverage(e,t,analysisParams)
     %
     %   usage: cal_hrfROIAverage
     %      by: Ben Gurer
