@@ -1,11 +1,11 @@
-function [ thisView , ERBdata ] = convertOverlay_GLMjpCF2NERB(thisView,overlayIN,stimInfo,overlayname)
+function [ thisView , ERBdata ] = convertOverlay_GLMCF2NERB(thisView,overlayIN,stimInfo,overlayname)
 
 % convert from stimulus-spacing-space to NERB
 % offset all values by the lowests frequencies NERB - this accounts for the
 % stimulus spacing
 % minus the difference stimuli in NERB to account for be-biasing step -
 % this step calucated from 0 to (number of overlays .*1.25)
-ERBdata = overlayIN.data{1} + (stimInfo.stimNERBs(1)-(stimInfo.stimNERBs(2)-stimInfo.stimNERBs(1)));
+ERBdata = (overlayIN.data{1} .* (stimInfo.stimNERBs(2)-stimInfo.stimNERBs(1))) + stimInfo.stimNERBs(1);
 
 scanDims = size(overlayIN.data{1});
 % create overlay structure

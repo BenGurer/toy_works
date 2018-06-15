@@ -1,10 +1,6 @@
-function [ thisView , kHzdata ] = convertOverlay_NERB2kHz(thisView,overlayIN,stimInfo)
+function [ thisView , kHzdata ] = convertOverlay_NERB2kHz(thisView,overlayIN,overlayname)
 
-% convert from stimulus-spacing-space to NERB
-% offset all values by the lowests frequencies NERB - this accounts for the
-% stimulus spacing
-% minus the difference stimuli in NERB to account for be-biasing step -
-% this step calucated from 0 to (number of overlays .*1.25)
+% convert from NERB to kHzaa
 kHzdata = InvNErb(overlayB.data{1});
 
 scanDims = size(overlayIN.data{1});
@@ -12,7 +8,7 @@ scanDims = size(overlayIN.data{1});
 overlaykHz = overlayIN;
 dateString = datestr(now);
 overlaykHz.date = dateString;
-overlaykHz.name = 'pCF_kHz';
+overlaykHz.name = overlayname;
 
 overlaykHz.range = [0 max(max(max(overlayIN.data{1})))];
 overlaykHz.clip = [0 max(max(max(overlayIN.data{1})))];
