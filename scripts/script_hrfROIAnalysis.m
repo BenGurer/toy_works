@@ -1,4 +1,4 @@
-function [ thisView, x_doubleGamma, x_Gamma, x_dGamma, estimate, threshold, nVoxels] = script_hrfROIAnalysis(thisView,roiName,glmInfo)
+function [ thisView, x_doubleGamma, x_Gamma, x_dGamma, estimate, hrf_Deconv, HRF_TW_est] = script_hrfROIAnalysis(thisView,roiName,glmInfo)
 % set to correct group and analysis;
 % get data from analysis
 % use ROI to restrict
@@ -31,6 +31,6 @@ e = estimate.hdr;
 
 % calcculate average HRF
 % [ x_doubleGamma, x_Gamma, x_dGamma ] = cal_hrfROIAverage(e,analysisParams)
-[ x_doubleGamma, x_Gamma, x_dGamma ] = cal_hrfROIAverage(e,estimate.time,analysisData.d{:});
+[ x_doubleGamma, x_Gamma, x_dGamma, hrf_Deconv, HRF_TW_est] = cal_hrfROIAverage(e,estimate.time,analysisData.d{:});
 
 end
