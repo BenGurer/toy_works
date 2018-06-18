@@ -961,45 +961,7 @@ for iSub = 1:8
     mrQuit()
 end
 
-%% difference map
-% make difference between groups maps - Sparse vs Continuous
-% make difference between analysis maps - GLM vs pRF
-% go to flatmap groups > take overlay from each group > subtrack them from
-% each other > install as new overlay
 
-for iSide = 1:length(Info.Sides)
-    overlay = cell(size(pRFInfo.analysisNames_Groups));
-    for iGroup = 1:length(glmInfo.groupNames)
-        
-        thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{iGroup});
-        
-        % 'overlay'
-        %    overlay = viewGet(view,'overlay',[overlayNum],[analysisNum])
-        %    overlay = viewGet(view,'overlay',overlayNum,[])
-        %    overlay = viewGet(view,'overlay',[],analysisNum)
-        %    overlay = viewGet(view,'overlay',[],[])
-        %    overlay = viewGet(view,'overlay',overlayNum)
-        %    overlay = viewGet(view,'overlay')
-        
-        %% loop over analysis
-        % add this in pRF analysis loop?
-        for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
-            %         analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
-            analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
-            
-            thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
-            overlayNum = viewGet(thisView,'overlayNum','PrefCentreFreq');
-            overlay{iGroup}{iAnal} = viewGet(thisView,'overlay',overlayNum);
-        end
-    end
-    for iAnal = 1:length(pRFInfo.analysisNames_Groups{2})
-        %     analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
-        analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
-        
-        thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
-        [ thisView , differenceData ] = script_createDifferenceMaps(thisView,overlay{1}{1},overlay{2}{iAnal});
-    end
-end
 
 
 
@@ -1055,18 +1017,18 @@ end
 % '_GLM'
 % {'LeftHa','LeftLow','LeftGRa''LeftGRp'}
 
-%% get condition names
-getConditionNames = cell(1,length(glmInfo.nStim));
-% save condition names
-if exist('data') && isfield(data, 'conditions')
-    conditionNames = data.conditions;
-else
-    analysisName = glmInfo.analysisNames_Scans{1};
-    conditionNames{1} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
-    analysisName = glmInfo.analysisNames_Scans{3};
-    conditionNames{2} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
-    data.conditions = conditionNames;
-end
+% %% get condition names
+% getConditionNames = cell(1,length(glmInfo.nStim));
+% % save condition names
+% if exist('data') && isfield(data, 'conditions')
+%     conditionNames = data.conditions;
+% else
+%     analysisName = glmInfo.analysisNames_Scans{1};
+%     conditionNames{1} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
+%     analysisName = glmInfo.analysisNames_Scans{3};
+%     conditionNames{2} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
+%     data.conditions = conditionNames;
+% end
 
 pRFrestrictROI = 'ARexp';
 pRFanalysisName = ['pRF_', pRFrestrictROI];
@@ -1094,28 +1056,38 @@ for iSide = 1:2
         for iAnal = 1:length(analysisNames)
             analysisName = analysisNames{iAnal};
             thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+            
+%             below not needed if using converted overlay
             % get condition names and create concatenate string
-            conNamesString = [];
-            for iCon = 1:length(conditionNames{1})
-                if iCon == 1
-                    conNamesString  = [conNamesString conditionNames{1}{iCon}];
-                else
-                    conNamesString  = [conNamesString ',' conditionNames{1}{iCon}];
-                end
-            end
+%             conNamesString = [];
+%             for iCon = 1:length(conditionNames{1})
+%                 if iCon == 1
+%                     conNamesString  = [conNamesString conditionNames{1}{iCon}];
+%                 else
+%                     conNamesString  = [conNamesString ',' conditionNames{1}{iCon}];
+%                 end
+%             end
+%             
+%             % glmInfo.voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
+%             for i = 1:length(glmInfo.voxelPropertyNames)-1
+%                 overlayNum(i) = viewGet(thisView,'overlayNum',['Ouput ' num2str(i) ' - weightedMeanStd(' conNamesString ')']);
+%             end
+%             overlayNum(end) = viewGet(thisView,'overlayNum',['Ouput 1 - indexMax(' conNamesString ')']);
             
-            % glmInfo.voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
-            for i = 1:length(glmInfo.voxelPropertyNames)-1
-                overlayNum(i) = viewGet(thisView,'overlayNum',['Ouput ' num2str(i) ' - weightedMeanStd(' conNamesString ')']);
-            end
-            overlayNum(end) = viewGet(thisView,'overlayNum',['Ouput 1 - indexMax(' conNamesString ')']);
+%             for i = 1:length(overlayNum)
+%                 overlayIN = viewGet(thisView,'overlay',overlayNum(i));
+%                 [ thisView , ~ ] = convertOverlay_GLMCF2NERB(thisView,overlayIN,stimInfo,[glmInfo.voxelPropertyNames{i} '_nERB']);
+%             end
             
-            for i = 1:length(overlayNum)
-                overlayIN = viewGet(thisView,'overlay',overlayNum(i));
-                [ thisView , ~ ] = convertOverlay_GLMCF2NERB(thisView,overlayIN,stimInfo,[glmInfo.voxelPropertyNames{i} '_nERB']);
-            end
-            
-        end
+        
+        
+        %%%%%%%%%%%%%!!!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%%%%%
+        % add if statement for pRF and GLMgit 
+        % select overlay to average and then change view to be on the averaged overlay - use above
+
+        % glmInfo.voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
+        % glmInfo.voxelPropertyNames{3} = 'julien_pCF'
+        overlayNum(i) = viewGet(thisView,'overlayNum',[glmInfo.voxelPropertyNames{3} '_nERB']);
         
         % average overlays over cortical depths
         [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlayNumbers)]);
@@ -1147,11 +1119,54 @@ for iSide = 1:2
             %%%%%%%%%%%%%%!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%%%%%%%%%%
             
         end
+        end
     end
 end
 %%%%%
 thisView = getMLRView;
 corticalMagnificationAuditory(thisView)
+
+% use averaged over depth overlays just created to make difference maps
+
+%% difference map
+% make difference between groups maps - Sparse vs Continuous
+% make difference between analysis maps - GLM vs pRF
+% go to flatmap groups > take overlay from each group > subtrack them from
+% each other > install as new overlay
+
+for iSide = 1:length(Info.Sides)
+    overlay = cell(size(pRFInfo.analysisNames_Groups));
+    for iGroup = 1:length(glmInfo.groupNames)
+        
+        thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{iGroup});
+        
+        % 'overlay'
+        %    overlay = viewGet(view,'overlay',[overlayNum],[analysisNum])
+        %    overlay = viewGet(view,'overlay',overlayNum,[])
+        %    overlay = viewGet(view,'overlay',[],analysisNum)
+        %    overlay = viewGet(view,'overlay',[],[])
+        %    overlay = viewGet(view,'overlay',overlayNum)
+        %    overlay = viewGet(view,'overlay')
+        
+        %% loop over analysis
+        % add this in pRF analysis loop?
+        for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+            %         analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+            analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
+            
+            thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+            overlayNum = viewGet(thisView,'overlayNum','PrefCentreFreq');
+            overlay{iGroup}{iAnal} = viewGet(thisView,'overlay',overlayNum);
+        end
+    end
+    for iAnal = 1:length(pRFInfo.analysisNames_Groups{2})
+        %     analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+        analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
+        
+        thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+        [ thisView , differenceData ] = script_createDifferenceMaps(thisView,overlay{1}{1},overlay{2}{iAnal});
+    end
+end
 
 
 %% Save/export data for group average
