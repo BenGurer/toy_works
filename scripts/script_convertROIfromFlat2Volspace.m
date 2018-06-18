@@ -7,7 +7,13 @@
 
 
 % set thisView to correct base and analysis
-roi = viewGet(thisView,'roi','RightAC');
-outputRoi = convertFromFlatVolumeToBase_depth6(roi)
+thisView = getMLRView;
+% 'LeftHa'
+% 'LeftLow'
+% 'LeftHigha2Low'
+roi = viewGet(thisView,'roi','LeftHigha2Low');
+outputRoi = convertFromFlatVolumeToBase(roi);
+% roi = viewGet(thisView,'roi','RightAC');
+% outputRoi = convertFromFlatVolumeToBase_depth6(roi);
 outputRoi.name = [outputRoi.name 'Vol'];
 thisView = viewSet(thisView,'newROI',outputRoi);
