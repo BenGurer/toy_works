@@ -139,7 +139,7 @@ for iSub = 1:8
         % resolution = 3; method = mrFlatMesh
         % rotate flatmaps for easy viewing (do before exporting to flatmap space)
     end
-
+    
     
     % get view so we have the ROIs
     thisView = getMLRView;
@@ -401,10 +401,16 @@ for iSub = 1:8
                     % voxel property estmate overlay names
                     %% change here if overlay names change
                     voxelPropertyOverlayName = cell(1,length(glmInfo.voxelPropertyNames));
+                    %                     for iName = 1:length(glmInfo.voxelPropertyNames) - 1
+                    %                         voxelPropertyOverlayName{iName} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' (Ouput ' num2str(iName) ' - weightedMeanStd(' conNamesString '),0))'];
+                    %                     end
+                    %                     voxelPropertyOverlayName{end} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' (Ouput 1 - indexMax(' conNamesString '),0))'];
+                    %
                     for iName = 1:length(glmInfo.voxelPropertyNames) - 1
-                        voxelPropertyOverlayName{iName} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' (Ouput ' num2str(iName) ' - weightedMeanStd(' conNamesString '),0))'];
+                        voxelPropertyOverlayName{iName} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' ' glmInfo.voxelPropertyNames{iName} '_nERB' '),0))'];
                     end
-                    voxelPropertyOverlayName{end} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' (Ouput 1 - indexMax(' conNamesString '),0))'];
+                    voxelPropertyOverlayName{end} = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' ' glmInfo.voxelPropertyNames{end} '_nERB' '),0))'];
+                    
                     
                     % get overlay data using get_overlayData - outputs a structure with fields: .data & .name
                     % R2
@@ -453,11 +459,18 @@ for iSub = 1:8
                     
                     % voxel property estmate overlay names
                     %% change here if overlay names change
+%                     voxelPropertyOverlayName = cell(1,length(glmInfo.voxelPropertyNames));
+%                     for iName = 1:length(glmInfo.voxelPropertyNames) - 1
+%                         voxelPropertyOverlayName{iName} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames{iAnal} ' (Ouput ' num2str(iName) ' - weightedMeanStd(' conNamesString '),0))'];
+%                     end
+%                     voxelPropertyOverlayName{end} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames{iAnal} ' (Ouput 1 - indexMax(' conNamesString '),0))'];
+%                     
                     voxelPropertyOverlayName = cell(1,length(glmInfo.voxelPropertyNames));
                     for iName = 1:length(glmInfo.voxelPropertyNames) - 1
-                        voxelPropertyOverlayName{iName} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames{iAnal} ' (Ouput ' num2str(iName) ' - weightedMeanStd(' conNamesString '),0))'];
+                        voxelPropertyOverlayName{iName} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames{iAnal} ' ' glmInfo.voxelPropertyNames{iName} '_nERB' '),0))'];
                     end
-                    voxelPropertyOverlayName{end} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames{iAnal} ' (Ouput 1 - indexMax(' conNamesString '),0))'];
+                    voxelPropertyOverlayName{end} = ['averageDepthVol(' glmInfo.groupNames{iGroup} '_' glmInfo.analysisNames{iAnal} ' ' glmInfo.voxelPropertyNames{end} '_nERB' '),0))'];
+                    
                     
                     % get overlay data using get_overlayData - outputs a structure with fields: .data & .name
                     % R2
@@ -841,7 +854,7 @@ for iSub = 1:8
             figure
             histogram(cell2mat(roipCFdataA))
             hold on
-            histogram(cell2mat(roipCFdataB))           
+            histogram(cell2mat(roipCFdataB))
             
             for iScan = 1:4
                 eval(['roiSplitpCF{iScan} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} '{iScan};']);
@@ -937,13 +950,126 @@ end
 % 	Low frequency - line
 % 	Gradient - polygon
 %
+% loop over:
+%   sides
+%   rois / anterior/ posterior
+%   group
+%   anlysis
+
 % Project ROIs across all depths
 % Export ROIs to volumetric space
-% change view to the group / analysis / overlay of interest
+% set view to FNIRTed flatmaps
+% change view to the group / analysis / overlay of interest **** loop over this ****
+
+% get undistorted flatmap names and send to analysis
 % Perform AverageDepthVol on overlay of interest - calculate in flat space but export to base space
 % Now run CorticalMagnificationAuditory
 % Modify CorticalMagnificationAuditory to save data
 
+
+
+
+% roinames{'LeftHa','LeftHp','LeftLow','LeftGRa''LeftGRp'}
+% {'RightHa','RightHp','RightLow','RightGRa''RightGRp'}
+% '_pRF'
+% '_GLM'
+% {'LeftHa','LeftLow','LeftGRa''LeftGRp'}
+
+%% get condition names
+getConditionNames = cell(1,length(glmInfo.nStim));
+% save condition names
+if exist('data') && isfield(data, 'conditions')
+    conditionNames = data.conditions;
+else
+    analysisName = glmInfo.analysisNames_Scans{1};
+    conditionNames{1} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
+    analysisName = glmInfo.analysisNames_Scans{3};
+    conditionNames{2} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
+    data.conditions = conditionNames;
+end
+
+pRFrestrictROI = 'ARexp';
+pRFanalysisName = ['pRF_', pRFrestrictROI];
+analysisNames = {'glm_hrfDoubleGamma',pRFanalysisName};
+
+AP = {'a','p'};
+
+thisView = getMLRView;
+for iSide = 1:2
+    % non- fnirted flatmap names
+    flatmapnames.gm = [subjectInfo.freeSurferName '_' Info.sides{iSide} '_GM.off'];
+    flatmapnames.wm = [subjectInfo.freeSurferName '_' Info.sides{iSide} '_WM.off'];
+    
+    % set base
+    baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+    thisView = viewSet(thisView,'currentbase',baseNum);
+    
+    for iGroup = 1:length(glmInfo.groupNames) % change change this if we want to calculate for both groups or not
+        % select group
+        groupName = glmInfo.groupNames{iGroup};
+        if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
+            thisView = viewSet(thisView,'curgroup',groupName);
+        end
+        % Select analysis
+        for iAnal = 1:length(analysisNames)
+            analysisName = analysisNames{iAnal};
+            thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+            % get condition names and create concatenate string
+            conNamesString = [];
+            for iCon = 1:length(conditionNames{1})
+                if iCon == 1
+                    conNamesString  = [conNamesString conditionNames{1}{iCon}];
+                else
+                    conNamesString  = [conNamesString ',' conditionNames{1}{iCon}];
+                end
+            end
+            
+            % glmInfo.voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
+            for i = 1:length(glmInfo.voxelPropertyNames)-1
+                overlayNum(i) = viewGet(thisView,'overlayNum',['Ouput ' num2str(i) ' - weightedMeanStd(' conNamesString ')']);
+            end
+            overlayNum(end) = viewGet(thisView,'overlayNum',['Ouput 1 - indexMax(' conNamesString ')']);
+            
+            for i = 1:length(overlayNum)
+                overlayIN = viewGet(thisView,'overlay',overlayNum(i));
+                [ thisView , ~ ] = convertOverlay_GLMCF2NERB(thisView,overlayIN,stimInfo,[glmInfo.voxelPropertyNames{i} '_nERB']);
+            end
+            
+        end
+        
+        % average overlays over cortical depths
+        [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlayNumbers)]);
+        params.combineFunction='averageDepthVol';
+        params.combinationMode = 'Apply function to each overlay';
+        params.baseSpace = 1; % perfrom analysis in base space (flatmap)
+        params.exportToNewGroup = 0; % don't export to volume in a new group
+        [thisView,params] = combineTransformOverlays(thisView,params);
+        
+        for iAP = 1:length(AP)
+            % make ROI names and get numbers then put in a list
+            HighROIname = [Info.Sides, 'H' AP{iAP} '_' analName{iAnal}];
+            roiList(1) = viewGet(thisView,'roinum',HighROIname);
+            
+            LowROIname = [Info.Sides, 'Low', '_' analName{iAnal}];
+            roiList(2) = viewGet(thisView,'roinum',LowROIname);
+            
+            GRROIname = [Info.Sides, 'GR' AP{iAP} '_' analName{iAnal}];
+            roiList(3) = viewGet(thisView,'roinum',GRROIname);
+            
+            % get rois
+            rois = viewGet(thisView,'roi',roiList);
+            
+            % calculate Tonotopic Magnification
+            clear tempData
+            [relativeDistances, overlayRoiData, pathDistances] = cal_tonotopicMagnification(thisView,rois,flatmapnames,saveName);
+            
+            % save to structure
+            %%%%%%%%%%%%%%!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%%%%%%%%%%
+            
+        end
+    end
+end
+%%%%%
 thisView = getMLRView;
 corticalMagnificationAuditory(thisView)
 
