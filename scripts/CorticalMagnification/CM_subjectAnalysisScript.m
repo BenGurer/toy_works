@@ -393,7 +393,8 @@ for iSub = 1:8
                     
                     % beta weights
                     overlayData = get_overlayData(thisView,overlayFlatNames);
-                    eval(['data.' Info.Sides{iSide}, '.scans.', glmInfo.analysisNames_nCons{iAnal}, '.betas{iScan} =  overlayData;']);
+                    %  eval(['data.' Info.Sides{iSide}, '.scans.', glmInfo.analysisNames_nCons{iAnal}, '.betas{iScan} =  overlayData;']);
+                    eval(['data.' Info.Sides{iSide}, '.scans_',  num2str(iScan) '.', glmInfo.analysisNames_nCons{iAnal}, '.betas =  overlayData;']);
                     
                     % r2 overlay name
                     r2OverlayName = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' (r2,0))'];
@@ -415,14 +416,16 @@ for iSub = 1:8
                     % get overlay data using get_overlayData - outputs a structure with fields: .data & .name
                     % R2
                     clear tempData
-                    tempData = get_overlayData(thisView,r2OverlayName);
-                    eval(['data.' Info.Sides{iSide}, '.scans.', glmInfo.analysisNames_nCons{iAnal}, '.r2{iScan}  = tempData;']);
+                    tempData = get_overlayData(thisView,r2OverlayName);                    
+%                     eval(['data.' Info.Sides{iSide}, '.scans.' , glmInfo.analysisNames_nCons{iAnal}, '.r2{iScan}  = tempData;']);
+                    eval(['data.' Info.Sides{iSide}, '.scans_', num2str(iScan), '.' , glmInfo.analysisNames_nCons{iAnal}, '.r2  = tempData;']);
                     
                     % voxel property estiamtes
                     for iName = 1:length(glmInfo.voxelPropertyNames)
                         clear tempData
                         tempData = get_overlayData(thisView,voxelPropertyOverlayName{iName});
-                        eval(['data.' Info.Sides{iSide}, '.scans.', glmInfo.analysisNames_nCons{iAnal}, '.', glmInfo.voxelPropertyNames{iName},'{iScan} = tempData;']);
+%                         eval(['data.' Info.Sides{iSide}, '.scans.' , glmInfo.analysisNames_nCons{iAnal}, '.', glmInfo.voxelPropertyNames{iName},'{iScan} = tempData;']);
+                        eval(['data.' Info.Sides{iSide}, '.scans_', num2str(iScan), '.' , glmInfo.analysisNames_nCons{iAnal}, '.', glmInfo.voxelPropertyNames{iName},' = tempData;']);
                     end
                 end
             end
@@ -523,21 +526,40 @@ for iSub = 1:8
                     for iAnal = 1:length(glmInfo.analysisNames_Groups)/length(glmInfo.groupNames)
                         analysisName = glmInfo.analysisNames_Groups{iAnal};
                         
+%                         % restrict r2
+%                         eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2.data;']);
+%                         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+%                         clear groupDataVar
+%                         
+%                         % restrict betas
+%                         eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas.data;']);
+%                         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+%                         
+%                         clear groupDataVar
+%                         
+%                         % restrict estimates
+%                         for iName = 1:length(voxelPropertyNames)
+%                             eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '.data;']);
+%                             eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+%                             
+%                             clear groupDataVar
+%                         end
+                        
                         % restrict r2
                         eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2.data;']);
-                        eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                        eval(['data.'  ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
                         clear groupDataVar
                         
                         % restrict betas
                         eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas.data;']);
-                        eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                        eval(['data.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
                         
                         clear groupDataVar
                         
                         % restrict estimates
                         for iName = 1:length(voxelPropertyNames)
                             eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '.data;']);
-                            eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                            eval(['data.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
                             
                             clear groupDataVar
                         end
@@ -549,15 +571,37 @@ for iSub = 1:8
                 for iAnal = 1:length(glmInfo.analysisBaseNames_Scans)/glmInfo.nScans
                     for iScan = 1:glmInfo.nScans
                         
+%                         % restrict r2
+%                         tempData = [];
+%                         eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2{iScan}.data;']);
+%                         eval(['tempData = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+%                         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2{iScan} = tempData{:};']);
+%                         clear scanDataVar
+%                         
+%                         eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas{iScan}.data;']);
+%                         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas{iScan} = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+%                         clear scanDataVar
+%                         
+%                         
+%                         % restrict estimates
+%                         for iName = 1:length(voxelPropertyNames)
+%                             
+%                             tempData = [];
+%                             eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.' voxelPropertyNames{iName} '{iScan}.data;']);
+%                             eval(['tempData = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+%                             eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.' voxelPropertyNames{iName} '{iScan} = tempData{:};']);
+%                             clear scanDataVar                            
+%                         end
+
                         % restrict r2
                         tempData = [];
-                        eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2{iScan}.data;']);
+                        eval(['scanDataVar = data.' Info.Sides{iSide} '.scans_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2.data;']);
                         eval(['tempData = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-                        eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2{iScan} = tempData{:};']);
+                        eval(['data.' ROInames{iROI} '.scan_'  num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2 = tempData{:};']);
                         clear scanDataVar
                         
-                        eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas{iScan}.data;']);
-                        eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas{iScan} = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                        eval(['scanDataVar = data.' Info.Sides{iSide} '.scans_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas.data;']);
+                        eval(['data.' ROInames{iROI} '.scan_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
                         clear scanDataVar
                         
                         
@@ -565,12 +609,12 @@ for iSub = 1:8
                         for iName = 1:length(voxelPropertyNames)
                             
                             tempData = [];
-                            eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.' voxelPropertyNames{iName} '{iScan}.data;']);
+                            eval(['scanDataVar = data.' Info.Sides{iSide} '.scans_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.' voxelPropertyNames{iName} '.data;']);
                             eval(['tempData = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-                            eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.' voxelPropertyNames{iName} '{iScan} = tempData{:};']);
-                            clear scanDataVar
-                            
+                            eval(['data.' ROInames{iROI} '.scan_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.' voxelPropertyNames{iName} ' = tempData{:};']);
+                            clear scanDataVar                            
                         end
+                        
                     end
                 end
             end
@@ -600,8 +644,11 @@ for iSub = 1:8
         iAnal = 2;
         iName = 3;
         
-        eval(['roipCFdataA = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ';']);
-        eval(['roipCFdataB = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ';']);
+%         eval(['roipCFdataA = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ';']);
+%         eval(['roipCFdataB = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ';']);
+        eval(['roipCFdataA = data.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ';']);
+        eval(['roipCFdataB = data.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ';']);
+       
         figure
         subplot(2,1,1)
         histogram(cell2mat(roipCFdataA))
@@ -609,8 +656,10 @@ for iSub = 1:8
         histogram(cell2mat(roipCFdataB))
         
         
-        eval(['roiBetadataA = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);
-        eval(['roiBetadataB = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);
+%         eval(['roiBetadataA = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);
+%         eval(['roiBetadataB = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);
+        eval(['roiBetadataA = data.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);
+        eval(['roiBetadataB = data.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);
         
         betas_mv_A = cal_movingAverage(cell2mat(roiBetadataA'));
         betas_mv_B = cal_movingAverage(cell2mat(roiBetadataB'));
@@ -621,7 +670,8 @@ for iSub = 1:8
         plot(mean(betas_mv_B,2))
         
         for iScan = 1:4
-            eval(['roiSplitBetas{iScan} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{4} '.betas{iScan};']);
+%             eval(['roiSplitBetas{iScan} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{4} '.betas{iScan};']);
+            eval(['roiSplitBetas{iScan} = data.' ROInames{iROI} '.scan_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{4} '.betas;']);
             splitBetas{iScan} = cell2mat(roiSplitBetas{iScan}');
         end
         [splitMeanA, ROI_data, Voxel_data, totalROIpCF] = cal_splitMean(splitBetas{1},splitBetas{3});
@@ -737,7 +787,22 @@ for iSub = 1:8
                         overlayFlatNames = cell(1,length(pRFInfo.pRFOverlayNames));
                         overlay2Get = cell(1,length(pRFInfo.pRFOverlayNames));
                         for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
-                            % get overlay names
+%                             % get overlay names
+%                             overlayFlatNames{iOverlay} = [groupName '_' pRFanalysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
+%                             overlay2Get{iOverlay} = ['averageDepthVol(' overlayFlatNames{iOverlay} ')'];
+%                             clear tempData
+%                             tempData = get_overlayData(thisView,overlay2Get{iOverlay});
+%                             % get data
+%                             eval(['data.' Info.Sides{iSide}, '.', glmInfo.groupNames{iGroup}, '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, ' = tempData;']);
+%                             
+%                             % restrict by ROI
+%                             for iROI = 1:length(roiNames)
+%                                 eval(['roi = data.' Info.Sides{iSide} '.' roiNames{iROI} '.roi;']);
+%                                 eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.', glmInfo.groupNames{iGroup}, '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '  = get_ROIdata(tempData.data,roi);']);
+%                                 
+%                             end
+
+                          % get overlay names
                             overlayFlatNames{iOverlay} = [groupName '_' pRFanalysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
                             overlay2Get{iOverlay} = ['averageDepthVol(' overlayFlatNames{iOverlay} ')'];
                             clear tempData
@@ -748,7 +813,7 @@ for iSub = 1:8
                             % restrict by ROI
                             for iROI = 1:length(roiNames)
                                 eval(['roi = data.' Info.Sides{iSide} '.' roiNames{iROI} '.roi;']);
-                                eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.', glmInfo.groupNames{iGroup}, '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '  = get_ROIdata(tempData.data,roi);']);
+                                eval(['data.', roiNames{iROI}, '.', glmInfo.groupNames{iGroup}, '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '  = get_ROIdata(tempData.data,roi);']);
                                 
                             end
                             
@@ -815,16 +880,28 @@ for iSub = 1:8
                             clear tempData
                             tempData = get_overlayData(thisView,overlay2Get{iOverlay});
                             % get data
-                            eval(['data.', Info.Sides{iSide}, '.scanData.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} '{iScan} = tempData;']);
+%                             eval(['data.', Info.Sides{iSide}, '.scanData.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} '{iScan} = tempData;']);
+%                             
+%                             % restrict by ROI
+%                             for iROI = 1:length(roiNames)
+%                                 clear tempROIdata
+%                                 eval(['roi = data.' Info.Sides{iSide} '.' roiNames{iROI} '.roi;']);
+%                                 %                             eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.scanData.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '{iScan}  = get_ROIdata(tempData.data,roi);']);
+%                                 eval(['tempROIdata = get_ROIdata(tempData.data,roi);']);
+%                                 
+%                                 eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.scanData.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '{iScan}  = tempROIdata{:};'])
+%                             end
+                            
+                            eval(['data.', Info.Sides{iSide}, '.scan_', num2str(iScan), '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, ' = tempData;']);
                             
                             % restrict by ROI
                             for iROI = 1:length(roiNames)
                                 clear tempROIdata
                                 eval(['roi = data.' Info.Sides{iSide} '.' roiNames{iROI} '.roi;']);
-                                %                             eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.scanData.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '{iScan}  = get_ROIdata(tempData.data,roi);']);
+                                %  eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.scanData.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '{iScan}  = get_ROIdata(tempData.data,roi);']);
                                 eval(['tempROIdata = get_ROIdata(tempData.data,roi);']);
                                 
-                                eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.scanData.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '{iScan}  = tempROIdata{:};'])
+                                eval(['data.', roiNames{iROI}, '.scan_', num2str(iScan), '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '  = tempROIdata{:};'])
                             end
                             
                         end
@@ -849,16 +926,19 @@ for iSub = 1:8
             
             pRFanalysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_',  pRFrestrictROI];
             
-            eval(['roipCFdataA = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
-            eval(['roipCFdataB = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+%             eval(['roipCFdataA = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+%             eval(['roipCFdataB = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+            eval(['roipCFdataA = data.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+            eval(['roipCFdataB = data.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+         
             figure
             histogram(cell2mat(roipCFdataA))
             hold on
             histogram(cell2mat(roipCFdataB))
             
             for iScan = 1:4
-                eval(['roiSplitpCF{iScan} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} '{iScan};']);
-                %                 splitpCF{iScan} = cell2mat(roiSplitpCF{iScan}');
+                %                 eval(['roiSplitpCF{iScan} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} '{iScan};']);
+                eval(['roiSplitpCF{iScan} = data.' ROInames{iROI} '.scan_' num2str(iScan) '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
             end
             figure
             subplot(2,1,1)
