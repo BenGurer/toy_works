@@ -939,6 +939,7 @@ end
 %
 % Project ROIs across all depths
 % Export ROIs to volumetric space
+% change view to the group / analysis / overlay of interest
 % Perform AverageDepthVol on overlay of interest - calculate in flat space but export to base space
 % Now run CorticalMagnificationAuditory
 % Modify CorticalMagnificationAuditory to save data
