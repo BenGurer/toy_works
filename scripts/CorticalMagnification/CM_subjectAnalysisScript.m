@@ -1017,6 +1017,25 @@ end
 % '_GLM'
 % {'LeftHa','LeftLow','LeftGRa''LeftGRp'}
 
+% convert rois from flatmap to volume space
+ for iAP = 1:length(AP)
+            % make ROI names and get numbers then put in a list
+            HighROIname = [Info.Sides, 'H' AP{iAP} '_' analName{iAnal}];
+            roiList(1) = viewGet(thisView,'roinum',HighROIname);
+            
+            LowROIname = [Info.Sides, 'Low', '_' analName{iAnal}];
+            roiList(2) = viewGet(thisView,'roinum',LowROIname);
+            
+            GRROIname = [Info.Sides, 'GR' AP{iAP} '_' analName{iAnal}];
+            roiList(3) = viewGet(thisView,'roinum',GRROIname);
+            
+            % get rois
+            rois = viewGet(thisView,'roi',roiList);
+            
+            %%%%%%%%%%%%%%%%!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%
+            %convert
+ end
+
 % %% get condition names
 % getConditionNames = cell(1,length(glmInfo.nStim));
 % % save condition names
