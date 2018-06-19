@@ -961,10 +961,6 @@ for iSub = 1:8
     mrQuit()
 end
 
-
-
-
-
 %% Comparisions
 % what to compare?
 % what extra things do I need from subjects
@@ -977,77 +973,59 @@ end
 % use best analysis
 
 %% Cortical Magnification
-% what extra things do I need from subjects
-% look at Juliens script for CM - cortical distances etc
-% define line ROIs for revHa revL RevHp
+
 % get cortical distances
 % get curvature?
 % get pCF estiamte
 % plot
 
-% CorticalMagnificationAuditory
-%
 % Define gradient reversal ROIs
 % 	High frequency - line
 % 	Low frequency - line
 % 	Gradient - polygon
-%
+
 % loop over:
 %   sides
 %   rois / anterior/ posterior
 %   group
 %   anlysis
 
-% Project ROIs across all depths
-% Export ROIs to volumetric space
-% set view to FNIRTed flatmaps
-% change view to the group / analysis / overlay of interest **** loop over this ****
+% Create ROIS
+keyboard
+% Create ROIs for each gradient reversal and name:
+%   'LeftHa','LeftHp','LeftLow,'LeftGRa''LeftGRp'
+%   'RightHa','RightHp','RightLow','RightGRa''RightGRp'
+%   Post fix with _GLM or _pRF
+% Project ROIs across all cortical depths
+% run script from here
 
-% get undistorted flatmap names and send to analysis
-% Perform AverageDepthVol on overlay of interest - calculate in flat space but export to base space
-% Now run CorticalMagnificationAuditory
-% Modify CorticalMagnificationAuditory to save data
-
-
-
-
-% roinames{'LeftHa','LeftHp','LeftLow','LeftGRa''LeftGRp'}
-% {'RightHa','RightHp','RightLow','RightGRa''RightGRp'}
-% '_pRF'
-% '_GLM'
-% {'LeftHa','LeftLow','LeftGRa''LeftGRp'}
+thisView = getMLRView;
 
 % convert rois from flatmap to volume space
- for iAP = 1:length(AP)
-            % make ROI names and get numbers then put in a list
-            HighROIname = [Info.Sides, 'H' AP{iAP} '_' analName{iAnal}];
-            roiList(1) = viewGet(thisView,'roinum',HighROIname);
-            
-            LowROIname = [Info.Sides, 'Low', '_' analName{iAnal}];
-            roiList(2) = viewGet(thisView,'roinum',LowROIname);
-            
-            GRROIname = [Info.Sides, 'GR' AP{iAP} '_' analName{iAnal}];
-            roiList(3) = viewGet(thisView,'roinum',GRROIname);
-            
-            % get rois
-            rois = viewGet(thisView,'roi',roiList);
-            
-            %%%%%%%%%%%%%%%%!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%
-            %convert
- end
-
-% %% get condition names
-% getConditionNames = cell(1,length(glmInfo.nStim));
-% % save condition names
-% if exist('data') && isfield(data, 'conditions')
-%     conditionNames = data.conditions;
-% else
-%     analysisName = glmInfo.analysisNames_Scans{1};
-%     conditionNames{1} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
-%     analysisName = glmInfo.analysisNames_Scans{3};
-%     conditionNames{2} = get_analysisConditionNames(thisView,analysisName,glmInfo.scanGroupName,1);
-%     data.conditions = conditionNames;
-% end
+for iAP = 1:length(AP)
+    % make ROI names and get numbers then put in a list
+    HighROIname = [Info.Sides, 'H' AP{iAP} '_' analName{iAnal}];
+    roiList(1) = viewGet(thisView,'roinum',HighROIname);
+    
+    LowROIname = [Info.Sides, 'Low', '_' analName{iAnal}];
+    roiList(2) = viewGet(thisView,'roinum',LowROIname);
+    
+    GRROIname = [Info.Sides, 'GR' AP{iAP} '_' analName{iAnal}];
+    roiList(3) = viewGet(thisView,'roinum',GRROIname);
+    
+    % get rois
+    rois = viewGet(thisView,'roi',roiList);
+    
+    %%%%%%%%%%%%%%%%!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%
+    %convert
+    outputRoi = convertFromFlatVolumeToBase(rois);
+    % roi = viewGet(thisView,'roi','RightAC');
+    % outputRoi = convertFromFlatVolumeToBase_depth6(roi);
+    for iROI = 1:3
+        outputRoi(iROI).name = [outputRoi(iROI).name 'Vol'];
+        thisView = viewSet(thisView,'newROI',outputRoi(iROI));
+    end
+end
 
 pRFrestrictROI = 'ARexp';
 pRFanalysisName = ['pRF_', pRFrestrictROI];
@@ -1055,7 +1033,11 @@ analysisNames = {'glm_hrfDoubleGamma',pRFanalysisName};
 
 AP = {'a','p'};
 
-thisView = getMLRView;
+% set view to FNIRTed flatmaps
+% change view to the group / analysis / overlay of interest **** loop over this ****
+% get undistorted flatmap names and send to analysis
+% Perform AverageDepthVol on overlay of interest - calculate in flat space but export to base space
+% Now run cal_tonotopicMagnification to get data
 for iSide = 1:2
     % non- fnirted flatmap names
     flatmapnames.gm = [subjectInfo.freeSurferName '_' Info.sides{iSide} '_GM.off'];
@@ -1076,68 +1058,56 @@ for iSide = 1:2
             analysisName = analysisNames{iAnal};
             thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
             
-%             below not needed if using converted overlay
-            % get condition names and create concatenate string
-%             conNamesString = [];
-%             for iCon = 1:length(conditionNames{1})
-%                 if iCon == 1
-%                     conNamesString  = [conNamesString conditionNames{1}{iCon}];
-%                 else
-%                     conNamesString  = [conNamesString ',' conditionNames{1}{iCon}];
-%                 end
-%             end
-%             
-%             % glmInfo.voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
-%             for i = 1:length(glmInfo.voxelPropertyNames)-1
-%                 overlayNum(i) = viewGet(thisView,'overlayNum',['Ouput ' num2str(i) ' - weightedMeanStd(' conNamesString ')']);
-%             end
-%             overlayNum(end) = viewGet(thisView,'overlayNum',['Ouput 1 - indexMax(' conNamesString ')']);
+            switch analysisNames
+                case 'glm_hrfDoubleGamma'
+                    overlayNum = viewGet(thisView,'overlayNum',[glmInfo.voxelPropertyNames{3} '_nERB']);
+                case pRFanalysisName
+                    overlayNum = viewGet(thisView,'overlayNum',pRFInfo.pRFOverlayNames(2));
+            end
             
-%             for i = 1:length(overlayNum)
-%                 overlayIN = viewGet(thisView,'overlay',overlayNum(i));
-%                 [ thisView , ~ ] = convertOverlay_GLMCF2NERB(thisView,overlayIN,stimInfo,[glmInfo.voxelPropertyNames{i} '_nERB']);
-%             end
+            % average overlays over cortical depths
+            [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlayNum)]);
+            params.combineFunction='averageDepthVol';
+            params.combinationMode = 'Apply function to each overlay';
+            params.baseSpace = 1; % perfrom analysis in base space (flatmap)
+            params.exportToNewGroup = 0; % don't export to volume in a new group
+            [thisView,params] = combineTransformOverlays(thisView,params);
             
-        
-        
-        %%%%%%%%%%%%%!!!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%%%%%
-        % add if statement for pRF and GLMgit 
-        % select overlay to average and then change view to be on the averaged overlay - use above
-
-        % glmInfo.voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
-        % glmInfo.voxelPropertyNames{3} = 'julien_pCF'
-        overlayNum(i) = viewGet(thisView,'overlayNum',[glmInfo.voxelPropertyNames{3} '_nERB']);
-        
-        % average overlays over cortical depths
-        [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlayNumbers)]);
-        params.combineFunction='averageDepthVol';
-        params.combinationMode = 'Apply function to each overlay';
-        params.baseSpace = 1; % perfrom analysis in base space (flatmap)
-        params.exportToNewGroup = 0; % don't export to volume in a new group
-        [thisView,params] = combineTransformOverlays(thisView,params);
-        
-        for iAP = 1:length(AP)
-            % make ROI names and get numbers then put in a list
-            HighROIname = [Info.Sides, 'H' AP{iAP} '_' analName{iAnal}];
-            roiList(1) = viewGet(thisView,'roinum',HighROIname);
+            switch analysisNames
+                case 'glm_hrfDoubleGamma'
+                    overlayNum = viewGet(thisView,'overlayNum',['averageDepthVol(', glmInfo.voxelPropertyNames{3} '_nERB', ')']);
+                    curOverlay=viewSet(thisView,'curOverlay',overlayNum);
+                case pRFanalysisName
+                    overlayNum = viewGet(thisView,'overlayNum',['averageDepthVol(', pRFInfo.pRFOverlayNames(2), ')']);
+                    curOverlay=viewSet(thisView,'curOverlay',overlayNum);
+            end
             
-            LowROIname = [Info.Sides, 'Low', '_' analName{iAnal}];
-            roiList(2) = viewGet(thisView,'roinum',LowROIname);
             
-            GRROIname = [Info.Sides, 'GR' AP{iAP} '_' analName{iAnal}];
-            roiList(3) = viewGet(thisView,'roinum',GRROIname);
-            
-            % get rois
-            rois = viewGet(thisView,'roi',roiList);
-            
-            % calculate Tonotopic Magnification
-            clear tempData
-            [relativeDistances, overlayRoiData, pathDistances] = cal_tonotopicMagnification(thisView,rois,flatmapnames,saveName);
-            
-            % save to structure
-            %%%%%%%%%%%%%%!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%%%%%%%%%%
-            
-        end
+            for iAP = 1:length(AP)
+                % make ROI names and get numbers then put in a list
+                HighROIname = [Info.Sides, 'H' AP{iAP} '_' analName{iAnal}];
+                roiList(1) = viewGet(thisView,'roinum',HighROIname);
+                
+                LowROIname = [Info.Sides, 'Low', '_' analName{iAnal}];
+                roiList(2) = viewGet(thisView,'roinum',LowROIname);
+                
+                GRROIname = [Info.Sides, 'GR' AP{iAP} '_' analName{iAnal}];
+                roiList(3) = viewGet(thisView,'roinum',GRROIname);
+                
+                % get rois
+                rois = viewGet(thisView,'roi',roiList);
+                
+                % calculate Tonotopic Magnification
+                clear tempData
+                [relativeDistances, overlayRoiData, pathDistances] = cal_tonotopicMagnification(thisView,rois,flatmapnames,saveName);
+                
+                % save to structure
+                %%%%%%%%%%%%%%!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%%%%%%%%%%
+                  eval(['data.' GRROIname '.' analysisName '.tonotopicMagnificaion.relativeDistances = relativeDistances;']);                  
+                  eval(['data.' GRROIname '.' analysisName '.tonotopicMagnificaion.pCF = overlayRoiData;']);                  
+                  eval(['data.' GRROIname '.' analysisName '.tonotopicMagnificaion.pathDistances = pathDistances;']);
+ 
+            end
         end
     end
 end
