@@ -174,8 +174,8 @@ Info.ConATrue = 1;
 % Must match order of sides
 Info.ROInames = {'LeftGR','RightGR'};
 Info.ROIbasenames = {'GR'};
-Info.LeftROInames = {'LeftGR','LeftGRa','LeftGRp'};
-Info.RightROInames = {'RightGR','RightGRa','RightGRp'};
+Info.LeftROInames = {'LeftGR_GLM','LeftGRa_GLM','LeftGRp_GLM'};
+Info.RightROInames = {'RightGR_GLM','RightGRa_GLM','RightGRp_GLM'};
 % Info.ROInames_flat = {'RightAC_flat','LeftAC_flat'};
 
 Info.epiDims = [128 128 24 73]; % dims of functional scans
