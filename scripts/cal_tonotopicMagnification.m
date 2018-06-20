@@ -1,5 +1,5 @@
 
-function [relativeDistances, overlayRoiData, pathDistances] = cal_tonotopicMagnification(thisView,rois,flatmapname,saveName)
+function [relativeDistances, overlayRoiData, pathDistances] = cal_tonotopicMagnification(thisView,roiList,flatmapname,saveName)
 
 %   usage: corticalMagnificationAuditory(thisView,saveName)
 %      by: Ben Gurer based on Julien Besle "corticalMagnificationAuditory" based on "calcDist" by eli merriam, denis schluppeck, etc...
@@ -39,10 +39,10 @@ function [relativeDistances, overlayRoiData, pathDistances] = cal_tonotopicMagni
 
 
 % check arguments
-if ~any(nargin == [0 1 2])
-    help cal_tonotopicMagnification
-    return
-end
+% if ~any(nargin == [0 1 2])
+%     help cal_tonotopicMagnification
+%     return
+% end
 
 invFnirt=1;
 
@@ -60,20 +60,23 @@ if ieNotDefined('thisView');
     thisView = viewGet([],'view',vnums(1));
 end
 
-if isempty(rois)
-roiList = viewGet(thisView,'curroi');
-%choose ROIs
 nRois = 3;
-while length(roiList)~=nRois
-  roiList = selectInList(thisView,'roi','Select 2 reversal and 1 gradient ROIs');
-  if isempty(roiList)
-    disp('User pressed cancel');
-    return;
-  elseif  length(roiList)~=nRois
-    mrWarnDlg('Please only select three ROIs')
-  end
-end
-rois = viewGet(thisView,'roi',roiList);
+if isempty(roiList)
+    roiList = viewGet(thisView,'curroi');
+    %choose ROIs    
+    while length(roiList)~=nRois
+        roiList = selectInList(thisView,'roi','Select 2 reversal and 1 gradient ROIs');
+        if isempty(roiList)
+            disp('User pressed cancel');
+            return;
+        elseif  length(roiList)~=nRois
+            mrWarnDlg('Please only select three ROIs')
+        end
+    end
+    rois = viewGet(thisView,'roi',roiList);
+else
+    
+    rois = viewGet(thisView,'roi',roiList);
 end
 
 %----------------------------------------------------------------------------------------------- Load surface coordinates
@@ -212,20 +215,22 @@ if invFnirt%load the non-fnirted surface
       disp(sprintf('Loading %s', filename));
       surface.outer = loadSurfOFF(fullfile(pathname, filename));
       surface.outer = xformSurfaceWorld2Array(surface.outer, baseHdr);
+      
+      
+      surface.filename = filename;
   else
       
       % load the appropriate surface files
-      disp(sprintf('Loading %s', filename));
       surface.inner = loadSurfOFF(fullfile(baseCoordMap.path, flatmapname.wm));
       surface.inner = xformSurfaceWorld2Array(surface.inner, baseHdr); %we assume they're in the same whole-head anatomy space
       
-      disp(sprintf('Loading %s', filename));
       surface.outer = loadSurfOFF(fullfile(baseCoordMap.path, flatmapname.gm));
       surface.outer = xformSurfaceWorld2Array(surface.outer, baseHdr);
       
+      surface.filename = flatmapname.gm;
+      
   end
   
-  surface.filename = filename;
   % replace the old vertices by the undistorted ones
   m.distortedVertices = m.vertices;
   m.vertices = surface.inner.vtcs(flat.patch2parent(:,2),:)+corticalDepth*(surface.outer.vtcs(flat.patch2parent(:,2),:)-surface.inner.vtcs(flat.patch2parent(:,2),:));
@@ -293,20 +298,20 @@ plot(0:0.01:1,pf(0:0.01:1),'r');
 plot(zeros(size(overlayRoiData{lowFrequencyBorder})),overlayRoiData{lowFrequencyBorder},'.k');
 plot(ones(size(overlayRoiData{3-lowFrequencyBorder})),overlayRoiData{3-lowFrequencyBorder},'.k');
 
-figure;
-if ~ieNotDefined('saveName')
-  set(gcf,'name',saveName);
-end
-semilogy(relativeDistances(lowFrequencyBorder,:),nErb2f(overlayRoiData{3},0.25,6,7),'ok');
-hold on
-semilogy(0:0.01:1,nErb2f(pf(0:0.01:1),0.25,6,7),'m','linewidth',2);
-semilogy(zeros(size(overlayRoiData{lowFrequencyBorder})),nErb2f(overlayRoiData{lowFrequencyBorder},0.25,6,7),'ob');
-semilogy(ones(size(overlayRoiData{3-lowFrequencyBorder})),nErb2f(overlayRoiData{3-lowFrequencyBorder},0.25,6,7),'or');
-xlim([-0.05 1.05]);
+% figure;
+% if ~ieNotDefined('saveName')
+%   set(gcf,'name',saveName);
+% end
+% semilogy(relativeDistances(lowFrequencyBorder,:),nErb2f(overlayRoiData{3},0.25,6,7),'ok');
+% hold on
+% semilogy(0:0.01:1,nErb2f(pf(0:0.01:1),0.25,6,7),'m','linewidth',2);
+% semilogy(zeros(size(overlayRoiData{lowFrequencyBorder})),nErb2f(overlayRoiData{lowFrequencyBorder},0.25,6,7),'ob');
+% semilogy(ones(size(overlayRoiData{3-lowFrequencyBorder})),nErb2f(overlayRoiData{3-lowFrequencyBorder},0.25,6,7),'or');
+% xlim([-0.05 1.05]);
 
 
-
-keyboard
+% 
+% keyboard
 % return
 
 % %---------------------------------------------define shortest paths between border ROIs
@@ -352,199 +357,200 @@ keyboard
 % pathEnds = sortedEnds(toKeep);
 % paths = m.rte(pathSortingIndices(toKeep));
 %   
-
-
-m.vertices(:,2) = -1*m.vertices(:,2); %change orientation for display
-
-% ROI patch
-% roiVertices = m.vertsToUnique(m.roiVertices{3});
-% roiFaces = m.faceIndexList((all(ismember(m.faceIndexList,roiVertices),2)),:);
-
-roiVertices1 = m.vertices(m.vertsToUnique(m.roiVertices{1}),:);
-roiVertices2 = m.vertices(m.vertsToUnique(m.roiVertices{2}),:);
-roiVertices3 = m.vertices(m.vertsToUnique(m.roiVertices{3}),:);
-myMrPrintSurf(m.vertices,m.faceIndexList);
-% patch('vertices', m.vertices, 'faces',roiFaces,'FaceVertexCData', .6*ones(size(m.vertices,1),3),'facecolor','interp','edgecolor',[0 0 0]);
-hold on
-% plot3(roiVertices1(:,1),roiVertices1(:,2),roiVertices1(:,3),'.','color',color2RGB(rois(1).color));
-% plot3(roiVertices2(:,1),roiVertices2(:,2),roiVertices2(:,3),'.','color',color2RGB(rois(2).color));
-plot3(roiVertices1(:,1),roiVertices1(:,2),roiVertices1(:,3),'.r');
-plot3(roiVertices2(:,1),roiVertices2(:,2),roiVertices2(:,3),'.b');
-% plot3(roiVertices3(:,1),roiVertices3(:,2),roiVertices3(:,3),'.r');
-
-point = find(abs(relativeDistances(1,:)-1/3)<0.0005);
-thisPoint = m.vertices(m.vertsToUnique(m.roiVertices{3}(point)),:);
-thisPath = m.vertices(m.vertsToUnique(m.rte{1}{whichEnd(1,point),point}),:);
-plot3(thisPath(:,1),thisPath(:,2),thisPath(:,3),'m','linewidth',2);
-plot3(thisPoint(:,1),thisPoint(:,2),thisPoint(:,3),'.g');
-thisPath = m.vertices(m.vertsToUnique(m.rte{2}{whichEnd(2,point),point}),:);
-plot3(thisPath(:,1),thisPath(:,2),thisPath(:,3),'c','linewidth',2);
-
-
-% nColors=length(paths);
-% cmap = hsv(nColors);
-% for i=1:length(paths)
-%   thisPath = m.vertices(m.vertsToUnique(paths{i}),:);
-%   plot3(thisPath(:,1),thisPath(:,2),thisPath(:,3),'color',cmap(rem(i,nColors)+1,:),'linewidth',2);
-% end
 % 
-keyboard,
-return
+% 
+% m.vertices(:,2) = -1*m.vertices(:,2); %change orientation for display
+% 
+% % ROI patch
+% % roiVertices = m.vertsToUnique(m.roiVertices{3});
+% % roiFaces = m.faceIndexList((all(ismember(m.faceIndexList,roiVertices),2)),:);
+% 
+% roiVertices1 = m.vertices(m.vertsToUnique(m.roiVertices{1}),:);
+% roiVertices2 = m.vertices(m.vertsToUnique(m.roiVertices{2}),:);
+% roiVertices3 = m.vertices(m.vertsToUnique(m.roiVertices{3}),:);
+% myMrPrintSurf(m.vertices,m.faceIndexList);
+% % patch('vertices', m.vertices, 'faces',roiFaces,'FaceVertexCData', .6*ones(size(m.vertices,1),3),'facecolor','interp','edgecolor',[0 0 0]);
+% hold on
+% % plot3(roiVertices1(:,1),roiVertices1(:,2),roiVertices1(:,3),'.','color',color2RGB(rois(1).color));
+% % plot3(roiVertices2(:,1),roiVertices2(:,2),roiVertices2(:,3),'.','color',color2RGB(rois(2).color));
+% plot3(roiVertices1(:,1),roiVertices1(:,2),roiVertices1(:,3),'.r');
+% plot3(roiVertices2(:,1),roiVertices2(:,2),roiVertices2(:,3),'.b');
+% % plot3(roiVertices3(:,1),roiVertices3(:,2),roiVertices3(:,3),'.r');
+% 
+% point = find(abs(relativeDistances(1,:)-1/3)<0.0005);
+% thisPoint = m.vertices(m.vertsToUnique(m.roiVertices{3}(point)),:);
+% thisPath = m.vertices(m.vertsToUnique(m.rte{1}{whichEnd(1,point),point}),:);
+% plot3(thisPath(:,1),thisPath(:,2),thisPath(:,3),'m','linewidth',2);
+% plot3(thisPoint(:,1),thisPoint(:,2),thisPoint(:,3),'.g');
+% thisPath = m.vertices(m.vertsToUnique(m.rte{2}{whichEnd(2,point),point}),:);
+% plot3(thisPath(:,1),thisPath(:,2),thisPath(:,3),'c','linewidth',2);
+% 
+% 
+% % nColors=length(paths);
+% % cmap = hsv(nColors);
+% % for i=1:length(paths)
+% %   thisPath = m.vertices(m.vertsToUnique(paths{i}),:);
+% %   plot3(thisPath(:,1),thisPath(:,2),thisPath(:,3),'color',cmap(rem(i,nColors)+1,:),'linewidth',2);
+% % end
+% % 
+% keyboard,
+% return
 
 %----------------------------------------------------------------------------------------------- plot data and fit cortical magnification parameters
 
-
-coherenceThreshold = 0.5;
-maxEccentricity = 5.5;
-minEccentricity = 0;
-twoThirdDistance = (max(m.pathDistances)+min(m.pathDistances))*.6;
-minEccDistantVertices = 2;
-cScan=0;
-figure('name',surface.filename);
-numPlotsPerScan=3;
-for iScan=scanList
-  cScan=cScan+1;
-  
-
-  fprintf(1,'converting phase to eccentricity with eccentricityMode=''%s'', minRadius = %.2f, maxRadius=%.2f, dutyCycle=%.2f\n', eccentricityMode, minRadius, maxRadius, dutyCycle);
-  eccentricity = phase2eccentricity(m.phase{cScan}, eccentricityMode, minRadius, maxRadius, dutyCycle);
-  %threshold the data
-  aboveThreshold = overlayRoiData{cScan}>=coherenceThreshold;
-  eccThres = double(eccentricity(aboveThreshold));
-  distThres = double(m.pathDistances(aboveThreshold));
-  % stop at max eccentricity for fit
-  distThres = distThres(eccThres<maxEccentricity & eccThres>minEccentricity);
-  eccThres = eccThres(eccThres<maxEccentricity & eccThres>minEccentricity);
-  %also exclude voxels with low phase values that are unreasonably far from the fovea
-  %for example, for now, all eccentricites less than 1 in the furthest third of remaining vertices
-  toKeep = distThres<twoThirdDistance | eccThres >minEccDistantVertices;
-  distData{cScan} = distThres(toKeep);
-  eccData{cScan} = eccThres(toKeep);
-
-  %fit logarithmic function with a parameters for x and y offsets
-  h=subplot(length(scanList),numPlotsPerScan,(cScan-1)*numPlotsPerScan+1);
-  scatter(eccentricity,m.pathDistances,30,[.7 .7 .7]);
-  hold on
-  scatter(eccentricity(aboveThreshold),m.pathDistances(aboveThreshold),30,'g');
-  scatter(eccThres,distThres,30)
-  scatter(eccData{cScan},distData{cScan},30,'b')
-  ylabel('Cortical distance from ''fovea''');
-  xlabel('Eccentricity')
-  [sortedEccData,sortingVector] = sort(eccData{cScan});
-  sortedDistData = distData{cScan}(sortingVector);
-  
-  func1 = @(params,sortedEccData)params(1)+params(2).*log(sortedEccData+params(3));
-%   lowerbound = [-5 5 0];
-%   upperbound = [50 30 10];
-%   params1 = lsqcurvefit(func1,[0 1 0],sortedEccData,sortedDistData,lowerbound,upperbound);
-   params1 = lsqcurvefit(func1,[0 1 0],sortedEccData,sortedDistData);
-  %compute derivative values at different eccentricities
-  eccentricities=[1 3 5]';
-  fprintf('\n\tEcc\t Dist (With b parameter)\n');
-  distances = params1(2)./(eccentricities+params1(3));
-  [eccentricities distances]
-  
-  plot(sortedEccData,func1(params1,sortedEccData),'k','linewidth',2);
-%   legend({sprintf('Data points (max eccentricty = %.1f deg)',maxEccentricity),sprintf('Fit: D = %.2f + %.2f * log(E + %.2f)',params1(1),params1(2),params1(3) )},'location','SouthEast');
-  title('D = b + k * log(E + a)');
-
-  %without b parameter
-  func2 = @(params,sortedEccData)params(1).*log(sortedEccData+params(2));
-  params2 = lsqcurvefit(func2,[1 0],sortedEccData,sortedDistData);
-  %compute derivative values at different eccentricities
-  eccentricities=[1 3 5]';
-  fprintf('\n\tEcc\t Dist (Without b parameter)\n');
-  distances = params2(1)./(eccentricities+params2(2));
-  [eccentricities distances]
-  
-
-  plot(sortedEccData,func2(params2,sortedEccData),'r','linewidth',2);
-  set(h,'Ylim',[0 50]);
-  set(h,'Xlim',[0 12]);
-  legend({sprintf('Coherence > %.1f',coherenceThreshold),...
-          sprintf('Eccentricty > %.1f or < %.1f deg',maxEccentricity,minEccentricity),...
-          sprintf('Distance > %.2f & Eccentricity < %.1f',twoThirdDistance,minEccDistantVertices),...
-          'Data points used for fit',...
-          sprintf('Fit: D = %.2f + %.2f * log(E + %.2f)',params1(1),params1(2),params1(3) ),...
-          sprintf('Fit: D = %.2f * log(E + %.2f)',params2(1),params2(2) )},...
-          'location','SouthEast');
- 
-  p=get(h,'position');
-  uicontrol('style','text','unit','normalized','String',scanNames{cScan},'position',[0.02 p(2)+p(4)/3 p(1)-0.05 p(4)/3]);
-  
-  %%%%%%%%%%%%%%% Fit exponential like in Larsson & Heeger 2006 J. Neurosci.
-
-  %set cortical distance to 0 at 3 deg eccentricity
-  %first estimate cortical distance at 3 deg eccentricity using previous fit
-  dist3deg = func1(params1,3);
-
-  [sortedDistData,sortingVector] = sort(distData{cScan}-dist3deg);
-  sortedEccData = eccData{cScan}(sortingVector);
-
-  func = @(params,sortedDistData) exp(params(1).*(sortedDistData+params(2)));
-  params = lsqcurvefit(func,[0 0],sortedDistData,sortedEccData);
-
-  % %this is the same using lsqnonlin
-  % func = @(params) sortedEccData - exp(params(1).*(sortedDistData+params(2)));
-  % params = lsqnonlin(func,[0 0]);
-
-  subplot(length(scanList),numPlotsPerScan,(cScan-1)*numPlotsPerScan+2);
-  scatter(m.pathDistances-dist3deg,eccentricity,30,[.7 .7 .7]);
-  hold on
-  scatter(m.pathDistances(aboveThreshold)-dist3deg,eccentricity(aboveThreshold),30,'g');
-  scatter(distThres-dist3deg,eccThres,30)
-  scatter(distData{cScan}-dist3deg,eccData{cScan},30,'b')
-  xlabel(sprintf('Cortical distance from 3 deg (%.0f mm)',dist3deg));
-  ylabel('Eccentricity')
-  plot(sortedDistData,func(params,sortedDistData),'k','linewidth',2);
-  legend({sprintf('Coherence > %.1f',coherenceThreshold),...
-          sprintf('Eccentricty > %.1f or < %.1f deg',maxEccentricity,minEccentricity),...
-          sprintf('Distance > %.2f & Eccentricity < %.1f',twoThirdDistance,minEccDistantVertices),...
-          'Data points used for fit',...
-          sprintf('Fit: E = exp[%.2f * (D + %.2f)]',params(1),params(2))},...
-          'location','NorthWest');
-  title('E = exp[c*(D + d)] (Larsson & Heeger 2006)');
-
-
-
-  %%%%%%%%%%%%%%% Derive and fit inverse function
-  [sortedEccData,sortingVector] = sort(eccData{cScan});
-  sortedDistData = distData{cScan}(sortingVector);
-
-  %bin values by 10 
-  numPerBins=20;
-  numBins = floor(length(sortedEccData)/numPerBins);
-  sortedEccData = reshape(sortedEccData(1:numBins*numPerBins),numPerBins,numBins);
-  sortedDistData = reshape(sortedDistData(1:numBins*numPerBins),numPerBins,numBins);
-  meanSortedEccData = mean(sortedEccData);
-  meanSortedDistData = mean(sortedDistData);
-  %numerically derive
-  derivDist = diff(meanSortedDistData)./diff(meanSortedEccData);
-  centreBinEcc = (meanSortedEccData(1:end-1)+meanSortedEccData(2:end))/2;
-  %fit inverse function
-  func = @(params,eccentricity) params(1)./(eccentricity+params(2));
-  params = lsqcurvefit(func,[1 0],centreBinEcc,derivDist);
-
-  subplot(length(scanList),numPlotsPerScan,(cScan-1)*numPlotsPerScan+3);
-  plot(centreBinEcc,derivDist,'o');
-  ylabel('Cortical distance');
-  xlabel('Eccentricity')
-  hold on
-  plot(centreBinEcc,func(params,centreBinEcc),'k','linewidth',2);
-  legend({sprintf('Numerical derivative (bins of %d points)',numPerBins),sprintf('Fit: D = %.2f/(E + %.2f)',params(1),params(2) )},'location','NorthEast');
-  title('D'' = k / (E + a)');
-
-end
-
-
-% fit exp function to eccentricity = f(cortical distance)
-
-% fit 1/(x+a) to deriv(cortical distance) = f(eccentricity)
-% for this need to bin the data somehow
-
+% 
+% coherenceThreshold = 0.5;
+% maxEccentricity = 5.5;
+% minEccentricity = 0;
+% twoThirdDistance = (max(m.pathDistances)+min(m.pathDistances))*.6;
+% minEccDistantVertices = 2;
+% cScan=0;
+% figure('name',surface.filename);
+% numPlotsPerScan=3;
+% for iScan=scanList
+%   cScan=cScan+1;
+%   
+% 
+%   fprintf(1,'converting phase to eccentricity with eccentricityMode=''%s'', minRadius = %.2f, maxRadius=%.2f, dutyCycle=%.2f\n', eccentricityMode, minRadius, maxRadius, dutyCycle);
+%   eccentricity = phase2eccentricity(m.phase{cScan}, eccentricityMode, minRadius, maxRadius, dutyCycle);
+%   %threshold the data
+%   aboveThreshold = overlayRoiData{cScan}>=coherenceThreshold;
+%   eccThres = double(eccentricity(aboveThreshold));
+%   distThres = double(m.pathDistances(aboveThreshold));
+%   % stop at max eccentricity for fit
+%   distThres = distThres(eccThres<maxEccentricity & eccThres>minEccentricity);
+%   eccThres = eccThres(eccThres<maxEccentricity & eccThres>minEccentricity);
+%   %also exclude voxels with low phase values that are unreasonably far from the fovea
+%   %for example, for now, all eccentricites less than 1 in the furthest third of remaining vertices
+%   toKeep = distThres<twoThirdDistance | eccThres >minEccDistantVertices;
+%   distData{cScan} = distThres(toKeep);
+%   eccData{cScan} = eccThres(toKeep);
+% 
+%   %fit logarithmic function with a parameters for x and y offsets
+%   h=subplot(length(scanList),numPlotsPerScan,(cScan-1)*numPlotsPerScan+1);
+%   scatter(eccentricity,m.pathDistances,30,[.7 .7 .7]);
+%   hold on
+%   scatter(eccentricity(aboveThreshold),m.pathDistances(aboveThreshold),30,'g');
+%   scatter(eccThres,distThres,30)
+%   scatter(eccData{cScan},distData{cScan},30,'b')
+%   ylabel('Cortical distance from ''fovea''');
+%   xlabel('Eccentricity')
+%   [sortedEccData,sortingVector] = sort(eccData{cScan});
+%   sortedDistData = distData{cScan}(sortingVector);
+%   
+%   func1 = @(params,sortedEccData)params(1)+params(2).*log(sortedEccData+params(3));
+% %   lowerbound = [-5 5 0];
+% %   upperbound = [50 30 10];
+% %   params1 = lsqcurvefit(func1,[0 1 0],sortedEccData,sortedDistData,lowerbound,upperbound);
+%    params1 = lsqcurvefit(func1,[0 1 0],sortedEccData,sortedDistData);
+%   %compute derivative values at different eccentricities
+%   eccentricities=[1 3 5]';
+%   fprintf('\n\tEcc\t Dist (With b parameter)\n');
+%   distances = params1(2)./(eccentricities+params1(3));
+%   [eccentricities distances]
+%   
+%   plot(sortedEccData,func1(params1,sortedEccData),'k','linewidth',2);
+% %   legend({sprintf('Data points (max eccentricty = %.1f deg)',maxEccentricity),sprintf('Fit: D = %.2f + %.2f * log(E + %.2f)',params1(1),params1(2),params1(3) )},'location','SouthEast');
+%   title('D = b + k * log(E + a)');
+% 
+%   %without b parameter
+%   func2 = @(params,sortedEccData)params(1).*log(sortedEccData+params(2));
+%   params2 = lsqcurvefit(func2,[1 0],sortedEccData,sortedDistData);
+%   %compute derivative values at different eccentricities
+%   eccentricities=[1 3 5]';
+%   fprintf('\n\tEcc\t Dist (Without b parameter)\n');
+%   distances = params2(1)./(eccentricities+params2(2));
+%   [eccentricities distances]
+%   
+% 
+%   plot(sortedEccData,func2(params2,sortedEccData),'r','linewidth',2);
+%   set(h,'Ylim',[0 50]);
+%   set(h,'Xlim',[0 12]);
+%   legend({sprintf('Coherence > %.1f',coherenceThreshold),...
+%           sprintf('Eccentricty > %.1f or < %.1f deg',maxEccentricity,minEccentricity),...
+%           sprintf('Distance > %.2f & Eccentricity < %.1f',twoThirdDistance,minEccDistantVertices),...
+%           'Data points used for fit',...
+%           sprintf('Fit: D = %.2f + %.2f * log(E + %.2f)',params1(1),params1(2),params1(3) ),...
+%           sprintf('Fit: D = %.2f * log(E + %.2f)',params2(1),params2(2) )},...
+%           'location','SouthEast');
+%  
+%   p=get(h,'position');
+%   uicontrol('style','text','unit','normalized','String',scanNames{cScan},'position',[0.02 p(2)+p(4)/3 p(1)-0.05 p(4)/3]);
+%   
+%   %%%%%%%%%%%%%%% Fit exponential like in Larsson & Heeger 2006 J. Neurosci.
+% 
+%   %set cortical distance to 0 at 3 deg eccentricity
+%   %first estimate cortical distance at 3 deg eccentricity using previous fit
+%   dist3deg = func1(params1,3);
+% 
+%   [sortedDistData,sortingVector] = sort(distData{cScan}-dist3deg);
+%   sortedEccData = eccData{cScan}(sortingVector);
+% 
+%   func = @(params,sortedDistData) exp(params(1).*(sortedDistData+params(2)));
+%   params = lsqcurvefit(func,[0 0],sortedDistData,sortedEccData);
+% 
+%   % %this is the same using lsqnonlin
+%   % func = @(params) sortedEccData - exp(params(1).*(sortedDistData+params(2)));
+%   % params = lsqnonlin(func,[0 0]);
+% 
+%   subplot(length(scanList),numPlotsPerScan,(cScan-1)*numPlotsPerScan+2);
+%   scatter(m.pathDistances-dist3deg,eccentricity,30,[.7 .7 .7]);
+%   hold on
+%   scatter(m.pathDistances(aboveThreshold)-dist3deg,eccentricity(aboveThreshold),30,'g');
+%   scatter(distThres-dist3deg,eccThres,30)
+%   scatter(distData{cScan}-dist3deg,eccData{cScan},30,'b')
+%   xlabel(sprintf('Cortical distance from 3 deg (%.0f mm)',dist3deg));
+%   ylabel('Eccentricity')
+%   plot(sortedDistData,func(params,sortedDistData),'k','linewidth',2);
+%   legend({sprintf('Coherence > %.1f',coherenceThreshold),...
+%           sprintf('Eccentricty > %.1f or < %.1f deg',maxEccentricity,minEccentricity),...
+%           sprintf('Distance > %.2f & Eccentricity < %.1f',twoThirdDistance,minEccDistantVertices),...
+%           'Data points used for fit',...
+%           sprintf('Fit: E = exp[%.2f * (D + %.2f)]',params(1),params(2))},...
+%           'location','NorthWest');
+%   title('E = exp[c*(D + d)] (Larsson & Heeger 2006)');
+% 
+% 
+% 
+%   %%%%%%%%%%%%%%% Derive and fit inverse function
+%   [sortedEccData,sortingVector] = sort(eccData{cScan});
+%   sortedDistData = distData{cScan}(sortingVector);
+% 
+%   %bin values by 10 
+%   numPerBins=20;
+%   numBins = floor(length(sortedEccData)/numPerBins);
+%   sortedEccData = reshape(sortedEccData(1:numBins*numPerBins),numPerBins,numBins);
+%   sortedDistData = reshape(sortedDistData(1:numBins*numPerBins),numPerBins,numBins);
+%   meanSortedEccData = mean(sortedEccData);
+%   meanSortedDistData = mean(sortedDistData);
+%   %numerically derive
+%   derivDist = diff(meanSortedDistData)./diff(meanSortedEccData);
+%   centreBinEcc = (meanSortedEccData(1:end-1)+meanSortedEccData(2:end))/2;
+%   %fit inverse function
+%   func = @(params,eccentricity) params(1)./(eccentricity+params(2));
+%   params = lsqcurvefit(func,[1 0],centreBinEcc,derivDist);
+% 
+%   subplot(length(scanList),numPlotsPerScan,(cScan-1)*numPlotsPerScan+3);
+%   plot(centreBinEcc,derivDist,'o');
+%   ylabel('Cortical distance');
+%   xlabel('Eccentricity')
+%   hold on
+%   plot(centreBinEcc,func(params,centreBinEcc),'k','linewidth',2);
+%   legend({sprintf('Numerical derivative (bins of %d points)',numPerBins),sprintf('Fit: D = %.2f/(E + %.2f)',params(1),params(2) )},'location','NorthEast');
+%   title('D'' = k / (E + a)');
+% 
+% end
+% 
+% 
+% % fit exp function to eccentricity = f(cortical distance)
+% 
+% % fit 1/(x+a) to deriv(cortical distance) = f(eccentricity)
+% % for this need to bin the data somehow
+% 
 
 %%%%%%%%%%%%%%%% Modified pred2path function %%%%%%%%%%%%%%%%%%%%
 % does not reorder the source vertices in the output
+
 
 function rte = pred2path(P,s,t)
 %PRED2PATH Convert predecessor indices to shortest paths from 's' to 't'.
