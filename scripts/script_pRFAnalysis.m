@@ -38,6 +38,9 @@ if ~weightStim
             pRFParams.pRFFit.amplitudeRatio = pRFInfo.hrfParamsDiffofGamma(7);
         end
         [thisView, pRFParams] = pRF_auditory(thisView,pRFParams);
+        
+        % save view
+        mrSaveView(thisView);
     end
     
     if runSplitHalf
@@ -72,6 +75,18 @@ if ~weightStim
                 pRFParams.pRFFit.amplitudeRatio = pRFInfo.hrfParamsDiffofGamma(7);
             end
             [thisView, pRFParams] = pRF_auditory(thisView,pRFParams);
+            
+            thisView = viewSet(thisView,'overlaycolorrange',[0 40],2);
+            thisView = viewSet(thisView,'overlaycolorrange',[0 40],3);
+            
+            thisView = viewSet(thisView,'overlayrange',[0 40],2);
+            thisView = viewSet(thisView,'overlayrange',[0 40],3);
+            
+            
+            thisView = viewSet(thisView,'clipacrossoverlays',0);
+            
+            % save view
+            mrSaveView(thisView);
         end        
     end
     
