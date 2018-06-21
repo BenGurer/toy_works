@@ -104,14 +104,14 @@ for i = 1:length(groupNames)
             thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-1);
             
             % Weighted mean and corrected weighted mean
-            params.combineFunction='weightedMeanStd';
+            params.combineFunction='weightedMeanStd_CM';
             params.nOutputOverlays=4;
             [thisView,params] = combineTransformOverlays(thisView,params);
             curOverlay=viewGet(thisView,'curOverlay');
             thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-3);
             thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-2);
-            thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay-1);
-            thisView = viewSet(thisView,'overlaycolorrange',[0 40],curOverlay);
+            thisView = viewSet(thisView,'overlaycolorrange',[-2 38],curOverlay-1);
+            thisView = viewSet(thisView,'overlaycolorrange',[-2 38],curOverlay);
             
             %% save analysis
             saveAnalysis(thisView,analysisName)
@@ -205,7 +205,7 @@ if runSplitHalf
                         thisView = viewSet(thisView,'overlaycolorrange',[0 8],curOverlay-1);
                         
                         % Weighted mean and corrected weighted mean
-                        params.combineFunction='weightedMeanStd';
+                        params.combineFunction='weightedMeanStd_CM';
                         params.nOutputOverlays=4;
                         [thisView,params] = combineTransformOverlays(thisView,params);
                         curOverlay=viewGet(thisView,'curOverlay');
