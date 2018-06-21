@@ -66,19 +66,19 @@ hrf_Deconv = HRF_TW_est(7,:)/max(HRF_TW_est(7,:));
 figure
 subplot(3,2,1)
 waterfall(t,freqBin,HRF_TW_est)
-% surf([1:1:analysisParams.nHrfComponents],[1-nOverlays:1/resolution:nOverlays-1],HRF_TW_est);
-
-p_fmribHRF = [6 12 0.9 0.9 0.35 1]; %guess
-opts = optimset('MaxFunEvals', 500, 'Display', 'off');
-[x_fmribHRF, resnorm, ~, exitflag, output] = lsqcurvefit(@get_HRFfmrib, p_fmribHRF, t, hrf_Deconv, [], [], opts);
-% disp(x_fmribHRF);
-subplot(3,2,2)
-fittedHRF = get_HRFfmrib(x_fmribHRF,t);
-plot(t,fittedHRF)
-hold on
-plot(t,hrf_Deconv)
-title('fmribHRF')
-legend('fitted','deconv')
+% % surf([1:1:analysisParams.nHrfComponents],[1-nOverlays:1/resolution:nOverlays-1],HRF_TW_est);
+% 
+% p_fmribHRF = [6 12 0.9 0.9 0.35 1]; %guess
+% opts = optimset('MaxFunEvals', 500, 'Display', 'off');
+% [x_fmribHRF, resnorm, ~, exitflag, output] = lsqcurvefit(@get_HRFfmrib, p_fmribHRF, t, hrf_Deconv, [], [], opts);
+% % disp(x_fmribHRF);
+% subplot(3,2,2)
+% fittedHRF = get_HRFfmrib(x_fmribHRF,t);
+% plot(t,fittedHRF)
+% hold on
+% plot(t,hrf_Deconv)
+% title('fmribHRF')
+% legend('fitted','deconv')
 
 
 %% GLM Double Gamma
