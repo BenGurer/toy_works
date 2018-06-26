@@ -187,7 +187,7 @@ if runSplitHalf
                         thisView = viewSet(thisView,'overlaycolorrange',[0 32],curOverlay-1);
                         
                         % Weighted mean and corrected weighted mean
-                        params.combineFunction='weightedMeanStd';
+                        params.combineFunction='weightedMeanStd_CM';
                         params.nOutputOverlays=4;
                         [thisView,params] = combineTransformOverlays(thisView,params);
                         curOverlay=viewGet(thisView,'curOverlay');
