@@ -1125,9 +1125,9 @@ for iSub = 1:length(iSubs2Run)
         % get undistorted flatmap names and send to analysis
         % Perform AverageDepthVol on overlay of interest - calculate in flat space but export to base space
         % Now run cal_tonotopicMagnification to get data
-        glmoverlayName = ['R2', [glmInfo.voxelPropertyNames{3} '_nERB'], [glmInfo.voxelPropertyNames{4} '_nERB']];
-        pRFoverlayName = [pRFInfo.pRFOverlayNames{1}, pRFInfo.pRFOverlayNames{2},pRFInfo.pRFOverlayNames{3}];
-        estimateName = ['r2', 'pCF', 'pTW'];
+        glmoverlayNames = ['R2', [glmInfo.voxelPropertyNames{3} '_nERB'], [glmInfo.voxelPropertyNames{4} '_nERB']];
+        pRFoverlayNames = [pRFInfo.pRFOverlayNames{1}, pRFInfo.pRFOverlayNames{2},pRFInfo.pRFOverlayNames{3}];
+        estimateNames = ['r2', 'pCF', 'pTW'];
         
         for iSide = 1:length(Info.Sides)
             % non- fnirted flatmap names
@@ -1159,8 +1159,10 @@ for iSub = 1:length(iSubs2Run)
                     switch analysisName
                         case 'glm_hrfDoubleGamma'
                             overlayNum = viewGet(thisView,'overlayNum',[glmInfo.voxelPropertyNames{3} '_nERB']);
+                            overlayNames = glmoverlayNames;
                         case pRFanalysisName
                             overlayNum = viewGet(thisView,'overlayNum',pRFInfo.pRFOverlayNames{2});
+                            overlayNames = pRFoverlayNames;
                     end
                     
                     % check if overlay has already been averaged
@@ -1168,7 +1170,8 @@ for iSub = 1:length(iSubs2Run)
                     clear overlayname
                     switch analysisName
                         case 'glm_hrfDoubleGamma'
-                            overlayname = ['averageDepthVol_' Info.Sides{iSide} '(', glmInfo.voxelPropertyNames{3} '_nERB)'];                            
+                            overlayname = ['averageDepthVol_' Info.Sides{iSide} '(', glmInfo.voxelPropertyNames{3} '_nERB)'];  
+                            
                         case pRFanalysisName                            
                             overlayname = ['averageDepthVol_' Info.Sides{iSide} '(', pRFInfo.pRFOverlayNames{2}, ')'];
                     end
@@ -1210,13 +1213,14 @@ for iSub = 1:length(iSubs2Run)
                         eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pCF = overlayRoiData;']);
                         eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pathDistances = pathDistances;']);                        
                         
-                       
-              for iOverlay = 1:3          
-       
-    overlayData = viewGet(thisView,'overlaydata',iScan,viewGet(thisView,'curOverlay'));                 
-    overlayRoiData{cScan,iRoi} = interpn(overlayData,verticesScanCoords{iRoi}(1,:),verticesScanCoords{iRoi}(2,:),verticesScanCoords{iRoi}(3,:),interpMethod);
-                        
-                    end
+                        interpMethod = 'linear';
+                        for iOverlay = 1:3
+                            clear tempOverlayData tempOverlayRoiData
+                            tempOverlayData = viewGet(thisView,'overlaydata',viewGet(thisView,overlayNames{iOverlay}));
+                            tempOverlayRoiData = interpn(tempOverlayData,verticesScanCoords{3}(1,:),verticesScanCoords{3}(2,:),verticesScanCoords{3}(3,:),interpMethod);
+                            eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.' estimateNames{iOverlay} '= overlayRoiData;']);
+      
+                        end
                         
                         
                         
@@ -1261,6 +1265,8 @@ for iSide = 1:length(Info.Sides)
                 roiSaveName = [Info.Sides{iSide}, 'GR' AP{iAP} '_' analName{iAnal}];
                 eval(['tempCorticalDistance = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.relativeDistances(2,:);']);
                 eval(['tempFrequency = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pCF{3};']);
+                eval(['tempTuningWidth = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pTW{3};']);
+                eval(['tempR2 = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.r2{3};']);
                 
                 %             CorticalDistance =
                 %             Frequency =
@@ -1268,6 +1274,8 @@ for iSide = 1:length(Info.Sides)
                 tempAnalysis = repmat(analysisSaveName{iAnal},nVoxels,1);
                 tempROI = repmat(roiSaveName,nVoxels,1);
                 
+                R2 = [R2; tempR2'];
+                TuningWidth = [TuningWidth; tempTuningWidth'];
                 CorticalDistance = [CorticalDistance; tempCorticalDistance'];
                 Frequency = [Frequency; tempFrequency'];
                 Analysis = char(Analysis,tempAnalysis);
@@ -1282,8 +1290,9 @@ Analysis = Analysis(2:end,:);
 ROI = ROI(2:end,:);
 
 T = table(CorticalDistance,Frequency,...
+    R2, TuningWidth,...
     Analysis,ROI,...
-    'VariableNames',{'CorticalDistance' 'Frequency' 'Analysis' 'ROI'});
+    'VariableNames',{'Cortical Distance' 'Frequency' 'r2' 'Tuning Width' 'Analysis' 'ROI'});
 
 writetable(T,'myData.csv')
 
