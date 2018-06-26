@@ -1,5 +1,5 @@
 
-function [relativeDistances, overlayRoiData, pathDistances] = cal_tonotopicMagnification(thisView,roiList,flatmapname,saveName)
+function [relativeDistances, overlayRoiData, pathDistances, verticesScanCoords] = cal_tonotopicMagnification(thisView,roiList,flatmapname,saveName)
 
 %   usage: corticalMagnificationAuditory(thisView,saveName)
 %      by: Ben Gurer based on Julien Besle "corticalMagnificationAuditory" based on "calcDist" by eli merriam, denis schluppeck, etc...

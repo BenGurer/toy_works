@@ -1125,6 +1125,10 @@ for iSub = 1:length(iSubs2Run)
         % get undistorted flatmap names and send to analysis
         % Perform AverageDepthVol on overlay of interest - calculate in flat space but export to base space
         % Now run cal_tonotopicMagnification to get data
+        glmoverlayName = ['R2', [glmInfo.voxelPropertyNames{3} '_nERB'], [glmInfo.voxelPropertyNames{4} '_nERB']];
+        pRFoverlayName = [pRFInfo.pRFOverlayNames{1}, pRFInfo.pRFOverlayNames{2},pRFInfo.pRFOverlayNames{3}];
+        estimateName = ['r2', 'pCF', 'pTW'];
+        
         for iSide = 1:length(Info.Sides)
             % non- fnirted flatmap names
             flatmapnames.gm = [subjectInfo.freeSurferName '_' Info.sides{iSide} '_GM.off'];
@@ -1150,6 +1154,7 @@ for iSub = 1:length(iSubs2Run)
                     if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum',analysisName)
                         thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
                     end
+                    
                     clear overlayNum
                     switch analysisName
                         case 'glm_hrfDoubleGamma'
@@ -1197,13 +1202,23 @@ for iSub = 1:length(iSubs2Run)
                         
                         % calculate Tonotopic Magnification
                         clear relativeDistances overlayRoiData pathDistances
-                        [relativeDistances, overlayRoiData, pathDistances] = cal_tonotopicMagnification(thisView,roiList,flatmapnames,[]);
+                        [relativeDistances, overlayRoiData, pathDistances, verticesScanCoords] = cal_tonotopicMagnification(thisView,roiList,flatmapnames,[]);
                         
                         % save to structure
                         roiSaveName = [Info.Sides{iSide}, 'GR' AP{iAP} '_' analName{iAnal}];
                         eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.relativeDistances = relativeDistances;']);
                         eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pCF = overlayRoiData;']);
-                        eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pathDistances = pathDistances;']);
+                        eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pathDistances = pathDistances;']);                        
+                        
+                       
+              for iOverlay = 1:3          
+       
+    overlayData = viewGet(thisView,'overlaydata',iScan,viewGet(thisView,'curOverlay'));                 
+    overlayRoiData{cScan,iRoi} = interpn(overlayData,verticesScanCoords{iRoi}(1,:),verticesScanCoords{iRoi}(2,:),verticesScanCoords{iRoi}(3,:),interpMethod);
+                        
+                    end
+                        
+                        
                         
                     end
                 end
