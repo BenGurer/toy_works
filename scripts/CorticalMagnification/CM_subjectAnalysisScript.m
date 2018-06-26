@@ -1328,6 +1328,68 @@ end
 
 
 %% Save/export data for group average
+% all overlays = averaged across depths
+% pCF
+% pTW
+% Difference maps
+% PSIR - need to do the extra regression stuff - thickness and curvature
+% Gradient reversals - will need to perform analysis again and export to volume space
+
+%load MNI single subject flat sampling subject space
+ssMNI = {'Colin27','Colin27_flipX'};
+flatName = {'_34_122_117_Rad60','_141_153_99';'_138_126_114','_34_122_117'};
+mniRotation = [230,330;60,230];
+flatWarp = {'',['_invFNIRT_' subjects{iSubj}]};
+params.anatFileName = fullfile(dataDir,'Anatomy/freesurfer/subjects/', freeSurferName{iSubj}, 'surfRelax',[freeSurferName{iSubj} '_mprage_pp.nii']);
+params.flatRes=3;
+for iMNI =1:2
+  params.path = fullfile(dataDir,'Anatomy/freesurfer/subjects/',ssMNI{iMNI},'surfRelax');
+  for iWarp=1:2
+    for iSide=1:2
+        params.flatFileName = [ssMNI{iMNI} '_' sides{iSide} '_Flat' flatName{iMNI,iSide} '.off'];
+        params.outerCoordsFileName = [ssMNI{iMNI} '_' sides{iSide} '_GM_' freeSurferName{iSubj} flatWarp{iWarp} '.off'];
+        params.innerCoordsFileName = [ssMNI{iMNI} '_' sides{iSide} '_WM_' freeSurferName{iSubj} flatWarp{iWarp} '.off'];
+        params.curvFileName = [ssMNI{iMNI} '_' sides{iSide} '_Curv.vff'];
+        base = importFlatOFF(params);
+        base.name = [ssMNI{iMNI} '_' sides{iSide} '_Flat' flatWarp{iWarp}];
+        thisView = viewSet(thisView, 'newbase', base);
+        thisView = viewSet(thisView,'rotate',mniRotation(iMNI,iSide));
+    end
+  end
+end
+
+%%% anatomy
+thisView = viewSet(thisView,'curgroup',psirGroup);
+thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',psirAnalysis));
+thisView = viewSet(thisView,'curOverlay',1);
+for iSide = 1:2
+  %export data to Colin27
+  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_' sides{iSide} '_Flat']));
+  mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'PSIR.nii']));
+  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_flipX_' sides{iSide} '_Flat']));
+  mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'PSIRflipX.nii']));
+end
+
+%%% Tuning
+%set group
+thisView = viewSet(thisView,'curgroup',concatenationGroup);
+thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',functionalAnalysis));
+[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1','overlayList=[2 3 4 5 6 7 8]');
+params.combineFunction='searchlightTuningWidth';
+params.additionalArgs = '[3 3 7],1';
+params.baseSpace=1;
+params.nOutputOverlays=7;
+for iSide = 1:2
+  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',[freeSurferName{iSubj} '_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj} '_lowres']));
+  params.outputName=['searchlightTuningWidth ' sides{iSide} ' flat lowres'];
+  [thisView,params] = combineTransformOverlays(thisView,params);
+  thisView = viewSet(thisView,'curOverlay',mainOverlays(iSubj,[1:10 10+iSide]));
+  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj}]));
+  mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'Tonotopy.nii']));
+  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_flipX_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj}]));
+  mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'TonotopyFlipX.nii']));
+end
+
 
 %% plot study information
 [ data ] = plot_studyInfo(stimInfo, glmInfo, pRFInfo, Info, plotInfo);

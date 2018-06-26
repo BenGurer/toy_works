@@ -25,6 +25,44 @@ function thisView = importPSIRasOverlay(thisView,Info,subjectInfo)
     thisView = viewSet(thisView,'overlaycolorrange',[.5 1]);
     %load PSIR as anatomy
     thisView = loadAnat(thisView,[subjectInfo.freeSurferName, '_PSIR_mrTools.nii'],fullfile(Info.dataDir,'Anatomy/originals/',subjectInfo.freeSurferName));
+    
+    return
+    
+    %%%%%%%%%%%%%%%%%%%%!!!!!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%%%%%%%%%
+    
+      %curvature and thickness flat maps
+  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',[freeSurferName{iSubj} '_' sides{iSide} '_Flat_curvature']));
+  saveAnat(thisView,'temp','OverWrite',0,fullfile(dataDir,studyDir,subjects{iSubj}))
+  [thisView,params] = importOverlay(thisView,[],'defaultParams=1','justGetParams=1',['pathname=' fullfile(dataDir,studyDir,subjects{iSubj},'temp.nii')]);
+  params.nameFrame1 = 'Curvature';
+  [thisView,params] = importOverlay(thisView,params);
+  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',[freeSurferName{iSubj} '_' sides{iSide} '_Flat_thickness']));
+  saveAnat(thisView,'temp','OverWrite',0,fullfile(dataDir,studyDir,subjects{iSubj}))
+  [thisView,params] = importOverlay(thisView,[],'defaultParams=1','justGetParams=1',['pathname=' fullfile(dataDir,studyDir,subjects{iSubj},'temp.nii')]);
+  params.nameFrame1 = 'Thickness';
+  [thisView,params] = importOverlay(thisView,params);
+  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',[freeSurferName{iSubj} '_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj} 'Volume']));
+
+ %regress curvature and thickness out of PSIR
+  psirOverlay = viewGet(thisView,'overlayNum','PSIR (temp.nii)');
+  fprintf('CORRELATION PSIR CURVATURE THICKNESS %s side\n',sides{iSide});
+  thisView = regressOverlayOut(thisView,psirOverlay+[0 [4 3]+logical(B1field(iSubj))],viewGet(thisView,'curScan'));
+  %average across depths
+  curOverlay = viewGet(thisView,'curOverlay');
+  [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' num2str(curOverlay-1)]);
+  params.combineFunction='averageDepthVol';
+  [thisView,params] = combineTransformOverlays(thisView,params);
+  thisView = viewSet(thisView,'overlayColorRange',[.5 1]);
+  %smooth
+  [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1');
+  params.combineFunction='spatialSmooth';
+  params.additionalArgs = '[6 6 1]';
+  [thisView,params] = combineTransformOverlays(thisView,params);
+  thisView = viewSet(thisView,'overlayColorRange',[.5 1]);
+  %compute gradient magnitude
+  [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1');
+  params.combineFunction='imGradient2D';
+  [thisView,params] = combineTransformOverlays(thisView,params);
 
 end
 
