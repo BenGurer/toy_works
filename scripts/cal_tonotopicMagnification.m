@@ -277,7 +277,7 @@ whichEnd = [whichEnd{1};whichEnd{2}];
 %closest points in the 2 reversal ROIs
 relativeDistances = pathDistances./repmat(sum(pathDistances),2,1);
 
-[~,lowFrequencyBorder] = min([mean(overlayRoiData{1}) mean(overlayRoiData{2})]);
+[~,lowFrequencyBorder] = min([nanmean(overlayRoiData{1}) nanmean(overlayRoiData{2})]);
 
 %(average distance estimate for unique overlay voxels?)
 
