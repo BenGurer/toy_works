@@ -28,7 +28,7 @@
 
 % use is pc to set data directory - could do in cm_setupStduyparams
 % Info.dataDir
-Info.dataDir = '/Volumes/data_PSY/data';
+Info.dataDir = '/Volumes/data_PSY/OneDrive - The University of Nottingham/data';
 % Info.dataDir = 'E:\data';
 q = char(39);
 
@@ -1125,9 +1125,9 @@ for iSub = 1:length(iSubs2Run)
         % get undistorted flatmap names and send to analysis
         % Perform AverageDepthVol on overlay of interest - calculate in flat space but export to base space
         % Now run cal_tonotopicMagnification to get data
-        glmoverlayNames = ['R2', [glmInfo.voxelPropertyNames{3} '_nERB'], [glmInfo.voxelPropertyNames{4} '_nERB']];
-        pRFoverlayNames = [pRFInfo.pRFOverlayNames{1}, pRFInfo.pRFOverlayNames{2},pRFInfo.pRFOverlayNames{3}];
-        estimateNames = ['r2', 'pCF', 'pTW'];
+        glmoverlayNames = {'r2', [glmInfo.voxelPropertyNames{3} '_nERB'], [glmInfo.voxelPropertyNames{4} '_nERB']};
+        pRFoverlayNames = {pRFInfo.pRFOverlayNames{1}, pRFInfo.pRFOverlayNames{2}, pRFInfo.pRFOverlayNames{3}};
+        estimateNames = {'r2', 'pCF', 'pTW'};
         
         for iSide = 1:length(Info.Sides)
             % non- fnirted flatmap names
@@ -1155,40 +1155,51 @@ for iSub = 1:length(iSubs2Run)
                         thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
                     end
                     
-                    clear overlayNum
-                    switch analysisName
-                        case 'glm_hrfDoubleGamma'
-                            overlayNum = viewGet(thisView,'overlayNum',[glmInfo.voxelPropertyNames{3} '_nERB']);
-                            overlayNames = glmoverlayNames;
-                        case pRFanalysisName
-                            overlayNum = viewGet(thisView,'overlayNum',pRFInfo.pRFOverlayNames{2});
-                            overlayNames = pRFoverlayNames;
+                    for iOverlay = 1:3
+                        clear overlayNum
+                        switch analysisName
+                            case 'glm_hrfDoubleGamma'
+                                overlayNum = viewGet(thisView,'overlayNum',glmoverlayNames{iOverlay});
+%                                 overlayNames = glmoverlayNames;
+                            case pRFanalysisName
+                                overlayNum = viewGet(thisView,'overlayNum',pRFoverlayNames{iOverlay});
+%                                 overlayNames = pRFoverlayNames;
+                        end
+                        
+                        % check if overlay has already been averaged
+                        clear overlayCheck
+                        clear overlayname
+                        clear tempOverlayData tempOverlayRoiData overlay2getName
+                        switch analysisName
+                            case 'glm_hrfDoubleGamma'
+                                overlay2check = ['averageDepthVol_' Info.Sides{iSide} '(', glmoverlayNames{iOverlay} ')'];
+                                
+                            case pRFanalysisName
+                                overlay2check = ['averageDepthVol_' Info.Sides{iSide} '(', pRFoverlayNames{iOverlay}, ')'];
+                        end
+                        
+                        overlayCheck = viewGet(thisView,'overlayNum',overlay2check);
+                        
+                        if isempty(overlayCheck)
+                            % average overlays over cortical depths
+                            [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlayNum)]);
+                            params.combineFunction='averageDepthVol';
+                            params.combinationMode = 'Apply function to each overlay';
+                            params.baseSpace = 1; % perfrom analysis in base space (flatmap)
+                            params.exportToNewGroup = 0; % don't export to volume in a new group
+                            params.outputName = ['averageDepthVol_', Info.Sides{iSide}];
+                            [thisView,params] = combineTransformOverlays(thisView,params);
+                        end
                     end
-                    
-                    % check if overlay has already been averaged
-                    clear overlayCheck
-                    clear overlayname
                     switch analysisName
                         case 'glm_hrfDoubleGamma'
-                            overlayname = ['averageDepthVol_' Info.Sides{iSide} '(', glmInfo.voxelPropertyNames{3} '_nERB)'];  
+                            pCFoverlayname = ['averageDepthVol_' Info.Sides{iSide} '(', glmoverlayNames{2} ')'];
                             
-                        case pRFanalysisName                            
-                            overlayname = ['averageDepthVol_' Info.Sides{iSide} '(', pRFInfo.pRFOverlayNames{2}, ')'];
-                    end
-                    overlayCheck = viewGet(thisView,'overlayNum',overlayname);
-                    if isempty(overlayCheck)
-                        % average overlays over cortical depths
-                        [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlayNum)]);
-                        params.combineFunction='averageDepthVol';
-                        params.combinationMode = 'Apply function to each overlay';
-                        params.baseSpace = 1; % perfrom analysis in base space (flatmap)
-                        params.exportToNewGroup = 0; % don't export to volume in a new group
-                        params.outputName = ['averageDepthVol_', Info.Sides{iSide}];
-                        [thisView,params] = combineTransformOverlays(thisView,params);
+                        case pRFanalysisName
+                            pCFoverlayname = ['averageDepthVol_' Info.Sides{iSide} '(', pRFoverlayNames{2}, ')'];
                     end
                     
-
-                    AvOverlayNum = viewGet(thisView,'overlayNum',overlayname);
+                    AvOverlayNum = viewGet(thisView,'overlayNum',pCFoverlayname);
                     thisView = viewSet(thisView,'curOverlay',AvOverlayNum);
                     
                     for iAP = 1:length(AP)
@@ -1210,16 +1221,25 @@ for iSub = 1:length(iSubs2Run)
                         % save to structure
                         roiSaveName = [Info.Sides{iSide}, 'GR' AP{iAP} '_' analName{iAnal}];
                         eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.relativeDistances = relativeDistances;']);
-                        eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pCF = overlayRoiData;']);
-                        eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pathDistances = pathDistances;']);                        
+                        eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pCFcheck = overlayRoiData;']);
+                        eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pathDistances = pathDistances;']);     
+                        
                         
                         interpMethod = 'linear';
                         for iOverlay = 1:3
-                            clear tempOverlayData tempOverlayRoiData
-                            tempOverlayData = viewGet(thisView,'overlaydata',viewGet(thisView,overlayNames{iOverlay}));
+                            clear tempOverlayData tempOverlayRoiData overlay2getName
+                            switch analysisName
+                                case 'glm_hrfDoubleGamma'
+                                    overlay2getName = ['averageDepthVol_' Info.Sides{iSide} '(', glmoverlayNames{iOverlay} ')'];
+                                    
+                                case pRFanalysisName
+                                    overlay2getName = ['averageDepthVol_' Info.Sides{iSide} '(', pRFoverlayNames{iOverlay}, ')'];
+                            end
+                            overlay2get = viewGet(thisView,'overlayNum',overlay2getName);
+                            tempOverlayData  = viewGet(thisView,'overlaydata',1,overlay2get);
                             tempOverlayRoiData = interpn(tempOverlayData,verticesScanCoords{3}(1,:),verticesScanCoords{3}(2,:),verticesScanCoords{3}(3,:),interpMethod);
-                            eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.' estimateNames{iOverlay} '= overlayRoiData;']);
-      
+                            eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.' estimateNames{iOverlay} '= tempOverlayRoiData;']);
+                            
                         end
                         
                         
@@ -1232,9 +1252,12 @@ for iSub = 1:length(iSubs2Run)
     %% save data
     save(saveName,'data','-v7.3');
     
+    %% save view
+    mrSaveView(thisView);
+    
     end
 
-
+    
 
     %% quit mrLoadRet
     mrQuit()
@@ -1254,6 +1277,8 @@ CorticalDistance = [];
 Frequency = [];
 Analysis = [];
 ROI = [];
+r2 = [];
+TuningWidth = [];
 for iSide = 1:length(Info.Sides)
     for iGroup = 1:length(glmInfo.groupNames)
         groupName = glmInfo.groupNames{iGroup};
@@ -1263,38 +1288,49 @@ for iSide = 1:length(Info.Sides)
             for iAP = 1:length(AP)
                 
                 roiSaveName = [Info.Sides{iSide}, 'GR' AP{iAP} '_' analName{iAnal}];
+                roiName = [Info.Sides{iSide}, 'GR' AP{iAP}];
+                
                 eval(['tempCorticalDistance = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.relativeDistances(2,:);']);
-                eval(['tempFrequency = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pCF{3};']);
-                eval(['tempTuningWidth = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pTW{3};']);
-                eval(['tempR2 = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.r2{3};']);
+                eval(['tempFrequency = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pCF;']);
+                eval(['tempFrequencycheck = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pCFcheck{3};']);
+                eval(['tempTuningWidth = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pTW;']);
+                eval(['tempR2 = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.r2;']);
                 
                 %             CorticalDistance =
                 %             Frequency =
+                
+%                 if tempFrequency == tempFrequencycheck
                 nVoxels = length(tempFrequency);
                 tempAnalysis = repmat(analysisSaveName{iAnal},nVoxels,1);
-                tempROI = repmat(roiSaveName,nVoxels,1);
+                tempROI = repmat(roiName,nVoxels,1);
                 
-                R2 = [R2; tempR2'];
+                r2 = [r2; tempR2'];
                 TuningWidth = [TuningWidth; tempTuningWidth'];
                 CorticalDistance = [CorticalDistance; tempCorticalDistance'];
                 Frequency = [Frequency; tempFrequency'];
+                if isempty(Analysis)
+                        Analysis = tempAnalysis;
+                ROI = tempROI;
+                else
                 Analysis = char(Analysis,tempAnalysis);
                 ROI = char(ROI,tempROI);
+                end
+
                 
             end
             
         end
     end
 end
-Analysis = Analysis(2:end,:);
-ROI = ROI(2:end,:);
+% Analysis = Analysis(2:end,:);
+% ROI = ROI(2:end,:);
 
 T = table(CorticalDistance,Frequency,...
-    R2, TuningWidth,...
+    r2, TuningWidth,...
     Analysis,ROI,...
-    'VariableNames',{'Cortical Distance' 'Frequency' 'r2' 'Tuning Width' 'Analysis' 'ROI'});
+    'VariableNames',{'CorticalDistance' 'Frequency' 'r2' 'TuningWidth' 'Analysis' 'ROI'});
 
-writetable(T,'myData.csv')
+writetable(T, [saveName, '_CM.csv'])
 
 %% Comparisions
 % what to compare?
