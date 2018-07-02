@@ -35,7 +35,8 @@ q = char(39);
 doAntomy = 0;
 doPSIR = 0;
 doGLMbc = 1;
-doMakeFlatmaps = 0;
+    doMakeFlatmaps = 0;
+    doMakeARrois = 1;
 doHRF = 1;
 doGLMdg = 1;
     doConvertOverlays = 1;
@@ -55,7 +56,7 @@ runCorticalMagnification = 1;
 
 %% define subject
 iSubs2Run = [1,2,3,4,5,6,7,8];
-% iSub= 5;
+iSub= 1;
 
 for iSub = 1:length(iSubs2Run)
     
@@ -121,7 +122,18 @@ for iSub = 1:length(iSubs2Run)
         % [thisView] = script_glmAnalysis(thisView,glmInfo,groupNames,hrfModel,runSplitHalf,runTonotopic)
         thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.groupNames,{'hrfBoxcar'},1,1);
         
+        %% Make flatmaps
+        if doMakeFlatmaps
+            keyboard
+            % radius = 55
+            % centre on HG (use R2 and f-test to guide)
+            % use default names
+            % resolution = 3; method = mrFlatMesh
+            % rotate flatmaps for easy viewing (do before exporting to flatmap space)
+        end
+        
         %% ROI CREATION
+        if doMakeARrois
         % create ROIs with the names:
         % LeftAR and RightAR: Group=Sparse; Analysis=glm_hrfboxcar; Overlay=f-test (FDR adjusted)- set min to 0.05
         % Create ROI - continuous voxels;
@@ -130,45 +142,65 @@ for iSub = 1:length(iSubs2Run)
         % Project through depths 0.3 to 0.7 to remove voxels outside of grey matter for ALL ROIs
         % combine LeftAR and RightAR = AR & combine LeftARexp and RightARexp = ARexp
         
+        % set group
+        groupName = glmInfo.groupNames{1};
+        if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
+            thisView = viewSet(thisView,'curgroup',groupName);
+        end
+        % set analysis
+        analysisName = glmInfo.analysisNames{1};
+        if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum',analysisName)
+            thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+        end
+        % set base
+        flatmapName = subjectInfo.flatmapNames{1};
+        if viewGet(thisView,'curbase') ~= viewGet(thisView,'basenum',flatmapName)
+            thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',flatmapName));
+        end
+        
+        % set overlay
+        overlayNum = viewGet(thisView,'overlayNum','FDR-adjusted P [F (fTest - all conditions)]');
+        thisView = viewSet(thisView,'curOverlay',overlayNum);
+        
         disp('create ROIs with the names:')
         disp('LeftAR and RightAR: Group=Sparse; Analysis=glm_hrfboxcar; Overlay=f-test (FDR adjusted)- set min to 0.05')
         disp('Create ROI - continuous voxels;')
         
         keyboard
         
-        %%%%%%!!!!!!!!!%%%%%%%%%%%%
-        % add combine to GR rois
-            roiList(1) = viewGet(thisView,'roinum','LeftAR');
-            
-            roiList(2) = viewGet(thisView,'roinum','RightAR');            
-            
-            % get rois
-            rois = viewGet(thisView,'roi',roiList);
-            
-            % Project ROIs across all cortical depths
-            for iSide = 1:3
-                clear outputRoi
-                outputRoi = expandROI(rois(iSide),[3 3 3],[]);
-                outputRoi.name = [outputRoi.name '_ex'];
-                thisView = viewSet(thisView,'newROI',outputRoi);
-            end
-            
-            thisView = convertROICorticalDepth(thisView,params,varargin);
-            
-           thisView = combineROIs(thisView,roi1,roi2,action,newName);
-        %%%%%%!!!!!!!!!%%%%%%%%%%%%
+        thisView = getMLRView;
+        
+        % get ROI numbers
+        roiList(1) = viewGet(thisView,'roinum','LeftAR');
+        roiList(2) = viewGet(thisView,'roinum','RightAR');
+        
+        % get rois
+        rois = viewGet(thisView,'roi',roiList);
+        
+        for iSide = 1:2
+            clear outputRoi
+            outputRoi = expandROI(rois(iSide),[3 3 3],'sphere');
+            outputRoi.name = [outputRoi.name 'exp'];
+            thisView = viewSet(thisView,'newROI',outputRoi);
+        end
+        
+        % Project ROIs across all cortical depths
+        [thisView, params] = convertROICorticalDepth(thisView,[],'defaultParams');
+        %         params.minDepth = 0.3;
+        %         params.maxDepth = 0.7;
+        %         thisView = convertROICorticalDepth(thisView,params);
+        
+        % combine ROIs
+        newName = 'ARexp';
+        roi1 = 'LeftARexp';
+        roi2 = 'RightARexp';
+        thisView = combineROIs(thisView,roi1,roi2,'union',newName);
+        end
+        
+        % save view 
+        mrSaveView(thisView);
+        
     end
-    
-    %% Make flatmaps
-    if doMakeFlatmaps
-        keyboard
-        % radius = 55
-        % centre on HG (use R2 and f-test to guide)
-        % use default names
-        % resolution = 3; method = mrFlatMesh
-        % rotate flatmaps for easy viewing (do before exporting to flatmap space)
-    end
-    
     
     % get view so we have the ROIs
     thisView = getMLRView;
@@ -186,6 +218,10 @@ for iSub = 1:length(iSubs2Run)
         glmInfo.hrfParamsDoubleGamma = data.hrf.x_doubleGamma;
         pRFInfo.hrfParamsGamma = data.hrf.x_Gamma;
         pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
+        
+        %% save data
+        % save so don't need to load again
+        save(saveName,'data','-v7.3');
     end
     % Estimate and fit average ROI tuning width using recentre method from deconvolution data
     % [ thisView, x_g, x_r, tw_Deconv, estimate, ~, nVoxels] = script_centredTWROIAnalysis(thisView,'AR',glmInfo);
@@ -302,8 +338,6 @@ for iSub = 1:length(iSubs2Run)
                 
                 for i = 1:length(overlayNum)
                     overlayIN = viewGet(thisView,'overlay',overlayNum(i));
-                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!!!!!!!!%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                     change input below to be stim nERB 1 and 2 rather than stimInfo
                     [ thisView , ~ ] = convertOverlay_GLMCF2NERB(thisView,overlayIN,stimOne,stimTwo,[glmInfo.voxelPropertyNames{i} '_nERB']);
                 end
             end
@@ -386,23 +420,64 @@ for iSub = 1:length(iSubs2Run)
     
     %% ROI CREATION
     if doROIsGLM
-    disp('create ROIs with the names: LeftGR_GLM, LeftGRa_GLM, LeftGRp_GLM, RightGR_GLM, RightGRa_GLM, RightGRp_GLM based on gradient reversals, unsmoothed tonotopic maps and f-test maps')
-    disp('Also, line ROIs for each  reversal with the names: LeftHighRevA_GLM, LeftLowRev_GLM, LeftHighRevP_GLM, RightHighRevA_GLM, RightLowRev_GLM, RightHighRevP_GLM')
-    %%%%%%%%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%%%%%%%%%%%%%
-    % automate combining ROIS
-    
-    keyboard
-    % create ROIs with the names:
-    % LeftGR_GLM, LeftGRa_GLM, LeftGRp_GLM, RightGR_GLM, RightGRa_GLM, RightGRp_GLM based on gradient reversals, unsmoothed tonotopic maps and f-test maps
-    
-    % Also, line ROIs for each  reversal with the names:
-    % LeftHighRevA_GLM, LeftLowRev_GLM, LeftHighRevP_GLM, RightHighRevA_GLM, RightLowRev_GLM, RightHighRevP_GLM
+        
+        % create ROIs with the names:
+        % LeftGR_GLM, LeftGRa_GLM, LeftGRp_GLM, RightGR_GLM, RightGRa_GLM, RightGRp_GLM based on gradient reversals, unsmoothed tonotopic maps and f-test maps
+        
+        % Also, line ROIs for each  reversal with the names:
+        % LeftHighRevA_GLM, LeftLowRev_GLM, LeftHighRevP_GLM, RightHighRevA_GLM, RightLowRev_GLM, RightHighRevP_GLM
+        
+        % set group
+        groupName = [subjectInfo.flatmapNames{1} 'Volume']
+        if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
+            thisView = viewSet(thisView,'curgroup',groupName);
+        end
+        % set analysis
+        analysisName = 'combineTransformOverlay';
+        if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum',analysisName)
+            thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+        end
+        % set base
+        flatmapName = [subjectInfo.flatmapNames{1} 'Volume'];
+        if viewGet(thisView,'curbase') ~= viewGet(thisView,'basenum',flatmapName)
+            thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',flatmapName));
+        end
+        
+        % set overlay
+%         overlayNum = viewGet(thisView,'overlayNum','gradentReversal - output 6');
+%         thisView = viewSet(thisView,'curOverlay',overlayNum);
+        
+        disp('create ROIs with the names:')
+        disp(', LeftGRa_GLM, LeftGRp_GLM, , RightGRa_GLM, RightGRp_GLM based on gradient reversals, unsmoothed tonotopic maps and f-test maps')
+        disp('Also, line ROIs for each  reversal with the names: LeftHighRevA_GLM, LeftLowRev_GLM, LeftHighRevP_GLM, RightHighRevA_GLM, RightLowRev_GLM, RightHighRevP_GLM')
+        
+        keyboard
+        
+        thisView = getMLRView;
+        
+        for iSide = 1:length(Info.Sides)
+            newName = [Info.Sides{iSide} 'GR' '_GLM'];
+            roi1 = [Info.Sides{iSide} 'GRa' '_GLM'];
+            roi2 = [Info.Sides{iSide} 'GRp' '_GLM'];
+            thisView = combineROIs(thisView,roi1,roi2,'union',newName);
+        end
+        
+        disp('Check there are no holes in GR rois')
+        
+        keyboard
+        
+        % get view in case we filled any holes
+        thisView = getMLRView;
+        
+        % save view
+        mrSaveView(thisView);
+        
+    end
     
     %% get GLM data
     % data has now be converted to flatmap space and averaged across cortical depth,
     % the following gets data from flatmap group, in flatmap space, from one depth (middle) that is the average across cortical depth.
     % create names to get data from overlays and save using structure side.Group.anal.data{iScan}
-    end
     if doGetDATA_GLM
         %% get data from SCANS
         analysisName = 'combineTransformOverlays';
@@ -741,7 +816,7 @@ for iSub = 1:length(iSubs2Run)
         end
         
     end
-        %% save data
+    %% save data
     % save so don't need to load again
     save(saveName,'data','-v7.3');
     
@@ -749,6 +824,10 @@ for iSub = 1:length(iSubs2Run)
     mrSaveView(thisView);
     
     end
+    
+    %%%%%%%%%%%%%%%%%%
+    %% pRF Analysis %%
+    %%%%%%%%%%%%%%%%%%
     
     if dopRF
         % first get view so we have the ROIs
@@ -765,21 +844,68 @@ for iSub = 1:length(iSubs2Run)
         
         [thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,pRFrestrictROI,1,0);
         
-        %% pRF grandient r     98lk;kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkeversals
+        %% pRF grandient reversals
         if doGradientReversal_pRF
-            thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase,pRFanalysisName,pRFInfo.pRFgradientReversalOverlay,'[18 18 21]');
-            % thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,groupBase,analysisBase,overlayNumber,smoothingParams)            
-           
+            % thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,groupBase,analysisBase,overlayNumber,smoothingParams)     
+            thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase,pRFanalysisName,pRFInfo.pRFgradientReversalOverlay,'[18 18 21]');               
         end
+        
+        %% Define pRF GR ROIs
         if doROIspRF
             
-             keyboard
+            keyboard
             % create ROIs with the names:
             % LeftGR_pRF, LeftGRa_pRF, LeftGRp_pRF, RightGR_pRF,
             % RightGRa_pRF, RightGRp_pRF based on gradient reversals, unsmoothed tonotopic maps and f-test maps.
             
             % Also, line ROIs for each  reversal with the names:
             % LeftHighRevA_pRF, LeftLowRev_pRF, LeftHighRevP_pRF, RightHighRevA_pRF, RightLowRev_pRF, RightHighRevP_pRF
+            
+            % set group
+            groupName = [subjectInfo.flatmapNames{1} 'Volume']
+            if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
+                thisView = viewSet(thisView,'curgroup',groupName);
+            end
+            % set analysis
+            analysisName = 'combineTransformOverlay';
+            if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum',analysisName)
+                thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+            end
+            % set base
+            flatmapName = [subjectInfo.flatmapNames{1} 'Volume'];
+            if viewGet(thisView,'curbase') ~= viewGet(thisView,'basenum',flatmapName)
+                thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',flatmapName));
+            end
+            
+            % set overlay
+            %         overlayNum = viewGet(thisView,'overlayNum','gradentReversal - output 6');
+            %         thisView = viewSet(thisView,'curOverlay',overlayNum);
+            
+            disp('create ROIs with the names:')
+            disp('LeftGRa_pRF, LeftGRp_pRF, , RightGRa_pRF, RightGRp_pRF based on gradient reversals, unsmoothed tonotopic maps and f-test maps')
+            disp('Also, line ROIs for each reversal with the names:')
+            disp('LeftHighRevA_pRF, LeftLowRev_pRF, LeftHighRevP_pRF, RightHighRevA_pRF, RightLowRev_pRF, RightHighRevP_pRF')
+            
+            keyboard
+            
+            thisView = getMLRView;
+            
+            for iSide = 1:length(Info.Sides)
+                newName = [Info.Sides{iSide} 'GR' '_pRF'];
+                roi1 = [Info.Sides{iSide} 'GRa' '_pRF'];
+                roi2 = [Info.Sides{iSide} 'GRp' '_pRF'];
+                thisView = combineROIs(thisView,roi1,roi2,'union',newName);
+            end
+            
+            disp('Check there are no holes in GR rois')
+            
+            keyboard
+            
+            % get view in case we filled any holes
+            thisView = getMLRView;
+            
+            % save view
+            mrSaveView(thisView);
             
         end
         
