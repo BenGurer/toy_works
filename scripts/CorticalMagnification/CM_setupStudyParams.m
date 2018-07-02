@@ -146,7 +146,7 @@ pRFInfo.analysisNames_Groups{2}{1} = 'pRF';
 % for iWeight = 1:length(pRFInfo.stimulusWeighting{2})
 %     pRFInfo.analysisNames_Groups{2}{iWeight} = ['pRF_' pRFInfo.stimulusWeighting{2}{iWeight}];
 % end
-
+pRFInfo.pRFrestrictROI = 'ARexp';
 pRFInfo.pRFrois = {'Left_AR_exp','Right_AR_exp'}; % ROIs to restrict pRF analysis - expanded around AC
 pRFInfo.pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
 pRFInfo.pRFgradientReversalOverlay = 2;
