@@ -1330,7 +1330,7 @@ T = table(CorticalDistance,Frequency,...
     Analysis,ROI,...
     'VariableNames',{'CorticalDistance' 'Frequency' 'r2' 'TuningWidth' 'Analysis' 'ROI'});
 
-writetable(T, [saveName, '_CM.csv'])
+writetable(T, [subjectInfo.subjectID, '_CM.csv'])
 
 %% Comparisions
 % what to compare?
