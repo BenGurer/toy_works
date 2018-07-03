@@ -1,7 +1,7 @@
 # Cortical Magnification
 
 # load tidyverse library
-install.packages("tidyverse")
+# install.packages("tidyverse")
 library(tidyverse)
 
 # set working directory to correct folder
