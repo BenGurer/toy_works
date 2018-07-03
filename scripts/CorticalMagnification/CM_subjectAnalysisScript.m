@@ -34,33 +34,34 @@ q = char(39);
 
 doAntomy = 0;
 doPSIR = 0;
-doGLMbc = 1;
+doGLMbc = 0;
     doMakeFlatmaps = 0;
     doMakeARrois = 1;
 doHRF = 1;
-doGLMdg = 1;
-    doConvertOverlays = 1;
-        doDeleteOverlays = 1;
-        doConvertvol2FlatAvDepth_GLM = 1;
-    doGradientReversal_GLM = 1;
+doGLMdg = 0;
+    doConvertOverlays = 0;
+        doDeleteOverlays = 0;
+        doConvertvol2FlatAvDepth_GLM = 0;
+    doGradientReversal_GLM = 0;
     doROIsGLM = 0;
-    doGetDATA_GLM = 1;
-    doROIRestrict_GLM = 1;
-dopRF = 1;
-    doConvertvol2FlatAvDepth_pRF = 1;
-    doGradientReversal_pRF = 1;
+    doGetDATA_GLM = 0;
+    doROIRestrict_GLM = 0;
+dopRF = 0;
+    doConvertvol2FlatAvDepth_pRF = 0;
+    doGradientReversal_pRF = 0;
     doROIspRF = 0;
-    doGetDATA_pRF = 1;
-    doROIRestrict_pRF = 1;
-runCorticalMagnification = 1;
+    doGetDATA_pRF = 0;
+    doROIRestrict_pRF = 0;
+runCorticalMagnification = 0;
 
 %% define subject
 iSubs2Run = [1,2,3,4,5,6,7,8];
-iSub= 1;
+% iSub= 1;
 
 for iSub = 1:length(iSubs2Run)
     
     %% Get subject info
+    disp('Getting subject info...')
     subjectInfo = get_SubjectInfo_CM(iSubs2Run(iSub));
     
     % Subject ID, flatmap names
@@ -72,6 +73,7 @@ for iSub = 1:length(iSubs2Run)
     
     %% either load data or mrView
     if exist(saveName, 'file')
+        disp('Loading data...')
         load(saveName)
         if isfield(data, 'hrf')
             glmInfo.hrfParamsDoubleGamma = data.hrf.x_doubleGamma;
@@ -83,6 +85,7 @@ for iSub = 1:length(iSubs2Run)
     end
     
     %% open View
+    disp('Loading mrView...')
     mrLoadRet
     
     thisView = getMLRView;
@@ -129,7 +132,7 @@ for iSub = 1:length(iSubs2Run)
             % centre on HG (use R2 and f-test to guide)
             % use default names
             % resolution = 3; method = mrFlatMesh
-            % rotate flatmaps for easy viewing (do before exporting to flatmap space)
+            % rotate flatmaps for easy viewing (do before exporting to flatmap space)           
         end
         
         %% ROI CREATION
@@ -184,21 +187,34 @@ for iSub = 1:length(iSubs2Run)
             thisView = viewSet(thisView,'newROI',outputRoi);
         end
         
+        refreshMLRDisplay(thisView.viewNum);
+        
+        disp('check ROIs include HG and then project between 0 - 1 (ALL) cortical depths')
+        
+        keyboard
+        % check ROIs include HG and then project between 0 - 1 (ALL) cortical
+        % depths
         % Project ROIs across all cortical depths
-        [thisView, params] = convertROICorticalDepth(thisView,[],'defaultParams');
+%         [thisView, params] = convertROICorticalDepth(thisView,[],'defaultParams');
         %         params.minDepth = 0.3;
         %         params.maxDepth = 0.7;
         %         thisView = convertROICorticalDepth(thisView,params);
+        
+        
+        % get view with latest rois
+        thisView = getMLRView;
         
         % combine ROIs
         newName = 'ARexp';
         roi1 = 'LeftARexp';
         roi2 = 'RightARexp';
         thisView = combineROIs(thisView,roi1,roi2,'union',newName);
-        end
+        
         
         % save view 
         mrSaveView(thisView);
+        
+        end       
         
     end
     
@@ -1470,115 +1486,115 @@ writetable(T, [subjectInfo.subjectID, '_CM.csv'])
 % use best analysis
 
 
-%% difference map
-% use averaged over depth overlays just created to make difference maps
-
-% make difference between groups maps - Sparse vs Continuous
-% make difference between analysis maps - GLM vs pRF
-% go to flatmap groups > take overlay from each group > subtrack them from
-% each other > install as new overlay
-
-for iSide = 1:length(Info.Sides)
-    overlay = cell(size(pRFInfo.analysisNames_Groups));
-    for iGroup = 1:length(glmInfo.groupNames)
-        
-        thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{iGroup});
-        
-        % 'overlay'
-        %    overlay = viewGet(view,'overlay',[overlayNum],[analysisNum])
-        %    overlay = viewGet(view,'overlay',overlayNum,[])
-        %    overlay = viewGet(view,'overlay',[],analysisNum)
-        %    overlay = viewGet(view,'overlay',[],[])
-        %    overlay = viewGet(view,'overlay',overlayNum)
-        %    overlay = viewGet(view,'overlay')
-        
-        %% loop over analysis
-        % add this in pRF analysis loop?
-        for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
-            %         analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
-            analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
-            
-            thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
-            overlayNum = viewGet(thisView,'overlayNum','PrefCentreFreq');
-            overlay{iGroup}{iAnal} = viewGet(thisView,'overlay',overlayNum);
-        end
-    end
-    for iAnal = 1:length(pRFInfo.analysisNames_Groups{2})
-        %     analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
-        analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
-        
-        thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
-        [ thisView , differenceData ] = script_createDifferenceMaps(thisView,overlay{1}{1},overlay{2}{iAnal});
-    end
-end
-
-
-%% Save/export data for group average
-% all overlays = averaged across depths
-% pCF
-% pTW
-% Difference maps
-% PSIR - need to do the extra regression stuff - thickness and curvature
-% Gradient reversals - will need to perform analysis again and export to volume space
-
-%load MNI single subject flat sampling subject space
-ssMNI = {'Colin27','Colin27_flipX'};
-flatName = {'_34_122_117_Rad60','_141_153_99';'_138_126_114','_34_122_117'};
-mniRotation = [230,330;60,230];
-flatWarp = {'',['_invFNIRT_' subjects{iSubj}]};
-params.anatFileName = fullfile(dataDir,'Anatomy/freesurfer/subjects/', freeSurferName{iSubj}, 'surfRelax',[freeSurferName{iSubj} '_mprage_pp.nii']);
-params.flatRes=3;
-for iMNI =1:2
-  params.path = fullfile(dataDir,'Anatomy/freesurfer/subjects/',ssMNI{iMNI},'surfRelax');
-  for iWarp=1:2
-    for iSide=1:2
-        params.flatFileName = [ssMNI{iMNI} '_' sides{iSide} '_Flat' flatName{iMNI,iSide} '.off'];
-        params.outerCoordsFileName = [ssMNI{iMNI} '_' sides{iSide} '_GM_' freeSurferName{iSubj} flatWarp{iWarp} '.off'];
-        params.innerCoordsFileName = [ssMNI{iMNI} '_' sides{iSide} '_WM_' freeSurferName{iSubj} flatWarp{iWarp} '.off'];
-        params.curvFileName = [ssMNI{iMNI} '_' sides{iSide} '_Curv.vff'];
-        base = importFlatOFF(params);
-        base.name = [ssMNI{iMNI} '_' sides{iSide} '_Flat' flatWarp{iWarp}];
-        thisView = viewSet(thisView, 'newbase', base);
-        thisView = viewSet(thisView,'rotate',mniRotation(iMNI,iSide));
-    end
-  end
-end
-
-%%% anatomy
-thisView = viewSet(thisView,'curgroup',psirGroup);
-thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',psirAnalysis));
-thisView = viewSet(thisView,'curOverlay',1);
-for iSide = 1:2
-  %export data to Colin27
-  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_' sides{iSide} '_Flat']));
-  mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'PSIR.nii']));
-  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_flipX_' sides{iSide} '_Flat']));
-  mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'PSIRflipX.nii']));
-end
-
-%%% Tuning
-%set group
-thisView = viewSet(thisView,'curgroup',concatenationGroup);
-thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',functionalAnalysis));
-[thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1','overlayList=[2 3 4 5 6 7 8]');
-params.combineFunction='searchlightTuningWidth';
-params.additionalArgs = '[3 3 7],1';
-params.baseSpace=1;
-params.nOutputOverlays=7;
-for iSide = 1:2
-  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',[freeSurferName{iSubj} '_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj} '_lowres']));
-  params.outputName=['searchlightTuningWidth ' sides{iSide} ' flat lowres'];
-  [thisView,params] = combineTransformOverlays(thisView,params);
-  thisView = viewSet(thisView,'curOverlay',mainOverlays(iSubj,[1:10 10+iSide]));
-  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj}]));
-  mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'Tonotopy.nii']));
-  thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_flipX_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj}]));
-  mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'TonotopyFlipX.nii']));
-end
+% %% difference map
+% % use averaged over depth overlays just created to make difference maps
+% 
+% % make difference between groups maps - Sparse vs Continuous
+% % make difference between analysis maps - GLM vs pRF
+% % go to flatmap groups > take overlay from each group > subtrack them from
+% % each other > install as new overlay
+% 
+% for iSide = 1:length(Info.Sides)
+%     overlay = cell(size(pRFInfo.analysisNames_Groups));
+%     for iGroup = 1:length(glmInfo.groupNames)
+%         
+%         thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{iGroup});
+%         
+%         % 'overlay'
+%         %    overlay = viewGet(view,'overlay',[overlayNum],[analysisNum])
+%         %    overlay = viewGet(view,'overlay',overlayNum,[])
+%         %    overlay = viewGet(view,'overlay',[],analysisNum)
+%         %    overlay = viewGet(view,'overlay',[],[])
+%         %    overlay = viewGet(view,'overlay',overlayNum)
+%         %    overlay = viewGet(view,'overlay')
+%         
+%         %% loop over analysis
+%         % add this in pRF analysis loop?
+%         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+%             %         analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+%             analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
+%             
+%             thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+%             overlayNum = viewGet(thisView,'overlayNum','PrefCentreFreq');
+%             overlay{iGroup}{iAnal} = viewGet(thisView,'overlay',overlayNum);
+%         end
+%     end
+%     for iAnal = 1:length(pRFInfo.analysisNames_Groups{2})
+%         %     analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+%         analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
+%         
+%         thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+%         [ thisView , differenceData ] = script_createDifferenceMaps(thisView,overlay{1}{1},overlay{2}{iAnal});
+%     end
+% end
 
 
-%% plot study information
-[ data ] = plot_studyInfo(stimInfo, glmInfo, pRFInfo, Info, plotInfo);
+% %% Save/export data for group average
+% % all overlays = averaged across depths
+% % pCF
+% % pTW
+% % Difference maps
+% % PSIR - need to do the extra regression stuff - thickness and curvature
+% % Gradient reversals - will need to perform analysis again and export to volume space
+% 
+% %load MNI single subject flat sampling subject space
+% ssMNI = {'Colin27','Colin27_flipX'};
+% flatName = {'_34_122_117_Rad60','_141_153_99';'_138_126_114','_34_122_117'};
+% mniRotation = [230,330;60,230];
+% flatWarp = {'',['_invFNIRT_' subjects{iSubj}]};
+% params.anatFileName = fullfile(dataDir,'Anatomy/freesurfer/subjects/', freeSurferName{iSubj}, 'surfRelax',[freeSurferName{iSubj} '_mprage_pp.nii']);
+% params.flatRes=3;
+% for iMNI =1:2
+%   params.path = fullfile(dataDir,'Anatomy/freesurfer/subjects/',ssMNI{iMNI},'surfRelax');
+%   for iWarp=1:2
+%     for iSide=1:2
+%         params.flatFileName = [ssMNI{iMNI} '_' sides{iSide} '_Flat' flatName{iMNI,iSide} '.off'];
+%         params.outerCoordsFileName = [ssMNI{iMNI} '_' sides{iSide} '_GM_' freeSurferName{iSubj} flatWarp{iWarp} '.off'];
+%         params.innerCoordsFileName = [ssMNI{iMNI} '_' sides{iSide} '_WM_' freeSurferName{iSubj} flatWarp{iWarp} '.off'];
+%         params.curvFileName = [ssMNI{iMNI} '_' sides{iSide} '_Curv.vff'];
+%         base = importFlatOFF(params);
+%         base.name = [ssMNI{iMNI} '_' sides{iSide} '_Flat' flatWarp{iWarp}];
+%         thisView = viewSet(thisView, 'newbase', base);
+%         thisView = viewSet(thisView,'rotate',mniRotation(iMNI,iSide));
+%     end
+%   end
+% end
+% 
+% %%% anatomy
+% thisView = viewSet(thisView,'curgroup',psirGroup);
+% thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',psirAnalysis));
+% thisView = viewSet(thisView,'curOverlay',1);
+% for iSide = 1:2
+%   %export data to Colin27
+%   thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_' sides{iSide} '_Flat']));
+%   mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'PSIR.nii']));
+%   thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_flipX_' sides{iSide} '_Flat']));
+%   mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'PSIRflipX.nii']));
+% end
+% 
+% %%% Tuning
+% %set group
+% thisView = viewSet(thisView,'curgroup',concatenationGroup);
+% thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',functionalAnalysis));
+% [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1','overlayList=[2 3 4 5 6 7 8]');
+% params.combineFunction='searchlightTuningWidth';
+% params.additionalArgs = '[3 3 7],1';
+% params.baseSpace=1;
+% params.nOutputOverlays=7;
+% for iSide = 1:2
+%   thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',[freeSurferName{iSubj} '_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj} '_lowres']));
+%   params.outputName=['searchlightTuningWidth ' sides{iSide} ' flat lowres'];
+%   [thisView,params] = combineTransformOverlays(thisView,params);
+%   thisView = viewSet(thisView,'curOverlay',mainOverlays(iSubj,[1:10 10+iSide]));
+%   thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj}]));
+%   mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'Tonotopy.nii']));
+%   thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_flipX_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj}]));
+%   mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'TonotopyFlipX.nii']));
+% end
+% 
+% 
+% %% plot study information
+% [ data ] = plot_studyInfo(stimInfo, glmInfo, pRFInfo, Info, plotInfo);
 
 
 %% Comparisions

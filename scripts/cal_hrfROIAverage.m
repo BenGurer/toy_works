@@ -102,6 +102,7 @@ plot(t,deconvHRF)
 title('Double Gamma')
 legend('fitted params','starting params','deconv')
 
+%%HRF GAMMA
 % time = xdata;
 % timelag = x(1);
 % tau = x(2);
