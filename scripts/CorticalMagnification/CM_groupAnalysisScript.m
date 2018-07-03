@@ -5,8 +5,9 @@ function CM_groupAnalysisScript
 
 % use is pc to set data directory - could do in cm_setupStduyparams
 % Info.dataDir = '/Volumes/data_PSY/data';
-Info.dataDir = 'E:\data';
+% Info.dataDir = 'E:\data';
 % E:\data\CorticalMagnification\11108_006
+Info.dataDir = 'E:\OneDrive - The University of Nottingham\data';
 q = char(39);
 
 %% Load subject data
@@ -96,6 +97,9 @@ for iSub = 5
     writetable(T, [saveName, '_CM.csv'])
     
     %% 7T comparisions %%
+    
+    % compare:
+    %   pCF estimates
     
     %% Concatenated data
     Frequency = [];
@@ -239,9 +243,9 @@ TimePoints = [];
 hrfEstimate = [];
 hrfEstimateName = [];
 
-get_HRFDoubleGamma(x_doubleGamma,t)
-get_HRFGamma(x_Gamma,t)
-get_HRFDiffOfGamma(x_dGamma,t)
+% get_HRFDoubleGamma(x_doubleGamma,t)
+% get_HRFGamma(x_Gamma,t)
+% get_HRFDiffOfGamma(x_dGamma,t)
 
 hrfFunctions = {@get_HRFGamma;
     @get_HRFDoubleGamma;
@@ -252,20 +256,20 @@ for iHRF = 1:length(hrfNames)
     
     tempTimePoints = data.hrf.estimate.time;
     
-    if hrfSaveNames{iHRF} ~= hrfSaveNames{end}
+    if ~strcmpi(hrfSaveNames{iHRF},hrfSaveNames{end})
         eval(['temphrfFit = data.hrf.' hrfSaveNames{iHRF} ';']);
         temphrfEstimate = hrfFunctions{iHRF}(temphrfFit,tempTimePoints);
     elseif hrfSaveNames{iHRF} == 'BoxCar'        
         temphrfEstimate = hrfFunctions{iHRF}([2.5, 2.5],tempTimePoints);
     
     else
-        eval(['temphrfEstimate = data.hrf.' hrf.SaveNames{iHRF} ';']);        
+        eval(['temphrfEstimate = data.hrf.' hrfSaveNames{iHRF} ';']);        
     end
     
     temphrfEstimateName = repmat(hrfNames{iHRF},nTimepoints,1);
     
-    TimePoints = [TimePoints, tempTimePoints];
-    hrfEstimate = [hrfEstimate, temphrfEstimate];
+    TimePoints = [TimePoints, tempTimePoints'];
+    hrfEstimate = [hrfEstimate, temphrfEstimate'];
     
     if isempty(hrfEstimateName)
         hrfEstimateName = temphrfEstimateName;
@@ -282,7 +286,31 @@ end
         'VariableNames',{'hrfEstimate', 'Gamma', 'doubleGamma', 'differenceOfGamma', 'Time(s)', 'Subject'});
     
     writetable(T, [saveName, '_HRF.csv'])
-    
+
+% just HRF estimate
+nTimepoints = length(data.hrf.estimate.time);
+
+TimePoints = [];
+hrfEstimate = [];
+hrfEstimateName = [];
+tempTimePoints = data.hrf.estimate.time;
+temphrfEstimate = data.hrf.deconv;
+
+TimePoints = [TimePoints, tempTimePoints'];
+hrfEstimate = [hrfEstimate, temphrfEstimate'];
+
+
+subject = repmat(iSub,length(TimePoints),1);
+
+T = table(hrfEstimate,TimePoints,...
+    subject,...
+    'VariableNames',{'hrfBetaEstimate', 'Time_sec', 'Subject'});
+
+writetable(T, [saveName, '_HRF.csv'])
+
+%% HRF params
+
+
     
 end
 
