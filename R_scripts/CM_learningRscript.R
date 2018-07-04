@@ -16,7 +16,8 @@ ggplot(data = dataset) +
 ggplot(data = dataset, mapping = aes(x = CorticalDistance, y = Frequency, color = Analysis)) + 
   geom_point() +
   geom_smooth() +
-  facet_wrap(~ ROI, nrow = 2)
+  facet_wrap(~ ROI, nrow = 2)+
+  theme_minimal()
 
 ggplot(data = dataset, mapping = aes(x = Frequency, y = r2, color = Analysis)) + 
   geom_point() +
