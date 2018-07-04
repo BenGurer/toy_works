@@ -310,6 +310,10 @@ writetable(T, [saveName, '_HRF.csv'])
 
 %% HRF params
 
+% average params using median - plot histogram to check
+
+%% save average recentred Deconvoluction
+
 
     
 end
