@@ -64,7 +64,7 @@ runCorticalMagnification = 0;
 
 %% define subject
 iSubs2Run = [1,2,3,4,5,6,7,8];
-iSub= 8;
+iSub= 5;
 % for iSub = 1:length(iSubs2Run)
 % looping doesnt work due to keyboard entering debubing mod and then ROIs cant be defined
 
