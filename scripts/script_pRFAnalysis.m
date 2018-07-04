@@ -25,7 +25,7 @@ if ~weightStim
         pRFParams.pRFFit.fwhm = 0;
         pRFParams.voxelScale = 'lin'; %'Scaling domain of voxel function.
         pRFParams.betaEachScan = true; %'Compute a separate beta weight (scaling) for each scan in the concanetation. This may be useful if there is some reason to believe that different scans have different magnitude responses, this will allow the fit to scale the magnitude for each scan'};
-        pRFParams.algorithm = 'nelder-mead'; %'Which algorithm to use for optimization. Levenberg-marquardt seems to get stuck in local minimum, so the default is nelder-mead. However, levenberg-marquardt can set bounds for parameters, so may be better for when you are trying to fit the hdr along with the rf, since the hdr parameters can fly off to strange values.'};
+        pRFParams.algorithm = 'Levenberg-marquardt'; %'Which algorithm to use for optimization. Levenberg-marquardt seems to get stuck in local minimum, so the default is nelder-mead. However, levenberg-marquardt can set bounds for parameters, so may be better for when you are trying to fit the hdr along with the rf, since the hdr parameters can fly off to strange values.'};
         pRFParams.defaultConstraints = 0;
         if isfield(pRFInfo,'hrfParamsGamma')            
             % timelag = x(1);
