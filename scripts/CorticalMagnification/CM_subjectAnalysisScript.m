@@ -19,6 +19,7 @@
 % data.roi.dataset.analysis.voxelParameter
 % ie. data.Left.scan1.glm_boxcar_nCons8.R2
 
+%% close and clear everything
 clear all; close all; clc
 
 %% Get study parameters
@@ -28,31 +29,31 @@ clear all; close all; clc
 % nummber of subjects
 
 % use is pc to set data directory - could do in cm_setupStduyparams
-% Info.dataDir
 if ispc
     Info.dataDir = 'E:\OneDrive - The University of Nottingham\data';
 else
     Info.dataDir = '/Volumes/data_PSY/OneDrive - The University of Nottingham/data';
 end
-% Info.dataDir = 'E:\data';
+% set variable to be ' to use with eval
 q = char(39);
 
+%% set logicals to what we want to do
 doLoadView = 1;
 doAntomy = 0;
 doPSIR = 0;
-doGLMbc = 0;
+doGLMbc = 1;
 doMakeFlatmaps = 0;
-doMakeARrois = 1;
+doMakeARrois = 0;
 doDeconv = 0;
-doHRF = 1;
-doGLMdg = 0;
-doConvertOverlays = 0;
-doDeleteOverlays = 0;
-doConvertvol2FlatAvDepth_GLM = 0;
-doGradientReversal_GLM = 0;
-doROIsGLM = 0;
-doGetDATA_GLM = 0;
-doROIRestrict_GLM = 0;
+doHRF = 0;
+doGLMdg = 1;
+doConvertOverlays = 1;
+doDeleteOverlays = 1;
+doConvertvol2FlatAvDepth_GLM = 1;
+doGradientReversal_GLM = 1;
+doROIsGLM = 1;
+doGetDATA_GLM = 1;
+doROIRestrict_GLM = 1;
 dopRF = 0;
 doConvertvol2FlatAvDepth_pRF = 0;
 doGradientReversal_pRF = 0;
@@ -64,7 +65,7 @@ runCorticalMagnification = 0;
 
 %% define subject
 iSubs2Run = [1,2,3,4,5,6,7,8];
-iSub= 2;
+iSub= 4;
 % for iSub = 1:length(iSubs2Run)
 % looping doesnt work due to keyboard entering debubing mod and then ROIs cant be defined
 
@@ -101,6 +102,7 @@ if doLoadView
     
     refreshMLRDisplay(thisView.viewNum);
 end
+
 %% Import anatomy
 if doAntomy
     thisView = script_importAnatomy(thisView,Info,subjectInfo);
@@ -126,6 +128,7 @@ if doPSIR
 end
 
 %% Tonotopic analysis
+%% GLM Analysis with Box Car HRF
 if doGLMbc
     %% GLM Analysis with Boxcar HRF
     % Perform GLM analysis with boxcar model of HRF
@@ -134,6 +137,7 @@ if doGLMbc
     % [thisView] = script_glmAnalysis(thisView,glmInfo,groupNames,hrfModel,runSplitHalf,runTonotopic)
     thisView = script_glmAnalysis(thisView,glmInfo,glmInfo.groupNames,{'hrfBoxcar'},1,1);
 end
+
 %% Make flatmaps
 if doMakeFlatmaps
     keyboard
@@ -466,7 +470,7 @@ if doROIsGLM
     % LeftHighRevA_GLM, LeftLowRev_GLM, LeftHighRevP_GLM, RightHighRevA_GLM, RightLowRev_GLM, RightHighRevP_GLM
     
     % set group
-    groupName = [subjectInfo.flatmapNames{1} 'Volume']
+    groupName = [subjectInfo.flatmapNames{1} 'Volume'];
     if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
         thisView = viewSet(thisView,'curgroup',groupName);
     end
@@ -561,7 +565,7 @@ if doGetDATA_GLM
                 % beta weights
                 overlayData = get_overlayData(thisView,overlayFlatNames);
                 %  eval(['data.' Info.Sides{iSide}, '.scans.', glmInfo.analysisNames_nCons{iAnal}, '.betas{iScan} =  overlayData;']);
-                eval(['data.' Info.Sides{iSide}, '.scans_',  num2str(iScan) '.', glmInfo.analysisNames_nCons{iAnal}, '.betas =  overlayData;']);
+                eval(['data.' Info.Sides{iSide}, '.scan_',  num2str(iScan) '.', glmInfo.analysisNames_nCons{iAnal}, '.betas =  overlayData;']);
                 
                 % r2 overlay name
                 r2OverlayName = ['averageDepthVol(Scan ' mat2str(iScan) ' - ' glmInfo.analysisNames_nCons{iAnal} '_Scan_' mat2str(iScan) ' (r2,0))'];
@@ -585,14 +589,14 @@ if doGetDATA_GLM
                 clear tempData
                 tempData = get_overlayData(thisView,r2OverlayName);
                 %                     eval(['data.' Info.Sides{iSide}, '.scans.' , glmInfo.analysisNames_nCons{iAnal}, '.r2{iScan}  = tempData;']);
-                eval(['data.' Info.Sides{iSide}, '.scans_', num2str(iScan), '.' , glmInfo.analysisNames_nCons{iAnal}, '.r2  = tempData;']);
+                eval(['data.' Info.Sides{iSide}, '.scan_', num2str(iScan), '.' , glmInfo.analysisNames_nCons{iAnal}, '.r2  = tempData;']);
                 
                 % voxel property estiamtes
                 for iName = 1:length(glmInfo.voxelPropertyNames)
                     clear tempData
                     tempData = get_overlayData(thisView,voxelPropertyOverlayName{iName});
                     %                         eval(['data.' Info.Sides{iSide}, '.scans.' , glmInfo.analysisNames_nCons{iAnal}, '.', glmInfo.voxelPropertyNames{iName},'{iScan} = tempData;']);
-                    eval(['data.' Info.Sides{iSide}, '.scans_', num2str(iScan), '.' , glmInfo.analysisNames_nCons{iAnal}, '.', glmInfo.voxelPropertyNames{iName},' = tempData;']);
+                    eval(['data.' Info.Sides{iSide}, '.scan_', num2str(iScan), '.' , glmInfo.analysisNames_nCons{iAnal}, '.', glmInfo.voxelPropertyNames{iName},' = tempData;']);
                 end
             end
         end
@@ -685,49 +689,30 @@ if doROIRestrict_GLM
         thisView = viewSet(thisView,'currentbase',baseNum);
         
         for iROI = 1:length(ROInames)
-            %         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} ' = struct;']);
-            eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi = viewGet(thisView,' q 'roi' q ',ROInames{iROI});']);
+            
+            % get ROI struct (overwrite old roi definitions)
+            eval(['data.' ROInames{iROI} ' = struct;']);
+            eval(['data.' ROInames{iROI} '.roi = viewGet(thisView,' q 'roi' q ',ROInames{iROI});']);
             
             % Restrict Group data
             for iGroup = 1:length(glmInfo.groupNames)
                 for iAnal = 1:length(glmInfo.analysisNames_Groups)/length(glmInfo.groupNames)
                     analysisName = glmInfo.analysisNames_Groups{iAnal};
-                    
-                    %                         % restrict r2
-                    %                         eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2.data;']);
-                    %                         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-                    %                         clear groupDataVar
-                    %
-                    %                         % restrict betas
-                    %                         eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas.data;']);
-                    %                         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-                    %
-                    %                         clear groupDataVar
-                    %
-                    %                         % restrict estimates
-                    %                         for iName = 1:length(voxelPropertyNames)
-                    %                             eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '.data;']);
-                    %                             eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} '  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-                    %
-                    %                             clear groupDataVar
-                    %                         end
-                    
+                                       
                     % restrict r2
                     eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2.data;']);
-                    eval(['data.'  ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                    eval(['data.'  ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.r2  = get_ROIdata(groupDataVar,data.' ROInames{iROI} '.roi);']);
                     clear groupDataVar
                     
                     % restrict betas
                     eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas.data;']);
-                    eval(['data.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-                    
+                    eval(['data.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.betas  = get_ROIdata(groupDataVar,data.' ROInames{iROI} '.roi);']);
                     clear groupDataVar
                     
-                    % restrict estimates
+                    % restrict tonotopic estimates
                     for iName = 1:length(glmInfo.voxelPropertyNames)
                         eval(['groupDataVar = data.' Info.Sides{iSide} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' glmInfo.voxelPropertyNames{iName} '.data;']);
-                        eval(['data.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' glmInfo.voxelPropertyNames{iName} '  = get_ROIdata(groupDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-                        
+                        eval(['data.' ROInames{iROI} '.' glmInfo.groupNames{iGroup} '.' glmInfo.analysisNames_Groups{iAnal} '.' glmInfo.voxelPropertyNames{iName} '  = get_ROIdata(groupDataVar,data.' ROInames{iROI} '.roi);']);
                         clear groupDataVar
                     end
                     
@@ -736,48 +721,26 @@ if doROIRestrict_GLM
             
             % Restrict Scan data
             for iAnal = 1:length(glmInfo.analysisBaseNames_Scans)/glmInfo.nScans
-                for iScan = 1:glmInfo.nScans
-                    
-                    %                         % restrict r2
-                    %                         tempData = [];
-                    %                         eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2{iScan}.data;']);
-                    %                         eval(['tempData = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-                    %                         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2{iScan} = tempData{:};']);
-                    %                         clear scanDataVar
-                    %
-                    %                         eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas{iScan}.data;']);
-                    %                         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas{iScan} = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-                    %                         clear scanDataVar
-                    %
-                    %
-                    %                         % restrict estimates
-                    %                         for iName = 1:length(voxelPropertyNames)
-                    %
-                    %                             tempData = [];
-                    %                             eval(['scanDataVar = data.' Info.Sides{iSide} '.scans.' glmInfo.analysisBaseNames_Scans{iAnal} '.' voxelPropertyNames{iName} '{iScan}.data;']);
-                    %                             eval(['tempData = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-                    %                             eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{iAnal} '.' voxelPropertyNames{iName} '{iScan} = tempData{:};']);
-                    %                             clear scanDataVar
-                    %                         end
-                    
+                for iScan = 1:glmInfo.nScans                    
+                   
                     % restrict r2
                     tempData = [];
-                    eval(['scanDataVar = data.' Info.Sides{iSide} '.scans_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2.data;']);
-                    eval(['tempData = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                    eval(['scanDataVar = data.' Info.Sides{iSide} '.scan_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2.data;']);
+                    eval(['tempData = get_ROIdata(scanDataVar,data.' ROInames{iROI} '.roi);']);
                     eval(['data.' ROInames{iROI} '.scan_'  num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.r2 = tempData{:};']);
                     clear scanDataVar
                     
-                    eval(['scanDataVar = data.' Info.Sides{iSide} '.scans_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas.data;']);
-                    eval(['data.' ROInames{iROI} '.scan_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
-                    clear scanDataVar
+                    eval(['scanDataVar = data.' Info.Sides{iSide} '.scan_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas.data;']);
                     
+                    eval(['data.' ROInames{iROI} '.scan_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.betas = get_ROIdata(scanDataVar,data.' ROInames{iROI} '.roi);']);
+                    clear scanDataVar                   
                     
-                    % restrict estimates
+                    % restrict tonotopic estimates
                     for iName = 1:length(glmInfo.voxelPropertyNames)
                         
                         tempData = [];
-                        eval(['scanDataVar = data.' Info.Sides{iSide} '.scans_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.' glmInfo.voxelPropertyNames{iName} '.data;']);
-                        eval(['tempData = get_ROIdata(scanDataVar,data.' Info.Sides{iSide} '.' ROInames{iROI} '.roi);']);
+                        eval(['scanDataVar = data.' Info.Sides{iSide} '.scan_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.' glmInfo.voxelPropertyNames{iName} '.data;']);
+                        eval(['tempData = get_ROIdata(scanDataVar,data.' ROInames{iROI} '.roi);']);
                         eval(['data.' ROInames{iROI} '.scan_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{iAnal} '.' glmInfo.voxelPropertyNames{iName} ' = tempData{:};']);
                         clear scanDataVar
                     end
@@ -803,7 +766,7 @@ if doROIRestrict_GLM
     % end
     
     %% check data
-    % quick plots to make sure its worked
+    % quick and dirty plots to check the data
     for iSide = 1:length(Info.Sides)
         eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
         iROI = 1;
@@ -811,8 +774,6 @@ if doROIRestrict_GLM
         iAnal = 2;
         iName = 3;
         
-        %         eval(['roipCFdataA = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ';']);
-        %         eval(['roipCFdataB = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.' voxelPropertyNames{iName} ';']);
         eval(['roipCFdataA = data.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.' glmInfo.voxelPropertyNames{iName} ';']);
         eval(['roipCFdataB = data.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.' glmInfo.voxelPropertyNames{iName} ';']);
         
@@ -822,9 +783,6 @@ if doROIRestrict_GLM
         hold on
         histogram(cell2mat(roipCFdataB))
         
-        
-        %         eval(['roiBetadataA = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);
-        %         eval(['roiBetadataB = data.' Info.Sides{iSide} '.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);
         eval(['roiBetadataA = data.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);
         eval(['roiBetadataB = data.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' glmInfo.analysisNames_Groups{iAnal} '.betas;']);
         
@@ -837,12 +795,10 @@ if doROIRestrict_GLM
         plot(mean(betas_mv_B,2))
         
         for iScan = 1:4
-            %             eval(['roiSplitBetas{iScan} = data.' Info.Sides{iSide} '.' ROInames{iROI} '.scanData.' glmInfo.analysisBaseNames_Scans{4} '.betas{iScan};']);
             eval(['roiSplitBetas{iScan} = data.' ROInames{iROI} '.scan_' num2str(iScan) '.' glmInfo.analysisBaseNames_Scans{4} '.betas;']);
             splitBetas{iScan} = cell2mat(roiSplitBetas{iScan}');
         end
-        [splitMeanA, ROI_data, Voxel_data, totalROIpCF] = cal_splitMean(splitBetas{1},splitBetas{3});
-        
+        [splitMeanA, ROI_data, Voxel_data, totalROIpCF] = cal_splitMean(splitBetas{1},splitBetas{3});        
         [splitMeanB, ROI_data, Voxel_data, totalROIpCF] = cal_splitMean(splitBetas{2},splitBetas{4});
         
         figure
@@ -854,8 +810,9 @@ if doROIRestrict_GLM
         end
         
     end
+    
     %% save data
-    % save so don't need to load again
+    % save so don't need to load mrView again
     save(saveName,'data','-v7.3');
     
     %% save view
@@ -873,8 +830,7 @@ if dopRF
     
     %% pRF analysis
     % perform pRF analysis (restricted to auditory responsive voxels * [3 3 3] sphere (ARexp ROI))
-    % ADD analysis per scan
-    % add these to study setup function
+    % make sure analysis roi is resctricted to glm overlay data (so we only perform analysis for voxels with functional data)
     pRFrestrictROI = 'ARexp';
     pRFanalysisName = ['pRF_', pRFrestrictROI];
     pRFInfo.hrfParamsGamma = data.hrf.x_Gamma;
