@@ -343,5 +343,215 @@ end
 
 %% get hrf
 
+%% notes from CM_subjectAnalysisScript
+%% Tidy data
+% cortical magnificaiton
+
+
+pRFrestrictROI = 'ARexp';
+pRFanalysisName = ['pRF_', pRFrestrictROI];
+analysisNames = {'glm_hrfDoubleGamma',pRFanalysisName};
+analysisSaveName = {'GLM','pRF'};
+AP = {'a','p'};
+analName = {'GLM', 'pRF'};
+CorticalDistance = [];
+Frequency = [];
+Analysis = [];
+ROI = [];
+r2 = [];
+TuningWidth = [];
+for iSide = 1:length(Info.Sides)
+    for iGroup = 1:length(glmInfo.groupNames)
+        groupName = glmInfo.groupNames{iGroup};
+        for iAnal = 1:length(analysisNames)
+            
+            analysisName = analysisNames{iAnal};
+            for iAP = 1:length(AP)
+                
+                roiSaveName = [Info.Sides{iSide}, 'GR' AP{iAP} '_' analName{iAnal}];
+                roiName = [Info.Sides{iSide}, 'GR' AP{iAP}];
+                
+                eval(['tempCorticalDistance = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.relativeDistances(2,:);']);
+                eval(['tempFrequency = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pCF;']);
+                eval(['tempFrequencycheck = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pCFcheck{3};']);
+                eval(['tempTuningWidth = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pTW;']);
+                eval(['tempR2 = data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.r2;']);
+                
+                %             CorticalDistance =
+                %             Frequency =
+                
+                %                 if tempFrequency == tempFrequencycheck
+                nVoxels = length(tempFrequency);
+                tempAnalysis = repmat(analysisSaveName{iAnal},nVoxels,1);
+                tempROI = repmat(roiName,nVoxels,1);
+                
+                r2 = [r2; tempR2'];
+                TuningWidth = [TuningWidth; tempTuningWidth'];
+                CorticalDistance = [CorticalDistance; tempCorticalDistance'];
+                Frequency = [Frequency; tempFrequency'];
+                if isempty(Analysis)
+                    Analysis = tempAnalysis;
+                    ROI = tempROI;
+                else
+                    Analysis = char(Analysis,tempAnalysis);
+                    ROI = char(ROI,tempROI);
+                end
+                
+                
+            end
+            
+        end
+    end
+end
+% Analysis = Analysis(2:end,:);
+% ROI = ROI(2:end,:);
+
+T = table(CorticalDistance,Frequency,...
+    r2, TuningWidth,...
+    Analysis,ROI,...
+    'VariableNames',{'CorticalDistance' 'Frequency' 'r2' 'TuningWidth' 'Analysis' 'ROI'});
+
+writetable(T, [subjectInfo.subjectID, '_CM.csv'])
+
+%% Comparisions
+% what to compare?
+% what extra things do I need from subjects
+
+%% Comparisions: analysis
+% convert units to match - convert overlays so figures are compareable
+% convert stimulus to ERB for glm - pRF already convert - steal that code
+
+%% Comparisions: aquistion
+% use best analysis
+
+
+% %% difference map
+% % use averaged over depth overlays just created to make difference maps
+%
+% % make difference between groups maps - Sparse vs Continuous
+% % make difference between analysis maps - GLM vs pRF
+% % go to flatmap groups > take overlay from each group > subtrack them from
+% % each other > install as new overlay
+%
+% for iSide = 1:length(Info.Sides)
+%     overlay = cell(size(pRFInfo.analysisNames_Groups));
+%     for iGroup = 1:length(glmInfo.groupNames)
+%
+%         thisView = viewSet(thisView,'curGroup',glmInfo.groupNames{iGroup});
+%
+%         % 'overlay'
+%         %    overlay = viewGet(view,'overlay',[overlayNum],[analysisNum])
+%         %    overlay = viewGet(view,'overlay',overlayNum,[])
+%         %    overlay = viewGet(view,'overlay',[],analysisNum)
+%         %    overlay = viewGet(view,'overlay',[],[])
+%         %    overlay = viewGet(view,'overlay',overlayNum)
+%         %    overlay = viewGet(view,'overlay')
+%
+%         %% loop over analysis
+%         % add this in pRF analysis loop?
+%         for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+%             %         analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+%             analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
+%
+%             thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+%             overlayNum = viewGet(thisView,'overlayNum','PrefCentreFreq');
+%             overlay{iGroup}{iAnal} = viewGet(thisView,'overlay',overlayNum);
+%         end
+%     end
+%     for iAnal = 1:length(pRFInfo.analysisNames_Groups{2})
+%         %     analysisName = pRFInfo.analysisNames_Groups{iGroup}{iAnal};
+%         analysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_', pRFInfo.pRFrois{iSide}, 'Vol' ];
+%
+%         thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+%         [ thisView , differenceData ] = script_createDifferenceMaps(thisView,overlay{1}{1},overlay{2}{iAnal});
+%     end
+% end
+
+
+% %% Save/export data for group average
+% % all overlays = averaged across depths
+% % pCF
+% % pTW
+% % Difference maps
+% % PSIR - need to do the extra regression stuff - thickness and curvature
+% % Gradient reversals - will need to perform analysis again and export to volume space
+%
+% %load MNI single subject flat sampling subject space
+% ssMNI = {'Colin27','Colin27_flipX'};
+% flatName = {'_34_122_117_Rad60','_141_153_99';'_138_126_114','_34_122_117'};
+% mniRotation = [230,330;60,230];
+% flatWarp = {'',['_invFNIRT_' subjects{iSubj}]};
+% params.anatFileName = fullfile(dataDir,'Anatomy/freesurfer/subjects/', freeSurferName{iSubj}, 'surfRelax',[freeSurferName{iSubj} '_mprage_pp.nii']);
+% params.flatRes=3;
+% for iMNI =1:2
+%   params.path = fullfile(dataDir,'Anatomy/freesurfer/subjects/',ssMNI{iMNI},'surfRelax');
+%   for iWarp=1:2
+%     for iSide=1:2
+%         params.flatFileName = [ssMNI{iMNI} '_' sides{iSide} '_Flat' flatName{iMNI,iSide} '.off'];
+%         params.outerCoordsFileName = [ssMNI{iMNI} '_' sides{iSide} '_GM_' freeSurferName{iSubj} flatWarp{iWarp} '.off'];
+%         params.innerCoordsFileName = [ssMNI{iMNI} '_' sides{iSide} '_WM_' freeSurferName{iSubj} flatWarp{iWarp} '.off'];
+%         params.curvFileName = [ssMNI{iMNI} '_' sides{iSide} '_Curv.vff'];
+%         base = importFlatOFF(params);
+%         base.name = [ssMNI{iMNI} '_' sides{iSide} '_Flat' flatWarp{iWarp}];
+%         thisView = viewSet(thisView, 'newbase', base);
+%         thisView = viewSet(thisView,'rotate',mniRotation(iMNI,iSide));
+%     end
+%   end
+% end
+%
+% %%% anatomy
+% thisView = viewSet(thisView,'curgroup',psirGroup);
+% thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',psirAnalysis));
+% thisView = viewSet(thisView,'curOverlay',1);
+% for iSide = 1:2
+%   %export data to Colin27
+%   thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_' sides{iSide} '_Flat']));
+%   mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'PSIR.nii']));
+%   thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_flipX_' sides{iSide} '_Flat']));
+%   mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'PSIRflipX.nii']));
+% end
+%
+% %%% Tuning
+% %set group
+% thisView = viewSet(thisView,'curgroup',concatenationGroup);
+% thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',functionalAnalysis));
+% [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1','overlayList=[2 3 4 5 6 7 8]');
+% params.combineFunction='searchlightTuningWidth';
+% params.additionalArgs = '[3 3 7],1';
+% params.baseSpace=1;
+% params.nOutputOverlays=7;
+% for iSide = 1:2
+%   thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',[freeSurferName{iSubj} '_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj} '_lowres']));
+%   params.outputName=['searchlightTuningWidth ' sides{iSide} ' flat lowres'];
+%   [thisView,params] = combineTransformOverlays(thisView,params);
+%   thisView = viewSet(thisView,'curOverlay',mainOverlays(iSubj,[1:10 10+iSide]));
+%   thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj}]));
+%   mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'Tonotopy.nii']));
+%   thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',['Colin27_flipX_' sides{iSide} '_Flat_invFNIRT_' subjects{iSubj}]));
+%   mrExport2SR(thisView.viewNum,fullfile(dataDir,studyDir,'flatExport',[subjects{iSubj} Sides{iSide} 'TonotopyFlipX.nii']));
+% end
+%
+%
+% %% plot study information
+% [ data ] = plot_studyInfo(stimInfo, glmInfo, pRFInfo, Info, plotInfo);
+
+
+%% Comparisions
+% what to compare?
+% what extra things do I need from subjects
+
+%% Comparisions: analysis
+% convert units to match - convert overlays so figures are compareable
+% convert stimulus to ERB for glm - pRF already convert - steal that code
+
+%% Comparisions: aquistion
+% use best analysis
+
+%% Group analysis function will:
+% import data
+% tidy data
+% statiscal analysis: average
+% plot
+
 
 end

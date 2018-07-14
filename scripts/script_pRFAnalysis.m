@@ -73,7 +73,7 @@ if ~weightStim
         thisView = viewSet(thisView,'curGroup',glmInfo.scanGroupName);
         for iScan = 1:glmInfo.nScans
             thisView = viewSet(thisView,'curScan', iScan);
-            analysisSaveName = ['pRF' '_' roiName '_Scan - ' num2str(iScan)];
+            analysisSaveName = ['pRF' '_' roiName '_Scan_' num2str(iScan)];
             [thisView, pRFParams] = pRF_auditory(thisView,[],'justGetParams=1','defaultParams=1');
             pRFParams.saveName = [analysisSaveName];
             pRFParams.restrict = ['ROI: ' roiName];
