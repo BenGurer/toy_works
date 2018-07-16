@@ -10,12 +10,14 @@ function CM_groupAnalysisScript
 Info.dataDir = 'E:\OneDrive - The University of Nottingham\data';
 q = char(39);
 
+iSubs2Run = [1,2,3,5,6,7,8];
+
 %% Load subject data
 % groupData = struct;
 % for iSub = 1:8
 for iSub = 5
     % Get subject info
-    subjectInfo = get_SubjectInfo_CM(iSub);
+    subjectInfo = get_SubjectInfo_CM(iSubs2Run(iSub));
     % Subject ID, flatmap names
     saveName = [subjectInfo.subjectID '_data.mat'];
     % move to subject folder
@@ -553,5 +555,18 @@ writetable(T, [subjectInfo.subjectID, '_CM.csv'])
 % statiscal analysis: average
 % plot
 
-
+        %% perform ROI analysis
+        % NOTE: selecting data should happen outside of function
+        % roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'GLM');
+        % for iSide = 1:length(Info.Sides)
+        %     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
+        %     for iROI = 1:length(ROInames)
+        %         eval(['roidata = data.' Info.Sides{iSide} '.' ROInames{iROI} ';']);
+        %         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} ' = script_ROIAnalysis(roidata,Info,glmInfo,stimInfo,plotInfo,subjectInfo,glmInfo.analysisScanNum,' q 'overlays' q ',ROInames{iROI});']);
+        %     end
+        % end
+        
+            
+    %     % delete view now we are done with it
+    %     deleteView(thisView);
 end
