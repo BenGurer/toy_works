@@ -1,6 +1,6 @@
 %% CM_subjectAnalysisScript
 % Scripted subject analysis for Comparisions at 7T and Cortical Magnification (CM) studies
-% study dates: 2015 - 2018
+% Study dates: 2015 - 2018
 
 % Aims:
 % Measure cortical magnification
@@ -15,7 +15,7 @@
 % define ROIs
 % export data from volume to flatmap space
 % average data over cortical depths
-% get cortical distance between gradient reversals
+% get cortical distances for tonotopic estimates between gradient reversals
 % save data to structure for group analysis
 
 %% save structure
@@ -29,7 +29,7 @@ clear all; close all; clc
 [stimInfo, glmInfo, pRFInfo, Info, plotInfo] = CM_setupStudyParams;
 % stimulus info, condition names, nummber of subjects etc
 
-% use is pc to set data directory
+% use ispc to set data directory
 if ispc
     Info.dataDir = 'E:\OneDrive - The University of Nottingham\data';
 else
@@ -67,17 +67,17 @@ runCorticalMagnification = 0;
 
 %% define subjects
 % iSubs2Run = [1,2,3,4,5,6,7,8];
-iSubs2Run = [2,3,5,6,7,8];
+iSubs2Run = [1,2,3,5,6,7,8];
 
-% iSub=8;
-for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering debubing mod and then ROIs cant be defined
+for iSub = 1:length(iSubs2Run)
     
     %% Setting up subject
     % Get subject info
     disp('Getting subject info...')
     subjectInfo = get_SubjectInfo_CM(iSubs2Run(iSub));
+    % Subject ID, flatmap names etc
     
-    % Subject ID, flatmap names
+    % define file name for data
     saveName = [subjectInfo.subjectID '_data.mat'];
     
     % move to subject folder
@@ -100,14 +100,18 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
     if doLoadView
         disp('Loading mrView...')
         
+        % clear any other views
         clear thisView
         
+        % open view in mrLoadRet
         mrLoadRet
         
+        % get view
         thisView = getMLRView;
         
+        % refresh mrLoadRet view
         refreshMLRDisplay(thisView.viewNum);
-
+        
     end
     
     %% Import anatomy
@@ -135,8 +139,20 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         
     end
     
-    %% Tonotopic analysis
+    %% GLM analysis %%
+    % voxelwise analysis using general linear modelling
+    
+    % HRF = Boxcar
+    % Determine auditory responsive voxels
+    
+    % HRF = Deconvolution
+    % Determine hemodynamic response function
+    
+    % HRF = Double gamma
+    % Determine tonotopic properites
+    
     %% GLM Analysis with Box Car HRF
+    % Estiamting auditory responsive voxels
     if doGLMbc
         %% GLM Analysis with Boxcar HRF
         disp('Performing GLM analysis (HRF=boxcar)')
@@ -149,6 +165,12 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
     
     %% Make flatmaps
     if doMakeFlatmaps
+        disp('Make flatmaps for each hemisphere...')
+        disp('centre on HG (use R2 and f-test to guide)')
+        disp('use default name')
+        disp('Params: Radius=55; Resolution=3; Method=mrFlatMesh')
+        disp('rotate flatmaps for easy viewing')
+        disp('Press F5 when done...')
         keyboard
         % radius = 55
         % centre on HG (use R2 and f-test to guide)
@@ -186,7 +208,7 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         % set overlay
         overlayNum = viewGet(thisView,'overlayNum','FDR-adjusted P [F (fTest - all conditions)]');
         thisView = viewSet(thisView,'curOverlay',overlayNum);
-                
+        
         refreshMLRDisplay(thisView.viewNum);
         
         disp('create ROIs with the names:')
@@ -236,13 +258,13 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         roi2 = 'RightARexp';
         thisView = combineROIs(thisView,roi1,roi2,'union',newName);
         
-        
         % save view
         mrSaveView(thisView);
         
     end
     
-    %% HRF estimate
+    %% GLM Analysis with deconvolution
+    % Estiamting hemodynamic response function
     if doDeconv
         % estimate hrf using deconvolution
         disp('Performing GLM analysis (HRF=deconvolution)')
@@ -269,11 +291,8 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         save(saveName,'data','-v7.3');
     end
     
-    % Legacy code that I may use
-    % Estimate and fit average ROI tuning width using recentre method from deconvolution data
-    % [ thisView, x_g, x_r, tw_Deconv, estimate, ~, nVoxels] = script_centredTWROIAnalysis(thisView,'AR',glmInfo);
-    
     %% GLM Analysis with Double Gamma HRF
+    % Estiamting tonotopic properties
     if doGLMdg
         disp('Performing GLM analysis (HRF=double gamma)')
         % Perform GLM analysis with double gamma model of HRF
@@ -285,6 +304,7 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
     end
     
     %% get condition names
+    % Get condition names to allow us to access and save data
     getConditionNames = cell(1,length(glmInfo.nStim));
     % save condition names
     if exist('data') && isfield(data, 'conditions')
@@ -298,7 +318,7 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
     end
     
     %% Convert overlays
-    % convert pCF overlays to NERB
+    % convert pCF overlays to nERB
     % all tonotopic estimates - groups and scans
     if doConvertOverlays
         thisView = getMLRView;
@@ -325,14 +345,15 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
                     end
                 end
                 
+                % get the overlay numbers of the data we want
                 % glmInfo.voxelPropertyNames = {'Centriod','Spread','julien_pCF','julien_pTW','indexMax'};
-                
                 overlayNum = zeros(1,length(glmInfo.voxelPropertyNames));
                 for i = 1:length(glmInfo.voxelPropertyNames)-1
                     overlayNum(i) = viewGet(thisView,'overlayNum',['Ouput ' num2str(i) ' - weightedMeanStd_CM(' conNamesString ')']);
                 end
                 overlayNum(end) = viewGet(thisView,'overlayNum',['Ouput 1 - indexMax(' conNamesString ')']);
                 
+                % convert overlays to nERB
                 for i = 1:length(overlayNum)
                     overlayIN = viewGet(thisView,'overlay',overlayNum(i));
                     [ thisView , ~ ] = convertOverlay_GLMCF2NERB(thisView,overlayIN,stimOne,stimTwo,[glmInfo.voxelPropertyNames{i} '_nERB']);
@@ -380,12 +401,14 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
                     end
                 end
                 
+                % get the overlay numbers of the data we want
                 overlayNum = zeros(1,length(glmInfo.voxelPropertyNames));
                 for i = 1:length(glmInfo.voxelPropertyNames)-1
                     overlayNum(i) = viewGet(thisView,'overlayNum',['Ouput ' num2str(i) ' - weightedMeanStd_CM(' conNamesString ')']);
                 end
                 overlayNum(end) = viewGet(thisView,'overlayNum',['Ouput 1 - indexMax(' conNamesString ')']);
                 
+                % convert overlays to nERB
                 for i = 1:length(overlayNum)
                     overlayIN = viewGet(thisView,'overlay',overlayNum(i));
                     [ thisView , ~ ] = convertOverlay_GLMCF2NERB(thisView,overlayIN,stimOne,stimTwo,[glmInfo.voxelPropertyNames{i} '_nERB']);
@@ -397,11 +420,11 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
     
     %% Convert GLM data to flatmap space and average over cortical depth
     % [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
-    % export scan data
+    
     % delete overlays if no longer needed
     if doConvertvol2FlatAvDepth_GLM
         
-        % auto delete all overlay sbecause its a pain to do
+        % auto delete all overlays because its a pain to do manually
         if doDeleteOverlays
             thisView = getMLRView;
             for iSide = 1:length(subjectInfo.flatmapNames)
@@ -413,7 +436,7 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
             end
         end
         
-        
+        % export scan data
         for iScan = 1:glmInfo.nScans
             for iAnal = 1:length(glmInfo.nStim)*length(glmInfo.hrfModel)
                 analysisName = [glmInfo.analysisBaseNames_Scans{iAnal}, '_Scan_' mat2str(iScan)];
@@ -444,7 +467,7 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
     
     %% GLM grandient reversals
     % calculate gradient reversals using GLM (double gamma) analysis.
-    % pCF estimation = Juliensdebiased method
+    % pCF estimation = Juliens debiased method
     if doGradientReversal_GLM
         groupName = glmInfo.groupNames{1}; % 'ConcatenationSparse';
         if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
@@ -453,19 +476,14 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         analysisName = glmInfo.analysisNames{2}; % 'glm_hrfDoubleGamma';
         thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
         conNamesString = [];
-        for iCon = 1:length(conditionNames{1})
-            if iCon == 1
-                conNamesString  = [conNamesString conditionNames{1}{iCon}];
-            else
-                conNamesString  = [conNamesString ',' conditionNames{1}{iCon}];
-            end
-        end
         
-        %         overlayNum = viewGet(thisView,'overlayNum',['Ouput 3 - weightedMeanStd_CM(' conNamesString ')']);
+        % get overlay number for debiased prefered frequency in number of ERBS overlay
         overlayNum = viewGet(thisView,'overlayNum','julien_pCF_nERB');
-        %     overlayIN = viewGet(thisView,'overlay',overlayNum);
+        
+        % calcuate gradient reversals
         thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase, glmInfo.analysisNames_Groups{2},overlayNum,'[18 18 21]');
         
+        % save view
         mrSaveView(thisView)
     end
     
@@ -505,7 +523,7 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         disp('LeftGRa_GLM, LeftGRp_GLM, , RightGRa_GLM, RightGRp_GLM based on gradient reversals, anatomy, unsmoothed tonotopic maps and f-test maps')
         disp('Also, line ROIs for each  reversal with the names: LeftHighRevA_GLM, LeftLowRev_GLM, LeftHighRevP_GLM, RightHighRevA_GLM, RightLowRev_GLM, RightHighRevP_GLM')
         disp('hit F5 when done')
-                
+        
         keyboard
         
         thisView = getMLRView;
@@ -667,7 +685,7 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         end
     end
     
-    %% Restrict data by ROIs    
+    %% Restrict data by ROIs
     % Now we need to restrict the data by the ROIs
     if doROIRestrict_GLM
         
@@ -749,21 +767,8 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         end
         
         
-        %% GLM ROI analysis
-        % results from GLM roi analysis inform the pRF analysis so perform it first
-        
-        %% perform ROI analysis
-        % NOTE: selecting data should happen outside of function
-        % roiAnalysis = script_ROIAnalysis(roiData,glmInfo.analysisBaseNames_Scans,Info,stimInfo,plotInfo,Info.conditionRunIndex,glmInfo.analysisScanNum,'GLM');
-        % for iSide = 1:length(Info.Sides)
-        %     eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
-        %     for iROI = 1:length(ROInames)
-        %         eval(['roidata = data.' Info.Sides{iSide} '.' ROInames{iROI} ';']);
-        %         eval(['data.' Info.Sides{iSide} '.' ROInames{iROI} ' = script_ROIAnalysis(roidata,Info,glmInfo,stimInfo,plotInfo,subjectInfo,glmInfo.analysisScanNum,' q 'overlays' q ',ROInames{iROI});']);
-        %     end
-        % end
-        
-        %% check data
+        %% Check data / GLM ROI analysis
+        % check data using GLM ROI analysis
         % quick and dirty plots to check the data
         for iSide = 1:length(Info.Sides)
             eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
@@ -820,9 +825,9 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         
     end
     
-    %%%%%%%%%%%%%%%%%%
+    
     %% pRF Analysis %%
-    %%%%%%%%%%%%%%%%%%
+    % voxelwise analysis using popualtion receptive field modelling
     
     if dopRF
         % first get view so we have the ROIs
@@ -833,6 +838,8 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         % make sure analysis roi is resctricted (cmd + x) to glm overlay data (so we only perform analysis for voxels with functional data)
         pRFrestrictROI = 'ARexp';
         pRFanalysisName = ['pRF_', pRFrestrictROI];
+        
+        % use HRF params from GLM deconvolution estimate
         pRFInfo.hrfParamsGamma = data.hrf.x_Gamma;
         pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
         
@@ -905,8 +912,8 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         
         %% export pRF overlays and average over depth cortical depth
         % first groups, then scans
-        % pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};        
-        if doConvertvol2FlatAvDepth_pRF            
+        % pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
+        if doConvertvol2FlatAvDepth_pRF
             %% Groups
             for iSide = 1:length(subjectInfo.flatmapNames)
                 
@@ -944,7 +951,7 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
             end
         end
         
-        if doGetDATA_pRF            
+        if doGetDATA_pRF
             
             %% get group data and restrict by ROIs
             for iSide = 1:length(Info.Sides)
@@ -1086,58 +1093,58 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
                     end
                 end
             end
-        
-        
-        %% pRF analysis
-        % create function or add to: voxel comparisions;
-        % pCF scatter, pCF distribution, pCF correlation
-        % r = corr2(A,B)
-        
-        %% check data
-        % quick plots to make sure its worked
-        for iSide = 1:length(Info.Sides)
-            eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
-            iROI = 1;
-            iGroup = 1;
-            iAnal = 1;
-            iOverlay = 2;
             
-            pRFanalysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_',  pRFrestrictROI];
             
-            eval(['roipCFdataA = data.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
-            eval(['roipCFdataB = data.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+            %% pRF analysis
+            % create function or add to: voxel comparisions;
+            % pCF scatter, pCF distribution, pCF correlation
+            % r = corr2(A,B)
             
-            figure
-            histogram(cell2mat(roipCFdataA))
-            hold on
-            histogram(cell2mat(roipCFdataB))
-            
-            for iScan = 1:4
-                eval(['roiSplitpCF{iScan} = data.' ROInames{iROI} '.scan_' num2str(iScan) '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+            %% check data
+            % quick plots to make sure its worked
+            for iSide = 1:length(Info.Sides)
+                eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
+                iROI = 1;
+                iGroup = 1;
+                iAnal = 1;
+                iOverlay = 2;
+                
+                pRFanalysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_',  pRFrestrictROI];
+                
+                eval(['roipCFdataA = data.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+                eval(['roipCFdataB = data.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+                
+                figure
+                histogram(cell2mat(roipCFdataA))
+                hold on
+                histogram(cell2mat(roipCFdataB))
+                
+                for iScan = 1:4
+                    eval(['roiSplitpCF{iScan} = data.' ROInames{iROI} '.scan_' num2str(iScan) '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+                end
+                figure
+                subplot(2,1,1)
+                scatter(roiSplitpCF{1},roiSplitpCF{3})
+                subplot(2,1,2)
+                scatter(roiSplitpCF{2},roiSplitpCF{4})
+                
+                % need to remove nans before - also findout how many
+                corrcoef(double(roiSplitpCF{1}'),double(roiSplitpCF{3}'))
+                corr(roiSplitpCF{1}',roiSplitpCF{3}')
             end
-            figure
-            subplot(2,1,1)
-            scatter(roiSplitpCF{1},roiSplitpCF{3})
-            subplot(2,1,2)
-            scatter(roiSplitpCF{2},roiSplitpCF{4})
             
-            % need to remove nans before - also findout how many
-            corrcoef(double(roiSplitpCF{1}'),double(roiSplitpCF{3}'))
-            corr(roiSplitpCF{1}',roiSplitpCF{3}')
+            
+            %% save data
+            save(saveName,'data','-v7.3');
+            
+            %% save view
+            mrSaveView(thisView);
         end
         
-        
-        %% save data
-        save(saveName,'data','-v7.3');
-        
-        %% save view
-        mrSaveView(thisView);
-        end
-      
-    end   
+    end
     
     %% Cortical Magnification
-    if runCorticalMagnification      
+    if runCorticalMagnification
         % get cortical distances
         % get curvature?
         % get pCF estiamte
@@ -1155,15 +1162,11 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         %   anlysis
         
         % ROIs could have already been create, if not:
-        % Create ROIS
-        % keyboard
         % Create ROIs for each gradient reversal and name:
         %   'LeftHa','LeftHp','LeftLow,'LeftGRa''LeftGRp'
         %   'RightHa','RightHp','RightLow','RightGRa''RightGRp'
         %   Post fix with _GLM or _pRF
-        
-        % run script from here
-        
+            
         thisView = getMLRView;
         
         % convert rois from flatmap to volume space
@@ -1239,8 +1242,11 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
         % get undistorted flatmap names and send to analysis
         % Perform AverageDepthVol on overlay of interest - calculate in flat space but export to base space
         % Now run cal_tonotopicMagnification to get data
+        
+        % overlays names to get for GLM and pRF analys
         glmoverlayNames = {'r2', [glmInfo.voxelPropertyNames{3} '_nERB'], [glmInfo.voxelPropertyNames{4} '_nERB']};
         pRFoverlayNames = {pRFInfo.pRFOverlayNames{1}, pRFInfo.pRFOverlayNames{2}, pRFInfo.pRFOverlayNames{3}};
+        % names used in saved data structure
         estimateNames = {'r2', 'pCF', 'pTW'};
         
         for iSide = 1:length(Info.Sides)
@@ -1270,6 +1276,7 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
                     end
                     
                     for iOverlay = 1:3
+                        % select overlay
                         clear overlayNum
                         switch analysisName
                             case 'glm_hrfDoubleGamma'
@@ -1294,8 +1301,8 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
                         
                         overlayCheck = viewGet(thisView,'overlayNum',overlay2check);
                         
-                        if isempty(overlayCheck)
-                            % average overlays over cortical depths
+                        % average overlays over cortical depths
+                        if isempty(overlayCheck)                            
                             [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlayNum)]);
                             params.combineFunction='averageDepthVol';
                             params.combinationMode = 'Apply function to each overlay';
@@ -1305,6 +1312,7 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
                             [thisView,params] = combineTransformOverlays(thisView,params);
                         end
                     end
+                    
                     switch analysisName
                         case 'glm_hrfDoubleGamma'
                             pCFoverlayname = ['averageDepthVol_' Info.Sides{iSide} '(', glmoverlayNames{2} ')'];
@@ -1339,6 +1347,7 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
                         eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.pathDistances = pathDistances;']);
                         
                         
+                        % get overlay data from voxels within the gradient - tonotopic estimates averaged over cortical depths
                         interpMethod = 'linear';
                         for iOverlay = 1:3
                             clear tempOverlayData tempOverlayRoiData overlay2getName
@@ -1354,8 +1363,8 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
                             tempOverlayRoiData = interpn(tempOverlayData,verticesScanCoords{3}(1,:),verticesScanCoords{3}(2,:),verticesScanCoords{3}(3,:),interpMethod);
                             eval(['data.' roiSaveName '.' groupName '.' analysisName '.tonotopicMagnificaion.' estimateNames{iOverlay} '= tempOverlayRoiData;']);
                             
-                        end                       
-                                                
+                        end
+                        
                     end
                 end
             end
@@ -1372,7 +1381,5 @@ for iSub = 1:length(iSubs2Run) % looping doesnt work due to keyboard entering de
     %% Quit and delete subject view
     % quit current mrLoadRet view
     mrQuit()
-    
-%     % delete view now we are done with it
-%     deleteView(thisView);
+
 end
