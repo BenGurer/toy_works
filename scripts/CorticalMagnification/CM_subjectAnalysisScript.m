@@ -9,8 +9,8 @@
 
 %% Tasks:
 % load subject data
-% GLM analysis
-% pRF analysis
+% perform GLM analysis
+% perform pRF analysis
 % calculate gradient reversals
 % define ROIs
 % export data from volume to flatmap space
@@ -56,19 +56,20 @@ doGradientReversal_GLM = 0;
 doROIsGLM = 0;
 doGetDATA_GLM = 0;
 doROIRestrict_GLM = 0;
-dopRF = 1;
-doConvertvol2FlatAvDepth_pRF = 0;
-doGradientReversal_pRF = 0;
+dopRF = 0;
+doConvertvol2FlatAvDepth_pRF = 1;
+doGradientReversal_pRF = 1;
 doROIspRF = 0;
-doGetDATA_pRF = 0;
-doROIRestrict_pRF = 0;
-runCorticalMagnification = 0;
-
+doGetAndRestrictDATA_pRF = 1;
+doCorticalMagnification = 1;
+doGRrois = 1;
 
 %% define subjects
 % iSubs2Run = [1,2,3,4,5,6,7,8];
-iSubs2Run = [1,2,3,5,6,7,8];
+iSubs2Run = [1,2,3,6,7,8];
 
+%% loop over subjects
+% use for loop to repeat analysis for each subject
 for iSub = 1:length(iSubs2Run)
     
     %% Setting up subject
@@ -151,10 +152,9 @@ for iSub = 1:length(iSubs2Run)
     % HRF = Double gamma
     % Determine tonotopic properites
     
-    %% GLM Analysis with Box Car HRF
+    %% GLM Analysis with Boxcar HRF
     % Estiamting auditory responsive voxels
     if doGLMbc
-        %% GLM Analysis with Boxcar HRF
         disp('Performing GLM analysis (HRF=boxcar)')
         % Perform GLM analysis with boxcar model of HRF
         % hrf = Box Car
@@ -263,7 +263,7 @@ for iSub = 1:length(iSubs2Run)
         
     end
     
-    %% GLM Analysis with deconvolution
+    %% GLM Analysis with deconvolved HRF
     % Estiamting hemodynamic response function
     if doDeconv
         % estimate hrf using deconvolution
@@ -273,7 +273,7 @@ for iSub = 1:length(iSubs2Run)
         thisView = script_hrfAnalysis(thisView,glmInfo.groupNames{2});
     end
     
-    %% get average HRF estimate for Auditory Responsive (AR) ROI
+    %% get average HRF estimate for Auditory Responsive(AR) ROI
     if doHRF
         % use results for GLM
         % save result to data
@@ -317,7 +317,7 @@ for iSub = 1:length(iSubs2Run)
         data.conditions = conditionNames;
     end
     
-    %% Convert overlays
+    %% Convert overlay values from stimulus scale to nERB
     % convert pCF overlays to nERB
     % all tonotopic estimates - groups and scans
     if doConvertOverlays
@@ -487,7 +487,7 @@ for iSub = 1:length(iSubs2Run)
         mrSaveView(thisView)
     end
     
-    %% ROI CREATION
+    %% Define GLM Gradient Reversal ROIs
     if doROIsGLM
         
         % create ROIs with the names:
@@ -825,7 +825,6 @@ for iSub = 1:length(iSubs2Run)
         
     end
     
-    
     %% pRF Analysis %%
     % voxelwise analysis using popualtion receptive field modelling
     
@@ -844,170 +843,112 @@ for iSub = 1:length(iSubs2Run)
         pRFInfo.hrfParamsDiffofGamma = data.hrf.x_dGamma;
         
         [thisView, pRFParams] = script_pRFAnalysis(thisView,pRFInfo,glmInfo,pRFrestrictROI,1,0);
+    end
+    
+    %% pRF grandient reversals
+    if doGradientReversal_pRF
+        % thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,groupBase,analysisBase,overlayNumber,smoothingParams)
+        thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase,pRFanalysisName,pRFInfo.pRFgradientReversalOverlay,'[18 18 21]');
+    end
+    
+    %% Define pRF Gradient Reversal ROIs
+    if doROIspRF
         
-        %% pRF grandient reversals
-        if doGradientReversal_pRF
-            % thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,groupBase,analysisBase,overlayNumber,smoothingParams)
-            thisView = script_flatMapAnalysis(thisView,Info,subjectInfo,Info.gradReversalInfo.groupBase,pRFanalysisName,pRFInfo.pRFgradientReversalOverlay,'[18 18 21]');
+        % create ROIs with the names:
+        % LeftGR_pRF, LeftGRa_pRF, LeftGRp_pRF, RightGR_pRF,
+        % RightGRa_pRF, RightGRp_pRF based on gradient reversals, unsmoothed tonotopic maps and f-test maps.
+        
+        % Also, line ROIs for each  reversal with the names:
+        % LeftHighRevA_pRF, LeftLowRev_pRF, LeftHighRevP_pRF, RightHighRevA_pRF, RightLowRev_pRF, RightHighRevP_pRF
+        
+        % set group
+        groupName = [subjectInfo.flatmapNames{1} 'Volume']
+        if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
+            thisView = viewSet(thisView,'curgroup',groupName);
+        end
+        % set analysis
+        analysisName = 'combineTransformOverlay';
+        if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum',analysisName)
+            thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+        end
+        % set base
+        flatmapName = [subjectInfo.flatmapNames{1} 'Volume'];
+        if viewGet(thisView,'curbase') ~= viewGet(thisView,'basenum',flatmapName)
+            thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',flatmapName));
         end
         
-        %% Define pRF GR ROIs
-        if doROIspRF
-            
-            keyboard
-            % create ROIs with the names:
-            % LeftGR_pRF, LeftGRa_pRF, LeftGRp_pRF, RightGR_pRF,
-            % RightGRa_pRF, RightGRp_pRF based on gradient reversals, unsmoothed tonotopic maps and f-test maps.
-            
-            % Also, line ROIs for each  reversal with the names:
-            % LeftHighRevA_pRF, LeftLowRev_pRF, LeftHighRevP_pRF, RightHighRevA_pRF, RightLowRev_pRF, RightHighRevP_pRF
-            
-            % set group
-            groupName = [subjectInfo.flatmapNames{1} 'Volume']
-            if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
-                thisView = viewSet(thisView,'curgroup',groupName);
-            end
-            % set analysis
-            analysisName = 'combineTransformOverlay';
-            if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum',analysisName)
-                thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
-            end
-            % set base
-            flatmapName = [subjectInfo.flatmapNames{1} 'Volume'];
-            if viewGet(thisView,'curbase') ~= viewGet(thisView,'basenum',flatmapName)
-                thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',flatmapName));
-            end
-            
-            % set overlay
-            %         overlayNum = viewGet(thisView,'overlayNum','gradentReversal - output 6');
-            %         thisView = viewSet(thisView,'curOverlay',overlayNum);
-            
-            disp('create ROIs with the names:')
-            disp('LeftGRa_pRF, LeftGRp_pRF, , RightGRa_pRF, RightGRp_pRF based on gradient reversals, unsmoothed tonotopic maps and f-test maps')
-            disp('Also, line ROIs for each reversal with the names:')
-            disp('LeftHighRevA_pRF, LeftLowRev_pRF, LeftHighRevP_pRF, RightHighRevA_pRF, RightLowRev_pRF, RightHighRevP_pRF')
-            
-            keyboard
-            
-            thisView = getMLRView;
-            
-            for iSide = 1:length(Info.Sides)
-                newName = [Info.Sides{iSide} 'GR' '_pRF'];
-                roi1 = [Info.Sides{iSide} 'GRa' '_pRF'];
-                roi2 = [Info.Sides{iSide} 'GRp' '_pRF'];
-                thisView = combineROIs(thisView,roi1,roi2,'union',newName);
-            end
-            
-            disp('Check there are no holes in GR rois')
-            
-            keyboard
-            
-            % get view in case we filled any holes
-            thisView = getMLRView;
-            
-            % save view
-            mrSaveView(thisView);
-            
+        % set overlay
+        overlayNum = viewGet(thisView,'overlayNum','Ouput 6 - gradientReversal_left_pRF(pCF,[18 18 21])');
+        thisView = viewSet(thisView,'curOverlay',overlayNum);
+        
+        disp('create ROIs with the names:')
+        disp('LeftGRa_pRF, LeftGRp_pRF, , RightGRa_pRF, RightGRp_pRF based on gradient reversals, unsmoothed tonotopic maps and f-test maps')
+        disp('Also, line ROIs for each reversal with the names:')
+        disp('LeftHighRevA_pRF, LeftLowRev_pRF, LeftHighRevP_pRF, RightHighRevA_pRF, RightLowRev_pRF, RightHighRevP_pRF')
+        disp('hit F5 when done')
+        
+        keyboard
+        
+        thisView = getMLRView;
+        
+        for iSide = 1:length(Info.Sides)
+            newName = [Info.Sides{iSide} 'GR' '_pRF'];
+            roi1 = [Info.Sides{iSide} 'GRa' '_pRF'];
+            roi2 = [Info.Sides{iSide} 'GRp' '_pRF'];
+            thisView = combineROIs(thisView,roi1,roi2,'union',newName);
         end
         
-        %% export pRF overlays and average over depth cortical depth
-        % first groups, then scans
-        % pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
-        if doConvertvol2FlatAvDepth_pRF
-            %% Groups
-            for iSide = 1:length(subjectInfo.flatmapNames)
+        disp('Check there are no holes in GR rois')
+        disp('hit F5 when done')
+        
+        keyboard
+        
+        % get view in case we filled any holes
+        thisView = getMLRView;
+        
+        % save view
+        mrSaveView(thisView);
+        
+    end
+    
+    %% Convert pRF data to flatmap space then average over depth cortical depth
+    % pRFOverlayNames = {'r2','PrefCentreFreq','rfHalfWidth'};
+    if doConvertvol2FlatAvDepth_pRF
+        for iSide = 1:length(subjectInfo.flatmapNames)
+            % Groups
+            if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',[subjectInfo.flatmapNames{iSide}, 'Volume'])
+                thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide}, 'Volume']);
+            end
+            if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum','combineTransformOverlays')
+                thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
+            end
+            
+            for iGroup = 1:length(glmInfo.groupNames)
+                groupName = glmInfo.groupNames{iGroup};
                 
-                if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',[subjectInfo.flatmapNames{iSide}, 'Volume'])
-                    thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide}, 'Volume']);
-                end
-                if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum','combineTransformOverlays')
-                    thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
-                end
-                
-                for iGroup = 1:length(glmInfo.groupNames)
-                    groupName = glmInfo.groupNames{iGroup};
+                for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+                    pRFanalysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_',  pRFrestrictROI];
+                    % get overlay names and numbers
+                    overlayFlatNames = cell(1,length(pRFInfo.pRFOverlayNames));
+                    overlayNum = zeros(1,length(pRFInfo.pRFOverlayNames));
+                    overlay2Get = cell(1,length(pRFInfo.pRFOverlayNames));
+                    for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
+                        overlayFlatNames{iOverlay} = [groupName '_' pRFanalysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
+                        overlayNum(iOverlay) = iOverlay;
+                        overlay2Get{iOverlay} = ['averageDepthVol(' overlayFlatNames{iOverlay} ')'];
+                    end
                     
-                    for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
-                        pRFanalysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_',  pRFrestrictROI];
-                        % get overlay names and numbers
-                        overlayFlatNames = cell(1,length(pRFInfo.pRFOverlayNames));
-                        overlayNum = zeros(1,length(pRFInfo.pRFOverlayNames));
-                        overlay2Get = cell(1,length(pRFInfo.pRFOverlayNames));
-                        for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
-                            overlayFlatNames{iOverlay} = [groupName '_' pRFanalysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
-                            overlayNum(iOverlay) = iOverlay;
-                            overlay2Get{iOverlay} = ['averageDepthVol(' overlayFlatNames{iOverlay} ')'];
-                        end
-                        
-                        % export group data from volumetric to flatmap space
-                        % [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
-                        thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},pRFanalysisName,[],overlayNum,subjectInfo.flatmapNames{iSide});
-                        
-                        % average over cortical depth
-                        thisView = script_averageAcrossDepths(thisView,overlayFlatNames,[subjectInfo.flatmapNames{iSide}, 'Volume'],1);
-                        
-                    end
+                    % export group data from volumetric to flatmap space
+                    % [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
+                    thisView = script_covertData2FlatmapSpace(thisView,glmInfo.groupNames{iGroup},pRFanalysisName,[],overlayNum,subjectInfo.flatmapNames{iSide});
+                    
+                    % average over cortical depth
+                    thisView = script_averageAcrossDepths(thisView,overlayFlatNames,[subjectInfo.flatmapNames{iSide}, 'Volume'],1);
                 end
             end
         end
-        
-        if doGetDATA_pRF
-            
-            %% get group data and restrict by ROIs
-            for iSide = 1:length(Info.Sides)
-                if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',[subjectInfo.flatmapNames{iSide}, 'Volume'])
-                    thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide}, 'Volume']);
-                end
-                if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum','combineTransformOverlays')
-                    thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
-                end
-                eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
-                baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
-                thisView = viewSet(thisView,'currentbase',baseNum);
-                
-                for iGroup = 1:length(glmInfo.groupNames)
-                    groupName = glmInfo.groupNames{iGroup};
-                    for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
-                        pRFanalysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_',  pRFrestrictROI];
-                        overlayFlatNames = cell(1,length(pRFInfo.pRFOverlayNames));
-                        overlay2Get = cell(1,length(pRFInfo.pRFOverlayNames));
-                        for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
-                            %                             % get overlay names
-                            %                             overlayFlatNames{iOverlay} = [groupName '_' pRFanalysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
-                            %                             overlay2Get{iOverlay} = ['averageDepthVol(' overlayFlatNames{iOverlay} ')'];
-                            %                             clear tempData
-                            %                             tempData = get_overlayData(thisView,overlay2Get{iOverlay});
-                            %                             % get data
-                            %                             eval(['data.' Info.Sides{iSide}, '.', glmInfo.groupNames{iGroup}, '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, ' = tempData;']);
-                            %
-                            %                             % restrict by ROI
-                            %                             for iROI = 1:length(roiNames)
-                            %                                 eval(['roi = data.' Info.Sides{iSide} '.' roiNames{iROI} '.roi;']);
-                            %                                 eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.', glmInfo.groupNames{iGroup}, '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '  = get_ROIdata(tempData.data,roi);']);
-                            %
-                            %                             end
-                            
-                            % get overlay names
-                            overlayFlatNames{iOverlay} = [groupName '_' pRFanalysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
-                            overlay2Get{iOverlay} = ['averageDepthVol(' overlayFlatNames{iOverlay} ')'];
-                            clear tempData
-                            tempData = get_overlayData(thisView,overlay2Get{iOverlay});
-                            % get data
-                            eval(['data.' Info.Sides{iSide}, '.', glmInfo.groupNames{iGroup}, '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, ' = tempData;']);
-                            
-                            % restrict by ROI
-                            for iROI = 1:length(roiNames)
-                                eval(['roi = data.' Info.Sides{iSide} '.' roiNames{iROI} '.roi;']);
-                                eval(['data.', roiNames{iROI}, '.', glmInfo.groupNames{iGroup}, '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '  = get_ROIdata(tempData.data,roi);']);
-                                
-                            end
-                            
-                        end
-                    end
-                end
-            end
-            
-            %% Scans
+        for iSide = 1:length(subjectInfo.flatmapNames)
+            % Scans
             for iScan = 1:glmInfo.nScans
                 if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',[subjectInfo.flatmapNames{iSide}, 'Volume'])
                     thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide}, 'Volume']);
@@ -1028,123 +969,151 @@ for iSub = 1:length(iSubs2Run)
                     overlay2Get{iOverlay} = ['averageDepthVol(' overlayFlatNames{iOverlay} ')'];
                 end
                 
-                % export group data from volumetric to flatmap space
+                % export scan data from volumetric to flatmap space
                 % [thisView, analysisData] = script_covertData2FlatmapSpace(thisView,groupName,analysisName,iScan,overlays,flatmapName)
-                % get overlay number
-                for iSide = 1:length(subjectInfo.flatmapNames)
-                    thisView = script_covertData2FlatmapSpace(thisView,glmInfo.scanGroupName,pRFanalysisName,iScan,[],subjectInfo.flatmapNames{iSide});
-                    
-                    % average over cortical depth
-                    thisView = script_averageAcrossDepths(thisView,overlayFlatNames,[subjectInfo.flatmapNames{iSide}, 'Volume'],1);
-                end
+                thisView = script_covertData2FlatmapSpace(thisView,glmInfo.scanGroupName,pRFanalysisName,iScan,overlayNum,subjectInfo.flatmapNames{iSide});
+                
+                % average over cortical depth
+                thisView = script_averageAcrossDepths(thisView,overlayFlatNames,[subjectInfo.flatmapNames{iSide}, 'Volume'],1);
+                
             end
-        end
-        
-        %% get scan data and restrict by ROIs
-        if doROIRestrict_pRF
-            for iSide = 1:length(Info.Sides)
-                if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',[subjectInfo.flatmapNames{iSide}, 'Volume'])
-                    thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide}, 'Volume']);
-                end
-                if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum','combineTransformOverlays')
-                    thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
-                end
-                eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
-                baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
-                thisView = viewSet(thisView,'currentbase',baseNum);
-                
-                for iScan = 1:glmInfo.nScans
-                    for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
-                        pRFanalysisName = ['pRF_',  pRFrestrictROI, '_Scan_' num2str(iScan)];
-                        overlayFlatNames = cell(1,length(pRFInfo.pRFOverlayNames));
-                        overlay2Get = cell(1,length(pRFInfo.pRFOverlayNames));
-                        for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
-                            % get overlay names
-                            overlayFlatNames{iOverlay} = ['Scan ' num2str(iScan) ' - '  pRFanalysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
-                            overlay2Get{iOverlay} = ['averageDepthVol(' overlayFlatNames{iOverlay} ')'];
-                            clear tempData
-                            tempData = get_overlayData(thisView,overlay2Get{iOverlay});
-                            % get data
-                            %                             eval(['data.', Info.Sides{iSide}, '.scanData.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} '{iScan} = tempData;']);
-                            %
-                            %                             % restrict by ROI
-                            %                             for iROI = 1:length(roiNames)
-                            %                                 clear tempROIdata
-                            %                                 eval(['roi = data.' Info.Sides{iSide} '.' roiNames{iROI} '.roi;']);
-                            %                                 %                             eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.scanData.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '{iScan}  = get_ROIdata(tempData.data,roi);']);
-                            %                                 eval(['tempROIdata = get_ROIdata(tempData.data,roi);']);
-                            %
-                            %                                 eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.scanData.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '{iScan}  = tempROIdata{:};'])
-                            %                             end
-                            
-                            eval(['data.', Info.Sides{iSide}, '.scan_', num2str(iScan), '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, ' = tempData;']);
-                            
-                            % restrict by ROI
-                            for iROI = 1:length(roiNames)
-                                clear tempROIdata
-                                eval(['roi = data.' Info.Sides{iSide} '.' roiNames{iROI} '.roi;']);
-                                %  eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.scanData.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '{iScan}  = get_ROIdata(tempData.data,roi);']);
-                                eval(['tempROIdata = get_ROIdata(tempData.data,roi);']);
-                                
-                                eval(['data.', roiNames{iROI}, '.scan_', num2str(iScan), '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '  = tempROIdata{:};'])
-                            end
-                            
-                        end
-                    end
-                end
-            end
-            
-            
-            %% pRF analysis
-            % create function or add to: voxel comparisions;
-            % pCF scatter, pCF distribution, pCF correlation
-            % r = corr2(A,B)
-            
-            %% check data
-            % quick plots to make sure its worked
-            for iSide = 1:length(Info.Sides)
-                eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
-                iROI = 1;
-                iGroup = 1;
-                iAnal = 1;
-                iOverlay = 2;
-                
-                pRFanalysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_',  pRFrestrictROI];
-                
-                eval(['roipCFdataA = data.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
-                eval(['roipCFdataB = data.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
-                
-                figure
-                histogram(cell2mat(roipCFdataA))
-                hold on
-                histogram(cell2mat(roipCFdataB))
-                
-                for iScan = 1:4
-                    eval(['roiSplitpCF{iScan} = data.' ROInames{iROI} '.scan_' num2str(iScan) '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
-                end
-                figure
-                subplot(2,1,1)
-                scatter(roiSplitpCF{1},roiSplitpCF{3})
-                subplot(2,1,2)
-                scatter(roiSplitpCF{2},roiSplitpCF{4})
-                
-                % need to remove nans before - also findout how many
-                corrcoef(double(roiSplitpCF{1}'),double(roiSplitpCF{3}'))
-                corr(roiSplitpCF{1}',roiSplitpCF{3}')
-            end
-            
-            
-            %% save data
-            save(saveName,'data','-v7.3');
-            
-            %% save view
-            mrSaveView(thisView);
         end
         
     end
     
-    %% Cortical Magnification
-    if runCorticalMagnification
+    %% Get pRF data and restrict by ROIs
+    if doGetAndRestrictDATA_pRF
+        
+        % get group data and restrict by ROIs
+        for iSide = 1:length(Info.Sides)
+            if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',[subjectInfo.flatmapNames{iSide}, 'Volume'])
+                thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide}, 'Volume']);
+            end
+            if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum','combineTransformOverlays')
+                thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
+            end
+            eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
+            baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+            thisView = viewSet(thisView,'currentbase',baseNum);
+            
+            for iGroup = 1:length(glmInfo.groupNames)
+                groupName = glmInfo.groupNames{iGroup};
+                for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+                    pRFanalysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_',  pRFrestrictROI];
+                    overlayFlatNames = cell(1,length(pRFInfo.pRFOverlayNames));
+                    overlay2Get = cell(1,length(pRFInfo.pRFOverlayNames));
+                    for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
+                        % get overlay names
+                        overlayFlatNames{iOverlay} = [groupName '_' pRFanalysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
+                        overlay2Get{iOverlay} = ['averageDepthVol(' overlayFlatNames{iOverlay} ')'];
+                        clear tempData
+                        tempData = get_overlayData(thisView,overlay2Get{iOverlay});
+                        % get data
+                        eval(['data.' Info.Sides{iSide}, '.', glmInfo.groupNames{iGroup}, '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, ' = tempData;']);
+                        
+                        % restrict by ROI
+                        for iROI = 1:length(roiNames)
+                            eval(['roi = data.' Info.Sides{iSide} '.' roiNames{iROI} '.roi;']);
+                            eval(['data.', roiNames{iROI}, '.', glmInfo.groupNames{iGroup}, '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '  = get_ROIdata(tempData.data,roi);']);
+                            
+                        end
+                        
+                    end
+                end
+            end
+        end
+        
+        % get scan data and restrict by ROIs
+        for iSide = 1:length(Info.Sides)
+            if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',[subjectInfo.flatmapNames{iSide}, 'Volume'])
+                thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide}, 'Volume']);
+            end
+            if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum','combineTransformOverlays')
+                thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
+            end
+            eval(['roiNames = Info.' Info.Sides{iSide} 'ROInames;']);
+            baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide} 'Volume']);
+            thisView = viewSet(thisView,'currentbase',baseNum);
+            
+            for iScan = 1:glmInfo.nScans
+                for iAnal = 1:length(pRFInfo.analysisNames_Groups{iGroup})
+                    pRFanalysisName = ['pRF_',  pRFrestrictROI, '_Scan_' num2str(iScan)];
+                    overlayFlatNames = cell(1,length(pRFInfo.pRFOverlayNames));
+                    overlay2Get = cell(1,length(pRFInfo.pRFOverlayNames));
+                    for iOverlay = 1:length(pRFInfo.pRFOverlayNames)
+                        % get overlay names
+                        overlayFlatNames{iOverlay} = ['Scan ' num2str(iScan) ' - '  pRFanalysisName ' (' pRFInfo.pRFOverlayNames{iOverlay} ',0)'];
+                        overlay2Get{iOverlay} = ['averageDepthVol(' overlayFlatNames{iOverlay} ')'];
+                        clear tempData
+                        tempData = get_overlayData(thisView,overlay2Get{iOverlay});
+                        % get data
+                        eval(['data.', Info.Sides{iSide}, '.scan_', num2str(iScan), '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, ' = tempData;']);
+                        
+                        % restrict by ROI
+                        for iROI = 1:length(roiNames)
+                            clear tempROIdata
+                            eval(['roi = data.' Info.Sides{iSide} '.' roiNames{iROI} '.roi;']);
+                            %  eval(['data.', Info.Sides{iSide}, '.', roiNames{iROI}, '.scanData.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '{iScan}  = get_ROIdata(tempData.data,roi);']);
+                            eval(['tempROIdata = get_ROIdata(tempData.data,roi);']);
+                            
+                            eval(['data.', roiNames{iROI}, '.scan_', num2str(iScan), '.', pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '.', pRFInfo.pRFOverlayNames{iOverlay}, '  = tempROIdata{:};'])
+                        end
+                        
+                    end
+                end
+            end
+        end
+        
+        
+        %% pRF analysis
+        % create function or add to: voxel comparisions;
+        % pCF scatter, pCF distribution, pCF correlation
+        % r = corr2(A,B)
+        
+        %% check data
+        % quick plots to make sure its worked
+        for iSide = 1:length(Info.Sides)
+            eval(['ROInames = Info.' Info.Sides{iSide} 'ROInames;']);
+            iROI = 1;
+            iGroup = 1;
+            iAnal = 1;
+            iOverlay = 2;
+            
+            pRFanalysisName = [pRFInfo.analysisNames_Groups{iGroup}{iAnal}, '_',  pRFrestrictROI];
+            
+            eval(['roipCFdataA = data.' ROInames{iROI} '.' glmInfo.groupNames{1} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+            eval(['roipCFdataB = data.' ROInames{iROI} '.' glmInfo.groupNames{2} '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+            
+            figure
+            histogram(cell2mat(roipCFdataA))
+            hold on
+            histogram(cell2mat(roipCFdataB))
+            
+            for iScan = 1:4
+                eval(['roiSplitpCF{iScan} = data.' ROInames{iROI} '.scan_' num2str(iScan) '.' pRFInfo.analysisNames_Groups{iGroup}{iAnal} '.' pRFInfo.pRFOverlayNames{iOverlay} ';']);
+            end
+            figure
+            subplot(2,1,1)
+            scatter(roiSplitpCF{1},roiSplitpCF{3})
+            subplot(2,1,2)
+            scatter(roiSplitpCF{2},roiSplitpCF{4})
+            
+            % need to remove nans before - also findout how many
+            corrcoef(double(roiSplitpCF{1}'),double(roiSplitpCF{3}'))
+            corr(roiSplitpCF{1}',roiSplitpCF{3}')
+        end
+        
+        
+        % save data
+        save(saveName,'data','-v7.3');
+        
+        % save view
+        mrSaveView(thisView);
+        
+    end
+    
+    %% Cortical Magnification %%
+    if doCorticalMagnification
         % get cortical distances
         % get curvature?
         % get pCF estiamte
@@ -1166,7 +1135,7 @@ for iSub = 1:length(iSubs2Run)
         %   'LeftHa','LeftHp','LeftLow,'LeftGRa''LeftGRp'
         %   'RightHa','RightHp','RightLow','RightGRa''RightGRp'
         %   Post fix with _GLM or _pRF
-            
+        
         thisView = getMLRView;
         
         % convert rois from flatmap to volume space
@@ -1174,65 +1143,104 @@ for iSub = 1:length(iSubs2Run)
         pRFanalysisName = ['pRF_', pRFrestrictROI];
         analysisNames = {'glm_hrfDoubleGamma',pRFanalysisName};
         AP = {'a','p'};
-        analName = {'GLM', 'pRF'};
-        for iSide = 1:length(Info.Sides)
-            if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',[subjectInfo.flatmapNames{iSide}, 'Volume'])
-                thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide}, 'Volume']);
-            end
-            if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum','combineTransformOverlays')
-                thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
-            end
-            for iAnal = 1:length(analysisNames)
-                for iAP = 1:length(AP)
-                    clear rois
-                    
-                    % make ROI names and get numbers then put in a list
-                    HighROIname = [Info.Sides{iSide}, 'High' AP{iAP} '_' analName{iAnal}];
-                    roiList(1) = viewGet(thisView,'roinum',HighROIname);
-                    
-                    LowROIname = [Info.Sides{iSide}, 'Low', '_' analName{iAnal}];
-                    roiList(2) = viewGet(thisView,'roinum',LowROIname);
-                    
-                    GRROIname = [Info.Sides{iSide}, 'GR' AP{iAP} '_' analName{iAnal}];
-                    roiList(3) = viewGet(thisView,'roinum',GRROIname);
-                    
-                    % get rois
-                    rois = viewGet(thisView,'roi',roiList);
-                    
-                    % Project ROIs across all cortical depths
-                    for iROI = 1:3
-                        clear outputRoi
-                        outputRoi = expandROI(rois(iROI),[1 1 6],[]);
-                        outputRoi.name = [outputRoi.name '_ex'];
-                        thisView = viewSet(thisView,'newROI',outputRoi);
+        %         analName = {'GLM', 'pRF'};
+        analName = {'GLM', 'GLM'};
+        
+        if doGRrois
+            for iSide = 1:length(Info.Sides)
+                
+                % define gradient reversals ROIs
+                
+                % set group
+                groupName = [subjectInfo.flatmapNames{iSide} 'Volume'];
+                if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',groupName)
+                    thisView = viewSet(thisView,'curgroup',groupName);
+                end
+                % set analysis
+                analysisName = 'combineTransformOverlay';
+                if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum',analysisName)
+                    thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum',analysisName));
+                end
+                % set base
+                flatmapName = [subjectInfo.flatmapNames{iSide} 'Volume'];
+                if viewGet(thisView,'curbase') ~= viewGet(thisView,'basenum',flatmapName)
+                    thisView = viewSet(thisView,'curbase',viewGet(thisView,'basenum',flatmapName));
+                end
+                
+                % set overlay
+                overlayNum = viewGet(thisView,'overlayNum',['Ouput 6 - gradientReversal_' Info.sides{iSide} '_glm_hrfDoubleGamma(julien_pCF_nERB,[18 18 21])']);
+                thisView = viewSet(thisView,'curOverlay',overlayNum);
+                
+                disp('create line ROIs for each reversal with the names:')
+                disp('LeftHighRevA_pRF, LeftLowRev_pRF, LeftHighRevP_pRF, RightHighRevA_pRF, RightLowRev_pRF, RightHighRevP_pRF')
+                disp('hit F5 when done')
+                
+                keyboard
+                
+                % get view
+                thisView = getMLRView;
+                
+                % make sure we have the correct group and analysis
+                if viewGet(thisView,'curgroup') ~= viewGet(thisView,'groupNum',[subjectInfo.flatmapNames{iSide}, 'Volume'])
+                    thisView = viewSet(thisView,'curgroup',[subjectInfo.flatmapNames{iSide}, 'Volume']);
+                end
+                if viewGet(thisView,'curAnalysis') ~= viewGet(thisView,'analysisNum','combineTransformOverlays')
+                    thisView = viewSet(thisView,'curAnalysis',viewGet(thisView,'analysisNum','combineTransformOverlays'));
+                end
+                
+                for iAnal = 1:length(analysisNames)
+                    for iAP = 1:length(AP)
+                        clear rois
+                        
+                        % define ROI names then get ROI numbers then put in a list
+                        HighROIname = [Info.Sides{iSide}, 'High' AP{iAP} '_' analName{iAnal}];
+                        roiList(1) = viewGet(thisView,'roinum',HighROIname);
+                        
+                        LowROIname = [Info.Sides{iSide}, 'Low', '_' analName{iAnal}];
+                        roiList(2) = viewGet(thisView,'roinum',LowROIname);
+                        
+                        GRROIname = [Info.Sides{iSide}, 'GR' AP{iAP} '_' analName{iAnal}];
+                        roiList(3) = viewGet(thisView,'roinum',GRROIname);
+                        
+                        % get rois
+                        rois = viewGet(thisView,'roi',roiList);
+                        
+                        % Project ROIs across all cortical depths
+                        for iROI = 1:3
+                            clear outputRoi
+                            outputRoi = expandROI(rois(iROI),[1 1 6],[]);
+                            outputRoi.name = [outputRoi.name '_ex'];
+                            thisView = viewSet(thisView,'newROI',outputRoi);
+                        end
+                        
+                        clear roiList
+                        
+                        % Define expanded ROI names and get numbers then put in a list
+                        HighROIname = [Info.Sides{iSide}, 'High' AP{iAP} '_' analName{iAnal} '_ex'];
+                        roiList(1) = viewGet(thisView,'roinum',HighROIname);
+                        
+                        LowROIname = [Info.Sides{iSide}, 'Low', '_' analName{iAnal} '_ex'];
+                        roiList(2) = viewGet(thisView,'roinum',LowROIname);
+                        
+                        GRROIname = [Info.Sides{iSide}, 'GR' AP{iAP} '_' analName{iAnal} '_ex'];
+                        roiList(3) = viewGet(thisView,'roinum',GRROIname);
+                        
+                        clear rois_ex
+                        
+                        % get expanded rois
+                        rois_ex = viewGet(thisView,'roi',roiList);
+                        
+                        % convert from flatmap space to volumetric
+                        for iROI = 1:3
+                            clear outputRoi
+                            outputRoi = convertFromFlatVolumeToBase(rois_ex(iROI));
+                            outputRoi.name = [outputRoi.name '_Vol'];
+                            thisView = viewSet(thisView,'newROI',outputRoi);
+                        end
+                        
+                        % delete expanded rois we don't need
+                        thisView = viewSet(thisView,'deleteroi',roiList);
                     end
-                    
-                    clear roiList
-                    % make ROI names and get numbers then put in a list
-                    
-                    HighROIname = [Info.Sides{iSide}, 'High' AP{iAP} '_' analName{iAnal} '_ex'];
-                    roiList(1) = viewGet(thisView,'roinum',HighROIname);
-                    
-                    LowROIname = [Info.Sides{iSide}, 'Low', '_' analName{iAnal} '_ex'];
-                    roiList(2) = viewGet(thisView,'roinum',LowROIname);
-                    
-                    GRROIname = [Info.Sides{iSide}, 'GR' AP{iAP} '_' analName{iAnal} '_ex'];
-                    roiList(3) = viewGet(thisView,'roinum',GRROIname);
-                    
-                    clear rois_ex
-                    % get rois again
-                    rois_ex = viewGet(thisView,'roi',roiList);
-                    
-                    % convert
-                    for iROI = 1:3
-                        clear outputRoi
-                        outputRoi = convertFromFlatVolumeToBase(rois_ex(iROI));
-                        outputRoi.name = [outputRoi.name '_Vol'];
-                        thisView = viewSet(thisView,'newROI',outputRoi);
-                    end
-                    
-                    % delete expanded rois we don't need
-                    thisView = viewSet(thisView,'deleteroi',roiList);
                 end
             end
         end
@@ -1260,6 +1268,13 @@ for iSub = 1:length(iSubs2Run)
                 baseNum = viewGet(thisView,'baseNum',[subjectInfo.flatmapNames{iSide}]);
                 thisView = viewSet(thisView,'currentbase',baseNum);
             end
+            
+            % set path to match the current directory
+            % its different for different computers..
+            %             '/Volumes/data_PSY/data/Anatomy/freesurfer/subjects/11108_006/surfRelax'
+            baseParams = viewGet(thisView,'basecoordmap');
+            baseParams.path = fullfile(Info.dataDir,'Anatomy/freesurfer/subjects/',subjectInfo.freeSurferName,'surfRelax');
+            thisView = viewSet(thisView,'basecoordmap',baseParams);
             
             for iGroup = 1:length(glmInfo.groupNames) % change change this if we want to calculate for both groups or not
                 % select group
@@ -1302,7 +1317,7 @@ for iSub = 1:length(iSubs2Run)
                         overlayCheck = viewGet(thisView,'overlayNum',overlay2check);
                         
                         % average overlays over cortical depths
-                        if isempty(overlayCheck)                            
+                        if isempty(overlayCheck)
                             [thisView,params] = combineTransformOverlays(thisView,[],'justGetParams=1','defaultParams=1',['overlayList=' mat2str(overlayNum)]);
                             params.combineFunction='averageDepthVol';
                             params.combinationMode = 'Apply function to each overlay';
@@ -1370,16 +1385,15 @@ for iSub = 1:length(iSubs2Run)
             end
         end
         
-        %% save data
+        % save data
         save(saveName,'data','-v7.3');
         
-        %% save view
+        % save view
         mrSaveView(thisView);
         
     end
     
-    %% Quit and delete subject view
-    % quit current mrLoadRet view
+    %% Quit current mrLoadRet view
     mrQuit()
-
+    
 end
